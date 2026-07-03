@@ -47,6 +47,24 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .logo path{stroke-dasharray:120;stroke-dashoffset:120;animation:draw 1.4s ease forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 
+/* hero: engraving of Atlas catching the globe (two masked layers of one image) */
+.hero{position:relative;width:210px;aspect-ratio:736/1220;margin:0 auto 16px;animation:heroFloat 7s ease-in-out 2.6s infinite}
+.hero img{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:multiply}
+.hero-fig{
+  -webkit-mask-image:radial-gradient(ellipse 45% 27.2% at 50.5% 28.8%,transparent 96%,#000 99%);
+  mask-image:radial-gradient(ellipse 45% 27.2% at 50.5% 28.8%,transparent 96%,#000 99%);
+  animation:heroFig 1s ease .1s both}
+.hero-globe{
+  -webkit-mask-image:radial-gradient(ellipse 45.4% 27.5% at 50.5% 28.8%,#000 97%,transparent 99.5%);
+  mask-image:radial-gradient(ellipse 45.4% 27.5% at 50.5% 28.8%,#000 97%,transparent 99.5%);
+  animation:heroGlobe 1.5s cubic-bezier(.3,1.4,.4,1) .55s both}
+@keyframes heroFig{from{opacity:0;transform:translateY(2%)}to{opacity:1;transform:none}}
+@keyframes heroGlobe{0%{opacity:0;transform:translateY(-15%)}35%{opacity:1}72%{transform:translateY(1.1%)}100%{transform:translateY(0)}}
+@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.auth-card h1,.auth-card .tag{animation:fadeUp .8s ease 1.7s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.hero,.hero img,.auth-card h1,.auth-card .tag,.logo path{animation:none!important;stroke-dashoffset:0}}
+
 /* ---------- Layout ---------- */
 #app{display:flex;min-height:100vh;position:relative;z-index:1}
 aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
@@ -105,12 +123,12 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 <!-- ============ AUTH ============ -->
 <div id="authScreen">
   <div class="auth-card">
-    <video id="heroVid" muted autoplay playsinline preload="auto"
-      style="display:none;width:100%;border-radius:14px;margin-bottom:16px"
-      onloadeddata="this.style.display='block';document.querySelector('.auth-card .logo').style.display='none'">
-      <source src="atlas-hero.mp4" type="video/mp4">
-    </video>
-    <svg class="logo" width="56" height="56" viewBox="0 0 48 48" fill="none">
+    <div class="hero" id="hero">
+      <img class="hero-fig" src="atlas-reference.jpg" alt=""
+        onerror="document.getElementById('hero').style.display='none';document.querySelector('.auth-card .logo').style.display='inline'">
+      <img class="hero-globe" src="atlas-reference.jpg" alt="Atlas catching the Earth">
+    </div>
+    <svg class="logo" style="display:none" width="56" height="56" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#3a4132"/><stop offset="1" stop-color="#55604a"/>
       </linearGradient></defs>
