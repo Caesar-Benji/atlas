@@ -4,29 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas — Your life, organized</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%232dd4bf'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233a4132'/%3E%3Cstop offset='1' stop-color='%2355604a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0b0e14; --surface:#12161f; --surface2:#1a1f2b; --border:#232a38;
-  --text:#e8ecf3; --muted:#8b93a7; --accent:#6366f1; --accent2:#2dd4bf;
-  --grad:linear-gradient(135deg,#6366f1,#2dd4bf);
-  --red:#f87171; --amber:#fbbf24; --green:#34d399;
-  --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+  --bg:#c6cabb; --surface:#d2d5c8; --surface2:#bec3b2; --border:#a8ae9a;
+  --text:#262b21; --muted:#6b7160; --accent:#3a4132; --accent2:#55604a;
+  --grad:linear-gradient(135deg,#3a4132,#4d5643);
+  --red:#8f3d32; --amber:#7d611f; --green:#3f5c3a;
+  --radius:12px; --shadow:0 2px 10px rgba(38,43,33,.08);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:radial-gradient(600px 300px at 15% -5%,rgba(99,102,241,.12),transparent),
-             radial-gradient(500px 300px at 90% 0%,rgba(45,212,191,.08),transparent)}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-::placeholder{color:#5b6376}
+::placeholder{color:#878d7b}
 h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .hidden{display:none!important}
 
@@ -34,10 +31,10 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 #authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow);text-align:center}
 .auth-card .logo{margin:0 auto 14px}
-.auth-card h1{font-size:26px;font-weight:800;letter-spacing:-.03em}
+.auth-card h1{font-size:26px;font-weight:700;letter-spacing:-.03em}
 .auth-card .tag{color:var(--muted);font-size:13px;margin:6px 0 24px}
 .auth-card form{display:flex;flex-direction:column;gap:12px;text-align:left}
-.btn{background:var(--grad);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:opacity .15s,transform .1s}
+.btn{background:var(--grad);color:#e9ebe1;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:opacity .15s,transform .1s}
 .btn:hover{opacity:.9}.btn:active{transform:scale(.98)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500}
 .btn-ghost:hover{color:var(--text);border-color:var(--accent)}
@@ -53,10 +50,10 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 /* ---------- Layout ---------- */
 #app{display:flex;min-height:100vh;position:relative;z-index:1}
 aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
-.brand{display:flex;align-items:center;gap:10px;padding:0 10px 22px;font-weight:800;font-size:18px;letter-spacing:-.02em}
+.brand{display:flex;align-items:center;gap:10px;padding:0 10px 22px;font-weight:700;font-size:18px;letter-spacing:-.02em}
 .nav-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:500;text-align:left;transition:.15s}
 .nav-btn:hover{color:var(--text);background:var(--surface2)}
-.nav-btn.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(45,212,191,.15));border:1px solid rgba(99,102,241,.35)}
+.nav-btn.active{color:#e9ebe1;background:var(--grad);border:1px solid var(--accent)}
 .nav-btn svg{width:18px;height:18px;flex-shrink:0}
 aside .spacer{flex:1}
 main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
@@ -68,7 +65,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .grid.cols2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
 .card h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
-.stat{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.stat{font-size:28px;font-weight:700;letter-spacing:-.02em}
 .stat small{font-size:13px;color:var(--muted);font-weight:500}
 .list{display:flex;flex-direction:column;gap:8px}
 .row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 14px}
@@ -80,10 +77,10 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .icon-btn:hover{color:var(--text);background:var(--border)}
 .icon-btn.danger:hover{color:var(--red)}
 .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
-.pill.red{background:rgba(248,113,113,.14);color:var(--red)}
-.pill.amber{background:rgba(251,191,36,.14);color:var(--amber)}
-.pill.green{background:rgba(52,211,153,.14);color:var(--green)}
-.pill.indigo{background:rgba(99,102,241,.16);color:#a5b4fc}
+.pill.red{background:rgba(143,61,50,.14);color:var(--red)}
+.pill.amber{background:rgba(125,97,31,.14);color:var(--amber)}
+.pill.green{background:rgba(63,92,58,.14);color:var(--green)}
+.pill.indigo{background:rgba(58,65,50,.12);color:var(--accent)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
 .empty{color:var(--muted);font-size:13.5px;padding:18px;text-align:center;border:1px dashed var(--border);border-radius:11px}
 .progress-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
@@ -92,7 +89,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:11px;font-size:14px;box-shadow:var(--shadow);transition:transform .25s;z-index:50}
 #toast.show{transform:translateX(-50%) translateY(0)}
 .checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0}
-.checkbox.checked{background:var(--grad);border-color:transparent;color:#fff}
+.checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
 
 /* mobile */
 @media(max-width:760px){
@@ -108,9 +105,14 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 <!-- ============ AUTH ============ -->
 <div id="authScreen">
   <div class="auth-card">
+    <video id="heroVid" muted autoplay playsinline preload="auto"
+      style="display:none;width:100%;border-radius:14px;margin-bottom:16px"
+      onloadeddata="this.style.display='block';document.querySelector('.auth-card .logo').style.display='none'">
+      <source src="atlas-hero.mp4" type="video/mp4">
+    </video>
     <svg class="logo" width="56" height="56" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#2dd4bf"/>
+        <stop offset="0" stop-color="#3a4132"/><stop offset="1" stop-color="#55604a"/>
       </linearGradient></defs>
       <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="3.5" stroke-linecap="round"/>
     </svg>
@@ -164,9 +166,9 @@ function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); const el = docum
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
-Chart.defaults.color = '#8b93a7';
-Chart.defaults.borderColor = '#232a38';
-Chart.defaults.font.family = 'Inter';
+Chart.defaults.color = '#6b7160';
+Chart.defaults.borderColor = '#aeb4a1';
+Chart.defaults.font.family = 'Space Grotesk';
 
 /* ================= AUTH ================= */
 let signupMode = false;
@@ -353,7 +355,7 @@ async function drawGymChart(){
   const byDate = {};
   sets.forEach(s => { const d = dateOf[s.workout_id]; if(d) byDate[d] = Math.max(byDate[d] || 0, +s.weight_kg); });
   const labels = Object.keys(byDate).sort();
-  mkChart('gymChart', {type: 'line', data: {labels: labels.map(fmtDate), datasets: [{label: 'Max weight (kg)', data: labels.map(d => byDate[d]), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.15)', fill: true, tension: .35, pointBackgroundColor: '#2dd4bf'}]},
+  mkChart('gymChart', {type: 'line', data: {labels: labels.map(fmtDate), datasets: [{label: 'Max weight (kg)', data: labels.map(d => byDate[d]), borderColor: '#3a4132', backgroundColor: 'rgba(58,65,50,.12)', fill: true, tension: .35, pointBackgroundColor: '#55604a'}]},
     options: {maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: false}}}});
 }
 
@@ -391,7 +393,7 @@ views.money = async function(){
   data.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + +x.amount);
   const cats = Object.keys(byCat);
   mkChart('catChart', {type: 'doughnut', data: {labels: cats, datasets: [{data: cats.map(c => byCat[c]),
-    backgroundColor: ['#6366f1','#2dd4bf','#f59e0b','#f87171','#a78bfa','#34d399','#f472b6','#60a5fa','#94a3b8'], borderWidth: 0}]},
+    backgroundColor: ['#3a4132','#55604a','#7d611f','#8f3d32','#6b7160','#3f5c3a','#8a7a56','#4a5568','#9aa08c'], borderWidth: 0}]},
     options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'}}}});
 };
 async function addExpense(){
