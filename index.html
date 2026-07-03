@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas — Your life, organized</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%232dd4bf'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b0e14; --surface:#12161f; --surface2:#1a1f2b; --border:#232a38;
+  --text:#e8ecf3; --muted:#8b93a7; --accent:#6366f1; --accent2:#2dd4bf;
+  --grad:linear-gradient(135deg,#6366f1,#2dd4bf);
+  --red:#f87171; --amber:#fbbf24; --green:#34d399;
+  --radius:14px; --shadow:0 8px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(600px 300px at 15% -5%,rgba(99,102,241,.12),transparent),
+             radial-gradient(500px 300px at 90% 0%,rgba(45,212,191,.08),transparent)}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+::placeholder{color:#5b6376}
+h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.hidden{display:none!important}
+
+/* ---------- Auth ---------- */
+#authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow);text-align:center}
+.auth-card .logo{margin:0 auto 14px}
+.auth-card h1{font-size:26px;font-weight:800;letter-spacing:-.03em}
+.auth-card .tag{color:var(--muted);font-size:13px;margin:6px 0 24px}
+.auth-card form{display:flex;flex-direction:column;gap:12px;text-align:left}
+.btn{background:var(--grad);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:opacity .15s,transform .1s}
+.btn:hover{opacity:.9}.btn:active{transform:scale(.98)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500}
+.btn-ghost:hover{color:var(--text);border-color:var(--accent)}
+.auth-switch{margin-top:18px;font-size:13px;color:var(--muted)}
+.auth-switch a{color:var(--accent2);cursor:pointer;text-decoration:none;font-weight:600}
+.auth-msg{font-size:13px;margin-top:12px;min-height:18px}
+.auth-msg.err{color:var(--red)}.auth-msg.ok{color:var(--green)}
+
+/* logo draw animation */
+.logo path{stroke-dasharray:120;stroke-dashoffset:120;animation:draw 1.4s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* ---------- Layout ---------- */
+#app{display:flex;min-height:100vh;position:relative;z-index:1}
+aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:0 10px 22px;font-weight:800;font-size:18px;letter-spacing:-.02em}
+.nav-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:500;text-align:left;transition:.15s}
+.nav-btn:hover{color:var(--text);background:var(--surface2)}
+.nav-btn.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.25),rgba(45,212,191,.15));border:1px solid rgba(99,102,241,.35)}
+.nav-btn svg{width:18px;height:18px;flex-shrink:0}
+aside .spacer{flex:1}
+main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+
+/* ---------- Cards / grids ---------- */
+.grid{display:grid;gap:16px}
+.grid.cols3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.grid.cols2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+.card h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+.stat{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.stat small{font-size:13px;color:var(--muted);font-weight:500}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:11px 14px}
+.row .grow{flex:1;min-width:0}
+.row .title{font-weight:600;font-size:14px}
+.row .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.row.done .title{text-decoration:line-through;color:var(--muted)}
+.icon-btn{background:transparent;border:none;color:var(--muted);padding:5px;border-radius:7px;display:flex}
+.icon-btn:hover{color:var(--text);background:var(--border)}
+.icon-btn.danger:hover{color:var(--red)}
+.pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.pill.red{background:rgba(248,113,113,.14);color:var(--red)}
+.pill.amber{background:rgba(251,191,36,.14);color:var(--amber)}
+.pill.green{background:rgba(52,211,153,.14);color:var(--green)}
+.pill.indigo{background:rgba(99,102,241,.16);color:#a5b4fc}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.empty{color:var(--muted);font-size:13.5px;padding:18px;text-align:center;border:1px dashed var(--border);border-radius:11px}
+.progress-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:var(--grad);border-radius:99px;transition:width .3s}
+.chart-box{position:relative;height:240px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:11px;font-size:14px;box-shadow:var(--shadow);transition:transform .25s;z-index:50}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0}
+.checkbox.checked{background:var(--grad);border-color:transparent;color:#fff}
+
+/* mobile */
+@media(max-width:760px){
+  aside{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-right:none;border-top:1px solid var(--border);z-index:40;justify-content:space-around}
+  .brand,.nav-btn span,aside .spacer,#signOutBtn{display:none}
+  .nav-btn{width:auto;padding:10px 13px;justify-content:center}
+  main{padding:22px 18px 110px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH ============ -->
+<div id="authScreen">
+  <div class="auth-card">
+    <svg class="logo" width="56" height="56" viewBox="0 0 48 48" fill="none">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#2dd4bf"/>
+      </linearGradient></defs>
+      <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="3.5" stroke-linecap="round"/>
+    </svg>
+    <h1>Atlas</h1>
+    <div class="tag">Your life, organized.</div>
+    <form id="authForm">
+      <input type="email" id="authEmail" placeholder="Email" required autocomplete="email">
+      <input type="password" id="authPassword" placeholder="Password" required minlength="6" autocomplete="current-password">
+      <button class="btn" type="submit" id="authSubmit">Sign in</button>
+    </form>
+    <div class="auth-msg" id="authMsg"></div>
+    <div class="auth-switch" id="authSwitch">No account? <a onclick="toggleAuthMode()">Sign up</a></div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <aside>
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
+        <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      Atlas
+    </div>
+    <button class="nav-btn" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></button>
+    <button class="nav-btn" data-tab="schedule"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg><span>Schedule</span></button>
+    <button class="nav-btn" data-tab="gym"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg><span>Gym</span></button>
+    <button class="nav-btn" data-tab="money"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg><span>Money</span></button>
+    <button class="nav-btn" data-tab="goals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg><span>Goals</span></button>
+    <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
+    <div class="spacer"></div>
+    <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://gsyrqhoutpshtbzastyq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CcpIpr41xdWcABUKaUkp-A_-J7z4-mG';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const NIS = n => '₪' + Number(n).toLocaleString('en-IL', {maximumFractionDigits: 2});
+const esc = s => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const todayStr = () => new Date().toLocaleDateString('en-CA');
+const fmtDate = d => new Date(d + 'T00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+const fmtDT = d => new Date(d).toLocaleString('en-GB', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+let charts = {};
+function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); const el = document.getElementById(id); if(!el) return; charts[id] = new Chart(el, cfg); }
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
+function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
+
+Chart.defaults.color = '#8b93a7';
+Chart.defaults.borderColor = '#232a38';
+Chart.defaults.font.family = 'Inter';
+
+/* ================= AUTH ================= */
+let signupMode = false;
+function toggleAuthMode(){
+  signupMode = !signupMode;
+  document.getElementById('authSubmit').textContent = signupMode ? 'Create account' : 'Sign in';
+  document.getElementById('authSwitch').innerHTML = signupMode
+    ? 'Have an account? <a onclick="toggleAuthMode()">Sign in</a>'
+    : 'No account? <a onclick="toggleAuthMode()">Sign up</a>';
+}
+document.getElementById('authForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = authEmail.value.trim(), password = authPassword.value;
+  const msg = document.getElementById('authMsg');
+  msg.className = 'auth-msg'; msg.textContent = signupMode ? 'Creating account…' : 'Signing in…';
+  const {error} = signupMode
+    ? await sb.auth.signUp({email, password})
+    : await sb.auth.signInWithPassword({email, password});
+  if(error){ msg.className = 'auth-msg err'; msg.textContent = error.message; return; }
+  if(signupMode){ msg.className = 'auth-msg ok'; msg.textContent = 'Account created! If asked, confirm via the email we sent — then sign in.'; signupMode = false; toggleAuthMode(); toggleAuthMode(); }
+});
+document.getElementById('signOutBtn').addEventListener('click', () => sb.auth.signOut());
+
+sb.auth.onAuthStateChange((_e, session) => {
+  document.getElementById('authScreen').classList.toggle('hidden', !!session);
+  document.getElementById('app').classList.toggle('hidden', !session);
+  if(session) go(location.hash.slice(1) || 'dashboard');
+});
+
+/* ================= ROUTER ================= */
+const views = {};
+function go(tab){
+  if(!views[tab]) tab = 'dashboard';
+  location.hash = tab;
+  document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  views[tab]();
+}
+document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
+
+/* ================= DASHBOARD ================= */
+views.dashboard = async function(){
+  const main = document.getElementById('main');
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  main.innerHTML = `<div class="page-head"><div><h2>${greet}, Benji 👋</h2>
+    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div></div>
+    <div class="grid cols3" id="dashStats"></div>
+    <div class="grid cols2" style="margin-top:16px">
+      <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
+      <div class="card"><h3>Chores due</h3><div class="list" id="dashChores"><div class="empty">Loading…</div></div></div>
+    </div>`;
+
+  const monthStart = todayStr().slice(0,8) + '01';
+  const now = new Date(); const dayStart = new Date(now); dayStart.setHours(0,0,0,0);
+  const [ev, ex, go_, ch, wo] = await Promise.all([
+    sb.from('events').select('*').gte('starts_at', dayStart.toISOString()).order('starts_at').limit(6),
+    sb.from('expenses').select('amount').gte('spent_at', monthStart),
+    sb.from('goals').select('*').eq('status','active'),
+    sb.from('chores').select('*'),
+    sb.from('workouts').select('workout_date').order('workout_date',{ascending:false}).limit(1),
+  ]);
+
+  const spent = (ex.data||[]).reduce((s,r) => s + +r.amount, 0);
+  const dueChores = (ch.data||[]).filter(c => choreDueDays(c) <= 0);
+  const lastWo = wo.data?.[0]?.workout_date;
+  document.getElementById('dashStats').innerHTML = `
+    <div class="card"><h3>Spent this month</h3><div class="stat">${NIS(spent)}</div></div>
+    <div class="card"><h3>Active goals</h3><div class="stat">${(go_.data||[]).length}</div></div>
+    <div class="card"><h3>Last workout</h3><div class="stat" style="font-size:20px">${lastWo ? fmtDate(lastWo) : '—'} ${lastWo ? daysAgoLabel(lastWo) : ''}</div></div>`;
+
+  document.getElementById('dashEvents').innerHTML = (ev.data||[]).length
+    ? ev.data.map(e => `<div class="row ${e.done?'done':''}"><div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div></div>`).join('')
+    : '<div class="empty">Nothing scheduled — enjoy the calm</div>';
+
+  document.getElementById('dashChores').innerHTML = dueChores.length
+    ? dueChores.map(c => `<div class="row"><div class="grow"><div class="title">${esc(c.name)}</div></div>${chorePill(c)}</div>`).join('')
+    : '<div class="empty">All chores done ✨</div>';
+};
+function daysAgoLabel(d){
+  const days = Math.floor((new Date(todayStr()) - new Date(d)) / 864e5);
+  return `<small>${days === 0 ? '(today)' : days === 1 ? '(yesterday)' : '('+days+'d ago)'}</small>`;
+}
+
+/* ================= SCHEDULE ================= */
+views.schedule = async function(){
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>Schedule</h2></div>
+    <div class="card" style="margin-bottom:16px"><h3>Add event</h3>
+      <div class="form-grid">
+        <input id="evTitle" placeholder="What's happening?" style="grid-column:1/-1">
+        <input id="evDate" type="date" value="${todayStr()}">
+        <input id="evTime" type="time" value="09:00">
+      </div>
+      <button class="btn" onclick="addEvent()">Add event</button>
+    </div>
+    <div class="card"><h3>Upcoming</h3><div class="list" id="evList"><div class="empty">Loading…</div></div></div>`;
+  const {data, error} = await sb.from('events').select('*').order('starts_at');
+  if(error) return err(error);
+  const now = Date.now();
+  const upcoming = data.filter(e => new Date(e.starts_at) >= new Date(now - 864e5));
+  document.getElementById('evList').innerHTML = upcoming.length ? upcoming.map(e => `
+    <div class="row ${e.done?'done':''}">
+      <button class="checkbox ${e.done?'checked':''}" onclick="toggleEvent('${e.id}',${!e.done})">${e.done?'✓':''}</button>
+      <div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div>
+      <button class="icon-btn danger" onclick="delRow('events','${e.id}','schedule')">✕</button>
+    </div>`).join('') : '<div class="empty">No upcoming events</div>';
+};
+async function addEvent(){
+  const title = evTitle.value.trim(); if(!title) return toast('Give it a title');
+  const {error} = await sb.from('events').insert({title, starts_at: new Date(evDate.value + 'T' + (evTime.value || '09:00')).toISOString()});
+  error ? err(error) : views.schedule();
+}
+async function toggleEvent(id, done){
+  const {error} = await sb.from('events').update({done}).eq('id', id);
+  error ? err(error) : views.schedule();
+}
+async function delRow(table, id, view){
+  const {error} = await sb.from(table).delete().eq('id', id);
+  error ? err(error) : views[view]();
+}
+
+/* ================= GYM ================= */
+let gymSetRows = [];
+views.gym = async function(){
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>Gym</h2></div>
+    <div class="card" style="margin-bottom:16px"><h3>Log workout</h3>
+      <div class="form-grid"><input id="woDate" type="date" value="${todayStr()}"><input id="woNotes" placeholder="Notes (optional)" style="grid-column:span 2"></div>
+      <div id="setRows" class="list" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="addSetRow()">+ Add set</button>
+        <button class="btn" onclick="saveWorkout()">Save workout</button>
+      </div>
+    </div>
+    <div class="grid cols2">
+      <div class="card"><h3>Progress — <select id="exSelect" style="width:auto;display:inline-block;padding:4px 8px;font-size:13px" onchange="drawGymChart()"></select></h3>
+        <div class="chart-box"><canvas id="gymChart"></canvas></div></div>
+      <div class="card"><h3>History</h3><div class="list" id="woList"><div class="empty">Loading…</div></div></div>
+    </div>`;
+  gymSetRows = []; addSetRow();
+  const [wos, sets] = await Promise.all([
+    sb.from('workouts').select('*').order('workout_date', {ascending:false}).limit(20),
+    sb.from('workout_sets').select('*').order('created_at'),
+  ]);
+  if(wos.error) return err(wos.error);
+  window._gymSets = sets.data || [];
+  const byWo = {};
+  window._gymSets.forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
+  document.getElementById('woList').innerHTML = (wos.data||[]).length ? wos.data.map(w => {
+    const ss = byWo[w.id] || [];
+    const summary = Object.entries(ss.reduce((m,s) => { (m[s.exercise] = m[s.exercise] || []).push(s); return m; }, {}))
+      .map(([ex, arr]) => `${esc(ex)} ${arr.length}×(${Math.max(...arr.map(a=>+a.weight_kg))}kg)`).join(' · ') || 'no sets';
+    return `<div class="row"><div class="grow"><div class="title">${fmtDate(w.workout_date)}</div><div class="sub">${summary}${w.notes ? ' — ' + esc(w.notes) : ''}</div></div>
+      <button class="icon-btn danger" onclick="delRow('workouts','${w.id}','gym')">✕</button></div>`;
+  }).join('') : '<div class="empty">No workouts yet — log your first!</div>';
+
+  const exercises = [...new Set(window._gymSets.map(s => s.exercise))].sort();
+  document.getElementById('exSelect').innerHTML = exercises.map(e => `<option>${esc(e)}</option>`).join('') || '<option>—</option>';
+  drawGymChart();
+};
+function addSetRow(){
+  const i = gymSetRows.length; gymSetRows.push(i);
+  document.getElementById('setRows').insertAdjacentHTML('beforeend', `
+    <div class="form-grid" style="margin:0" id="setrow${i}">
+      <input id="ex${i}" placeholder="Exercise" list="exList">
+      <input id="reps${i}" type="number" placeholder="Reps" min="0">
+      <input id="wt${i}" type="number" placeholder="Weight (kg)" min="0" step="0.5">
+    </div>`);
+}
+async function saveWorkout(){
+  const rows = gymSetRows.map(i => ({exercise: document.getElementById('ex'+i).value.trim(), reps: +document.getElementById('reps'+i).value, weight_kg: +document.getElementById('wt'+i).value})).filter(r => r.exercise);
+  if(!rows.length) return toast('Add at least one set');
+  const {data: wo, error} = await sb.from('workouts').insert({workout_date: woDate.value, notes: woNotes.value.trim() || null}).select().single();
+  if(error) return err(error);
+  const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: wo.id, set_number: i+1})));
+  e2 ? err(e2) : (toast('Workout saved 💪'), views.gym());
+}
+async function drawGymChart(){
+  const ex = document.getElementById('exSelect').value;
+  const sets = (window._gymSets || []).filter(s => s.exercise === ex);
+  const woIds = [...new Set(sets.map(s => s.workout_id))];
+  const {data: wos} = woIds.length ? await sb.from('workouts').select('id,workout_date').in('id', woIds) : {data: []};
+  const dateOf = Object.fromEntries((wos||[]).map(w => [w.id, w.workout_date]));
+  const byDate = {};
+  sets.forEach(s => { const d = dateOf[s.workout_id]; if(d) byDate[d] = Math.max(byDate[d] || 0, +s.weight_kg); });
+  const labels = Object.keys(byDate).sort();
+  mkChart('gymChart', {type: 'line', data: {labels: labels.map(fmtDate), datasets: [{label: 'Max weight (kg)', data: labels.map(d => byDate[d]), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.15)', fill: true, tension: .35, pointBackgroundColor: '#2dd4bf'}]},
+    options: {maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: false}}}});
+}
+
+/* ================= MONEY ================= */
+const CATS = ['Food','Groceries','Transport','Home','Health','Fun','Shopping','Bills','Other'];
+views.money = async function(){
+  const month = window._moneyMonth || todayStr().slice(0,7);
+  window._moneyMonth = month;
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto" onchange="window._moneyMonth=this.value;views.money()"></div>
+    <div class="card" style="margin-bottom:16px"><h3>Add expense</h3>
+      <div class="form-grid">
+        <input id="exAmount" type="number" placeholder="Amount ₪" min="0" step="0.01">
+        <select id="exCat">${CATS.map(c => `<option>${c}</option>`).join('')}</select>
+        <input id="exDesc" placeholder="Description">
+        <input id="exDate" type="date" value="${todayStr()}">
+      </div>
+      <button class="btn" onclick="addExpense()">Add expense</button>
+    </div>
+    <div class="grid cols2">
+      <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>
+      <div class="card"><h3>This month</h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
+    </div>`;
+  const from = month + '-01';
+  const to = new Date(new Date(from + 'T00:00').getFullYear(), new Date(from + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
+  const {data, error} = await sb.from('expenses').select('*').gte('spent_at', from).lt('spent_at', to).order('spent_at', {ascending: false});
+  if(error) return err(error);
+  const total = data.reduce((s,r) => s + +r.amount, 0);
+  document.getElementById('moTotal').textContent = NIS(total);
+  document.getElementById('exList').innerHTML = data.length ? data.map(x => `
+    <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span></div>
+    <div class="sub">${esc(x.description) || '—'} · ${fmtDate(x.spent_at)}</div></div>
+    <button class="icon-btn danger" onclick="delRow('expenses','${x.id}','money')">✕</button></div>`).join('') : '<div class="empty">No expenses this month</div>';
+  const byCat = {};
+  data.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + +x.amount);
+  const cats = Object.keys(byCat);
+  mkChart('catChart', {type: 'doughnut', data: {labels: cats, datasets: [{data: cats.map(c => byCat[c]),
+    backgroundColor: ['#6366f1','#2dd4bf','#f59e0b','#f87171','#a78bfa','#34d399','#f472b6','#60a5fa','#94a3b8'], borderWidth: 0}]},
+    options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'}}}});
+};
+async function addExpense(){
+  const amount = +exAmount.value; if(!amount) return toast('Enter an amount');
+  const {error} = await sb.from('expenses').insert({amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value});
+  error ? err(error) : views.money();
+}
+
+/* ================= GOALS ================= */
+views.goals = async function(){
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>Goals</h2></div>
+    <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
+      <div class="form-grid"><input id="goTitle" placeholder="What do you want to achieve?" style="grid-column:span 2"><input id="goDate" type="date"></div>
+      <button class="btn" onclick="addGoal()">Add goal</button>
+    </div>
+    <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
+  const {data, error} = await sb.from('goals').select('*').order('created_at');
+  if(error) return err(error);
+  document.getElementById('goList').innerHTML = data.length ? data.map(g => `
+    <div class="card" style="padding:16px 20px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div class="grow" style="flex:1"><div class="title" style="font-weight:600;${g.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">${esc(g.title)}</div>
+        <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed 🎉' : ''}</div></div>
+        <span style="font-weight:700;font-size:14px">${g.progress}%</span>
+        ${g.status !== 'done' ? `<button class="btn-ghost" onclick="setGoal('${g.id}',${Math.min(100, g.progress + 10)})">+10%</button>` : ''}
+        <button class="icon-btn danger" onclick="delRow('goals','${g.id}','goals')">✕</button>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+    </div>`).join('') : '<div class="empty">No goals yet — dream big</div>';
+};
+async function addGoal(){
+  const title = goTitle.value.trim(); if(!title) return toast('Name your goal');
+  const {error} = await sb.from('goals').insert({title, target_date: goDate.value || null});
+  error ? err(error) : views.goals();
+}
+async function setGoal(id, progress){
+  const {error} = await sb.from('goals').update({progress, status: progress >= 100 ? 'done' : 'active'}).eq('id', id);
+  error ? err(error) : views.goals();
+}
+
+/* ================= CHORES ================= */
+function choreDueDays(c){
+  if(!c.last_done) return 0;
+  const next = new Date(c.last_done + 'T00:00'); next.setDate(next.getDate() + c.frequency_days);
+  return Math.round((next - new Date(todayStr() + 'T00:00')) / 864e5);
+}
+function chorePill(c){
+  const d = choreDueDays(c);
+  if(d < 0) return `<span class="pill red">Overdue ${-d}d</span>`;
+  if(d === 0) return `<span class="pill amber">Due today</span>`;
+  return `<span class="pill green">in ${d}d</span>`;
+}
+views.chores = async function(){
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>Chores</h2></div>
+    <div class="card" style="margin-bottom:16px"><h3>Add chore</h3>
+      <div class="form-grid"><input id="chName" placeholder="e.g. Run vacuum cleaner" style="grid-column:span 2"><input id="chFreq" type="number" placeholder="Every X days" min="1" value="7"></div>
+      <button class="btn" onclick="addChore()">Add chore</button>
+    </div>
+    <div class="card"><h3>All chores</h3><div class="list" id="chList"><div class="empty">Loading…</div></div></div>`;
+  const {data, error} = await sb.from('chores').select('*');
+  if(error) return err(error);
+  data.sort((a,b) => choreDueDays(a) - choreDueDays(b));
+  document.getElementById('chList').innerHTML = data.length ? data.map(c => `
+    <div class="row"><div class="grow"><div class="title">${esc(c.name)}</div>
+      <div class="sub">every ${c.frequency_days}d · last: ${c.last_done ? fmtDate(c.last_done) : 'never'}</div></div>
+      ${chorePill(c)}
+      <button class="btn-ghost" onclick="doneChore('${c.id}')">Done ✓</button>
+      <button class="icon-btn danger" onclick="delRow('chores','${c.id}','chores')">✕</button></div>`).join('') : '<div class="empty">No chores yet</div>';
+};
+async function addChore(){
+  const name = chName.value.trim(); if(!name) return toast('Name the chore');
+  const {error} = await sb.from('chores').insert({name, frequency_days: +chFreq.value || 7});
+  error ? err(error) : views.chores();
+}
+async function doneChore(id){
+  const {error} = await sb.from('chores').update({last_done: todayStr()}).eq('id', id);
+  error ? err(error) : (toast('Nice work ✨'), views.chores());
+}
+</script>
+<datalist id="exList">
+  <option>Bench Press</option><option>Squat</option><option>Deadlift</option><option>Overhead Press</option>
+  <option>Barbell Row</option><option>Pull Up</option><option>Lat Pulldown</option><option>Bicep Curl</option>
+  <option>Tricep Pushdown</option><option>Leg Press</option><option>Lunges</option><option>Plank</option>
+</datalist>
+</body>
+</html>
