@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
   --bg:#c6cabb; --surface:#d2d5c8; --surface2:#bec3b2; --border:#a8ae9a;
@@ -210,6 +211,7 @@ function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); const el = docum
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 Chart.defaults.color = '#6b7160';
 Chart.defaults.borderColor = '#aeb4a1';
 Chart.defaults.font.family = 'Space Grotesk';
@@ -258,7 +260,8 @@ views.dashboard = async function(){
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   main.innerHTML = `<div class="page-head"><div><h2>${greet}, Benji</h2>
-    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div></div>
+    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div>
+    <img src="hero-dashboard.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="grid cols3" id="dashStats"></div>
     <div class="grid cols2" style="margin-top:16px">
       <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
@@ -305,7 +308,7 @@ function daysAgoLabel(d){
 /* ================= SCHEDULE ================= */
 views.schedule = async function(){
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Schedule</h2></div>
+    <div class="page-head"><h2>Schedule</h2><img src="hero-schedule.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>Add event</h3>
       <div class="form-grid">
         <div style="grid-column:1/-1"><label class="lbl" for="evTitle">Event title — what's happening?</label>
@@ -508,6 +511,15 @@ views.money = async function(){
       </div>
       <button class="btn" onclick="addExpense()">Add expense</button>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>Import statement (PDF)</h3>
+      <div class="empty" style="cursor:pointer"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+        ondragleave="this.style.borderColor=''"
+        ondrop="event.preventDefault();this.style.borderColor='';handleStatement(event.dataTransfer.files)"
+        onclick="pdfFile.click()">Drop your Cal / Diners monthly statement PDF here, or click to choose.<br>Every charge is read with its date; ones you already logged (same date + amount) are skipped, and you confirm before anything is added.</div>
+      <input id="pdfFile" type="file" accept="application/pdf" multiple style="display:none" onchange="handleStatement(this.files);this.value=''">
+      <div id="importPreview"></div>
+    </div>
     <div class="card" style="margin-bottom:16px"><h3>Monthly budget</h3>
       <div id="budgetBar"></div>
       <div class="form-grid" style="margin:10px 0 0">
@@ -568,6 +580,89 @@ views.money = async function(){
     backgroundColor: ['#3a4132','#55604a','#7d611f','#8f3d32','#6b7160','#3f5c3a','#8a7a56','#4a5568','#9aa08c'], borderWidth: 0}]},
     options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'}}}});
 };
+/* ---- PDF statement import ---- */
+function fixHeb(s){
+  const heb = /[֐-׿]/, out = [], run = [];
+  const flush = () => { if(run.length){ out.push(...run.map(t => [...t].reverse().join('')).reverse()); run.length = 0; } };
+  s.split(/\s+/).forEach(t => { if(heb.test(t)) run.push(t); else { flush(); out.push(t); } });
+  flush(); return out.join(' ');
+}
+const CAT_RULES = [
+  ['Transport', /אנרגיה|דלק|סונול|רכב|תחבורה|חניו|חניה|פנגו|GETT|נסיע/i],
+  ['Groceries', /מזון|סופר|מרקט|חקלאית|שוק/],
+  ['Food', /מסעד|קפה|בורגר|פיצה/],
+  ['Health', /כושר|פארם|בריאות|מרפא|רפוא/],
+  ['Shopping', /טיפוח|יופי|אופנה|מספרה|ביגוד|מוצרי/],
+  ['Bills', /מוסדות|תקשורת|ביטוח|עיריי|מחשבים|חשמל|מים/],
+  ['Fun', /תיירות|פנאי|בילוי|מלון|קולנוע/],
+];
+const IMP_NOISE = /^(מזהה|כרטיס|Apple|Pay|הוראת|קבע|לא|ב-|-ב|ארצות|הברית\.?|מ|-|\$|₪|\d{1,4}|\d+\/\d+)$/;
+async function parseStatement(file){
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  let all = '', txs = [];
+  const pages = [];
+  for(let p = 1; p <= pdf.numPages; p++){
+    const tc = await (await pdf.getPage(p)).getTextContent();
+    const rows = {};
+    tc.items.forEach(it => {
+      if(it.transform[4] < 140 || !it.str.trim()) return;
+      const y = Math.round(it.transform[5]);
+      (rows[y] = rows[y] || []).push(it);
+    });
+    const lines = Object.keys(rows).sort((a,b) => b-a).map(y =>
+      rows[y].sort((a,b) => a.transform[4] - b.transform[4]).map(i => i.str).join(' '));
+    pages.push(lines); all += lines.join('\n');
+  }
+  // detect whether Hebrew came out visually reversed (e.g. "ןוזמ" instead of "מזון")
+  const reversed = ((all.match(/ןוזמ|תודעסמ|ההזמ|סיטרכ|ךיראת/g)||[]).length) >= ((all.match(/מזון|מסעדות|מזהה|כרטיס|תאריך/g)||[]).length);
+  pages.flat().forEach(raw => {
+    const line = reversed ? fixHeb(raw) : raw;
+    const dm = line.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    const ams = [...raw.matchAll(/₪\s*([\d,]+\.\d{2})/g)];
+    if(!dm || !ams.length) return;
+    const [, dd, mm, yyyy] = dm;
+    if(+mm < 1 || +mm > 12 || +yyyy < 2020 || +yyyy > 2035) return;
+    const desc = line.replace(/₪\s*[\d,]+\.\d{2}/g, '').replace(/\$\s*[\d,]+\.\d{2}/g, '')
+      .replace(/\d{2}\/\d{2}\/\d{2,4}/g, '').split(/\s+/).filter(t => t && !IMP_NOISE.test(t)).join(' ').slice(0, 60).trim();
+    txs.push({spent_at: `${yyyy}-${mm}-${dd}`, amount: +ams[0][1].replace(/,/g, ''),
+      category: (CAT_RULES.find(([, re]) => re.test(line)) || ['Other'])[0], description: desc || 'Imported charge'});
+  });
+  return txs;
+}
+async function handleStatement(files){
+  if(!files || !files.length) return;
+  const pv = document.getElementById('importPreview');
+  pv.innerHTML = '<div class="empty">Reading PDF…</div>';
+  try{
+    let txs = [];
+    for(const f of files) txs = txs.concat(await parseStatement(f));
+    if(!txs.length){ pv.innerHTML = '<div class="empty">No charges recognized in this PDF</div>'; return; }
+    txs.sort((a,b) => a.spent_at.localeCompare(b.spent_at));
+    const {data: existing, error} = await sb.from('expenses').select('spent_at,amount')
+      .gte('spent_at', txs[0].spent_at).lte('spent_at', txs[txs.length-1].spent_at);
+    if(error) return err(error);
+    const have = {};
+    (existing||[]).forEach(e => { const k = e.spent_at + '|' + (+e.amount).toFixed(2); have[k] = (have[k]||0) + 1; });
+    txs.forEach(t => { const k = t.spent_at + '|' + t.amount.toFixed(2); if(have[k] > 0){ have[k]--; t.dup = true; } });
+    window._parsedTxs = txs;
+    const news = txs.filter(t => !t.dup).length;
+    pv.innerHTML = `<div style="margin:12px 0 8px;font-size:13.5px">Found <b>${txs.length}</b> charges · <b>${news}</b> new · ${txs.length - news} already logged</div>
+      <div class="list" style="max-height:320px;overflow:auto">` + txs.map((t,i) => `
+      <div class="row" style="${t.dup ? 'opacity:.55' : ''}">
+        ${t.dup ? '<span class="pill indigo">already logged</span>' : `<input type="checkbox" id="imp${i}" checked style="width:auto" title="Untick to skip this charge">`}
+        <div class="grow"><div class="title">${NIS(t.amount)} <span class="pill indigo" style="margin-left:6px">${t.category}</span></div>
+        <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
+      </div>`).join('') + `</div>
+      ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed()">Add ${news} expenses</button>` : ''}`;
+  }catch(e){ err(e); pv.innerHTML = '<div class="empty">Could not read this PDF</div>'; }
+}
+async function importParsed(){
+  const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
+    ? {spent_at: t.spent_at, amount: t.amount, category: t.category, description: t.description} : null).filter(Boolean);
+  if(!rows.length) return toast('Nothing selected');
+  const {error} = await sb.from('expenses').insert(rows);
+  error ? err(error) : (toast(rows.length + ' expenses imported'), views.money());
+}
 function drawBurnChart(rows, budget, month){
   const [Y, M] = month.split('-').map(Number);
   const dim = new Date(Y, M, 0).getDate();
