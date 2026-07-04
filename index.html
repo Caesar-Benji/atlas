@@ -110,6 +110,8 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
 
 .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.sub-logo{width:28px;height:28px;border-radius:7px;flex-shrink:0;object-fit:contain;background:var(--surface)}
+.sub-fallback{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:var(--grad);color:#e9ebe1;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 
 /* calendar */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -464,6 +466,18 @@ async function drawGymChart(){
 
 /* ================= MONEY ================= */
 const CATS = ['Food','Groceries','Transport','Home','Health','Fun','Shopping','Bills','Other'];
+const SUBS = {'Netflix':'netflix.com','Spotify':'spotify.com','Amazon Prime':'amazon.com','HBO Max':'max.com','Disney+':'disneyplus.com','YouTube Premium':'youtube.com','Apple TV+':'tv.apple.com','iCloud+':'icloud.com','ChatGPT':'openai.com','Claude':'claude.ai','PlayStation Plus':'playstation.com','Xbox Game Pass':'xbox.com','Other':''};
+function subLogo(s){
+  const initial = esc((s.name[0]||'?').toUpperCase());
+  if(!s.domain) return `<div class="sub-fallback">${initial}</div>`;
+  return `<img class="sub-logo" alt="${esc(s.name)} logo" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(s.domain)}&sz=64"
+    onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="sub-fallback" style="display:none">${initial}</div>`;
+}
+function nextCharge(day){
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getDate() <= day ? now.getMonth() : now.getMonth()+1, day);
+  return {date: d, days: Math.round((d - new Date(todayStr()+'T00:00'))/864e5)};
+}
 views.money = async function(){
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
@@ -485,17 +499,37 @@ views.money = async function(){
         <div style="display:flex;align-items:flex-end"><button class="btn-ghost" onclick="saveBudget()">Save budget</button></div>
       </div>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>Subscriptions — <span id="subTotal" style="color:var(--text)"></span></h3>
+      <div class="list" id="subList" style="margin-bottom:14px"><div class="empty">Loading…</div></div>
+      <div class="form-grid">
+        <div><label class="lbl" for="subPreset">Service</label><select id="subPreset">${Object.keys(SUBS).map(s => `<option>${s}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="subName">Custom name (only for "Other")</label><input id="subName" placeholder="e.g. Gym membership"></div>
+        <div><label class="lbl" for="subAmount">Price per month (₪)</label><input id="subAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div><label class="lbl" for="subDay">Billing day of month (1–28)</label><input id="subDay" type="number" min="1" max="28" value="1"></div>
+      </div>
+      <button class="btn" onclick="addSub()">Add subscription</button>
+    </div>
     <div class="grid cols2">
       <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>
       <div class="card"><h3>This month <button class="btn-ghost" style="float:right" title="Download this month's expenses as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
     </div>`;
   const from = month + '-01';
   const to = new Date(new Date(from + 'T00:00').getFullYear(), new Date(from + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
-  const [{data, error}, st] = await Promise.all([
+  const [{data, error}, st, subs] = await Promise.all([
     sb.from('expenses').select('*').gte('spent_at', from).lt('spent_at', to).order('spent_at', {ascending: false}),
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
+    sb.from('subscriptions').select('*').order('billing_day'),
   ]);
   if(error) return err(error);
+  const subRows = subs.data || [];
+  document.getElementById('subTotal').textContent = NIS(subRows.reduce((s,r) => s + +r.amount, 0)) + '/month';
+  document.getElementById('subList').innerHTML = subRows.length ? subRows.map(s => {
+    const nc = nextCharge(s.billing_day);
+    return `<div class="row">${subLogo(s)}
+      <div class="grow"><div class="title">${esc(s.name)}</div>
+      <div class="sub">${NIS(s.amount)}/mo · renews ${nc.date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${nc.days === 0 ? '(today)' : '(in ' + nc.days + 'd)'}</div></div>
+      <button class="icon-btn danger" title="Remove subscription" onclick="delRow('subscriptions','${s.id}','money')">✕</button></div>`;
+  }).join('') : '<div class="empty">No subscriptions yet — add Netflix, Spotify and friends below</div>';
   window._monthExpenses = data;
   const total = data.reduce((s,r) => s + +r.amount, 0);
   const budget = +(st.data?.monthly_budget || 0);
@@ -519,6 +553,13 @@ views.money = async function(){
 async function addExpense(){
   const amount = +exAmount.value; if(!amount) return toast('Enter an amount');
   const {error} = await sb.from('expenses').insert({amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value});
+  error ? err(error) : views.money();
+}
+async function addSub(){
+  const preset = subPreset.value, amount = +subAmount.value;
+  if(!amount) return toast('Enter the monthly price');
+  const name = preset === 'Other' ? (subName.value.trim() || 'Subscription') : preset;
+  const {error} = await sb.from('subscriptions').insert({name, domain: SUBS[preset] || null, amount, billing_day: Math.min(28, Math.max(1, +subDay.value || 1))});
   error ? err(error) : views.money();
 }
 async function saveBudget(){
