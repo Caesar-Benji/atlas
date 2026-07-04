@@ -178,9 +178,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 <div id="app" class="hidden">
   <aside>
     <div class="brand">
-      <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
-        <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="4" stroke-linecap="round"/>
-      </svg>
+      <img src="atlas-logo.png" alt="" style="height:42px" onerror="this.remove()">
       Atlas
     </div>
     <button class="nav-btn" data-tab="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Dashboard</span></button>
@@ -260,8 +258,7 @@ views.dashboard = async function(){
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   main.innerHTML = `<div class="page-head"><div><h2>${greet}, Benji</h2>
-    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div>
-    <img src="atlas-logo.png" alt="Atlas" style="height:96px" onerror="this.remove()"></div>
+    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div></div>
     <div class="grid cols3" id="dashStats"></div>
     <div class="grid cols2" style="margin-top:16px">
       <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
