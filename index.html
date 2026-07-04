@@ -603,14 +603,24 @@ async function parseStatement(file){
   const pages = [];
   for(let p = 1; p <= pdf.numPages; p++){
     const tc = await (await pdf.getPage(p)).getTextContent();
-    const rows = {};
-    tc.items.forEach(it => {
-      if(it.transform[4] < 140 || !it.str.trim()) return;
-      const y = Math.round(it.transform[5]);
-      (rows[y] = rows[y] || []).push(it);
+    // pdf.js may split text into per-character items: rebuild lines by y-cluster, then join by x with gap detection
+    const its = tc.items.filter(i => i.str.trim() && i.transform[4] >= 140);
+    its.sort((a,b) => b.transform[5] - a.transform[5] || a.transform[4] - b.transform[4]);
+    const clusters = []; let cur = null, curY = null;
+    its.forEach(it => {
+      if(curY === null || Math.abs(it.transform[5] - curY) > 2.5){ cur = []; clusters.push(cur); curY = it.transform[5]; }
+      cur.push(it);
     });
-    const lines = Object.keys(rows).sort((a,b) => b-a).map(y =>
-      rows[y].sort((a,b) => a.transform[4] - b.transform[4]).map(i => i.str).join(' '));
+    const lines = clusters.map(items => {
+      items.sort((a,b) => a.transform[4] - b.transform[4]);
+      let s = '', prevEnd = null;
+      items.forEach(it => {
+        const x = it.transform[4];
+        if(prevEnd !== null && x - prevEnd > 2) s += ' ';
+        s += it.str; prevEnd = x + (it.width || 0);
+      });
+      return s;
+    });
     pages.push(lines); all += lines.join('\n');
   }
   // detect whether Hebrew came out visually reversed (e.g. "ןוזמ" instead of "מזון")
