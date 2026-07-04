@@ -409,14 +409,18 @@ views.gym = async function(){
       <div class="card"><h3>Progress — <select id="exSelect" style="width:auto;display:inline-block;padding:4px 8px;font-size:13px" onchange="drawGymChart()"></select></h3>
         <div class="chart-box"><canvas id="gymChart"></canvas></div></div>
       <div class="card"><h3>History</h3><div class="list" id="woList"><div class="empty">Loading…</div></div></div>
+      <div class="card"><h3>Personal records</h3><div class="list" id="prList"><div class="empty">Loading…</div></div></div>
     </div>`;
   gymSetRows = []; addSetRow();
-  const [wos, sets] = await Promise.all([
+  const [wos, sets, allWos] = await Promise.all([
     sb.from('workouts').select('*').order('workout_date', {ascending:false}).limit(20),
     sb.from('workout_sets').select('*').order('created_at'),
+    sb.from('workouts').select('id,workout_date'),
   ]);
   if(wos.error) return err(wos.error);
   window._gymSets = sets.data || [];
+  window._woDates = Object.fromEntries((allWos.data||[]).map(w => [w.id, w.workout_date]));
+  renderPRs();
   const byWo = {};
   window._gymSets.forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
   document.getElementById('woList').innerHTML = (wos.data||[]).length ? wos.data.map(w => {
@@ -448,12 +452,27 @@ async function saveWorkout(){
   const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: wo.id, set_number: i+1})));
   e2 ? err(e2) : (toast('Workout saved'), views.gym());
 }
+function renderPRs(){
+  const dateOf = window._woDates || {};
+  const best = {};
+  (window._gymSets || []).forEach(s => {
+    const d = dateOf[s.workout_id]; if(!d) return;
+    if(!best[s.exercise] || +s.weight_kg > +best[s.exercise].weight_kg ||
+      (+s.weight_kg === +best[s.exercise].weight_kg && d < best[s.exercise].date))
+      best[s.exercise] = {weight_kg: s.weight_kg, reps: s.reps, date: d};
+  });
+  const prs = Object.entries(best).sort((a,b) => b[1].weight_kg - a[1].weight_kg);
+  const fresh = d => (new Date(todayStr()) - new Date(d)) / 864e5 <= 14;
+  document.getElementById('prList').innerHTML = prs.length ? prs.map(([ex, p]) => `
+    <div class="row"><div class="grow"><div class="title">${esc(ex)}</div>
+      <div class="sub">${+p.weight_kg}kg × ${p.reps} · ${fmtDate(p.date)}</div></div>
+      ${fresh(p.date) ? '<span class="pill green">NEW PR</span>' : ''}</div>`).join('')
+    : '<div class="empty">Log workouts to start setting records</div>';
+}
 async function drawGymChart(){
   const ex = document.getElementById('exSelect').value;
   const sets = (window._gymSets || []).filter(s => s.exercise === ex);
-  const woIds = [...new Set(sets.map(s => s.workout_id))];
-  const {data: wos} = woIds.length ? await sb.from('workouts').select('id,workout_date').in('id', woIds) : {data: []};
-  const dateOf = Object.fromEntries((wos||[]).map(w => [w.id, w.workout_date]));
+  const dateOf = window._woDates || {};
   const byDate = {};
   sets.forEach(s => { const d = dateOf[s.workout_id]; if(d) byDate[d] = Math.max(byDate[d] || 0, +s.weight_kg); });
   const labels = Object.keys(byDate).sort();
@@ -506,6 +525,7 @@ views.money = async function(){
       </div>
       <button class="btn" onclick="addSub()">Add subscription</button>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>Month burn-down — your spend pace vs budget</h3><div class="chart-box"><canvas id="burnChart"></canvas></div></div>
     <div class="grid cols2">
       <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>
       <div class="card"><h3>This month <button class="btn-ghost" style="float:right" title="Download this month's expenses as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
@@ -536,6 +556,7 @@ views.money = async function(){
       <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${NIS(total)} spent · ${total > budget ? '<span style="color:var(--red)">' + NIS(total-budget) + ' over budget</span>' : NIS(budget-total) + ' remaining'} of ${NIS(budget)}</div>`;
   } else document.getElementById('budgetBar').innerHTML = '<div class="empty">Set a budget below to track spending against it</div>';
   document.getElementById('moTotal').textContent = NIS(total);
+  drawBurnChart(data, budget, month);
   document.getElementById('exList').innerHTML = data.length ? data.map(x => `
     <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span></div>
     <div class="sub">${esc(x.description) || '—'} · ${fmtDate(x.spent_at)}</div></div>
@@ -547,6 +568,22 @@ views.money = async function(){
     backgroundColor: ['#3a4132','#55604a','#7d611f','#8f3d32','#6b7160','#3f5c3a','#8a7a56','#4a5568','#9aa08c'], borderWidth: 0}]},
     options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'}}}});
 };
+function drawBurnChart(rows, budget, month){
+  const [Y, M] = month.split('-').map(Number);
+  const dim = new Date(Y, M, 0).getDate();
+  const daily = Array(dim).fill(0);
+  rows.forEach(r => { daily[+r.spent_at.slice(8,10) - 1] += +r.amount; });
+  let run = 0; const cum = daily.map(v => run += v);
+  const isCur = todayStr().slice(0,7) === month;
+  const lastDay = isCur ? +todayStr().slice(8,10) : dim;
+  const datasets = [{label: 'Spent so far', data: cum.map((v,i) => i < lastDay ? v : null),
+    borderColor: '#3a4132', backgroundColor: 'rgba(58,65,50,.12)', fill: true, tension: .25, pointRadius: 0, borderWidth: 2}];
+  if(budget > 0) datasets.push({label: 'Ideal pace to budget', data: Array.from({length: dim}, (_,i) => +(budget*(i+1)/dim).toFixed(0)),
+    borderColor: '#8a7a56', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false});
+  mkChart('burnChart', {type: 'line', data: {labels: Array.from({length: dim}, (_,i) => i+1), datasets},
+    options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+      plugins: {legend: {labels: {boxWidth: 18}}}, scales: {y: {beginAtZero: true}}}});
+}
 async function addExpense(){
   const amount = +exAmount.value; if(!amount) return toast('Enter an amount');
   const {error} = await sb.from('expenses').insert({amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value});
@@ -587,9 +624,28 @@ views.goals = async function(){
       </div>
       <button class="btn" onclick="addGoal()">Add goal</button>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>Timeline — progress vs time elapsed (▎= where you should be by today)</h3>
+      <div class="list" id="goTimeline"></div></div>
     <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
   const {data, error} = await sb.from('goals').select('*').order('created_at');
   if(error) return err(error);
+  const timed = data.filter(g => g.target_date && g.status !== 'done');
+  document.getElementById('goTimeline').innerHTML = timed.length ? timed.map(g => {
+    const start = new Date(g.created_at), end = new Date(g.target_date + 'T23:59'), now = new Date();
+    const elapsed = Math.max(0, Math.min(100, (now - start) / Math.max(1, end - start) * 100));
+    const overdue = now > end, behind = !overdue && g.progress < elapsed - 5;
+    const pill = overdue ? '<span class="pill red">Past target</span>' : behind ? '<span class="pill amber">Behind pace</span>' : '<span class="pill green">On track</span>';
+    const left = Math.max(0, Math.ceil((end - now) / 864e5));
+    return `<div style="padding:6px 2px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div class="grow" style="flex:1;font-weight:600;font-size:13.5px">${esc(g.title)}</div>
+        <span style="font-size:12px;color:var(--muted)">${overdue ? 'target ' + fmtDate(g.target_date) : left + 'd left'}</span>${pill}
+      </div>
+      <div class="progress-track" style="position:relative">
+        <div class="progress-fill" style="width:${g.progress}%${overdue || behind ? ';background:' + (overdue ? 'var(--red)' : 'var(--amber)') : ''}"></div>
+        <div title="Time elapsed" style="position:absolute;top:0;bottom:0;left:${elapsed}%;width:2px;background:var(--text);opacity:.55"></div>
+      </div></div>`;
+  }).join('') : '<div class="empty">Give your goals target dates to see them on the timeline</div>';
   document.getElementById('goList').innerHTML = data.length ? data.map(g => `
     <div class="card" style="padding:16px 20px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
