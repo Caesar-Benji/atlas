@@ -109,6 +109,21 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0}
 .checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
 
+.lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+
+/* calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-head h3{margin:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{font-size:10px;font-weight:600;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid transparent}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.other{color:#9aa08c}
+.cal-day.today{border-color:var(--accent)}
+.cal-day.selected{background:var(--grad);color:#e9ebe1}
+.cal-dot{position:absolute;bottom:4px;width:4px;height:4px;border-radius:99px;background:var(--accent)}
+.cal-day.selected .cal-dot{background:#e9ebe1}
+
 /* mobile */
 @media(max-width:760px){
   aside{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-right:none;border-top:1px solid var(--border);z-index:40;justify-content:space-around}
@@ -242,8 +257,9 @@ views.dashboard = async function(){
   const main = document.getElementById('main');
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  main.innerHTML = `<div class="page-head"><div><h2>${greet}, Benji 👋</h2>
-    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div></div>
+  main.innerHTML = `<div class="page-head"><div><h2>${greet}, Benji</h2>
+    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div>
+    <img src="atlas-logo.png" alt="Atlas" style="height:96px" onerror="this.remove()"></div>
     <div class="grid cols3" id="dashStats"></div>
     <div class="grid cols2" style="margin-top:16px">
       <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
@@ -252,19 +268,25 @@ views.dashboard = async function(){
 
   const monthStart = todayStr().slice(0,8) + '01';
   const now = new Date(); const dayStart = new Date(now); dayStart.setHours(0,0,0,0);
-  const [ev, ex, go_, ch, wo] = await Promise.all([
+  const [ev, ex, go_, ch, wo, wc, st] = await Promise.all([
     sb.from('events').select('*').gte('starts_at', dayStart.toISOString()).order('starts_at').limit(6),
     sb.from('expenses').select('amount').gte('spent_at', monthStart),
     sb.from('goals').select('*').eq('status','active'),
     sb.from('chores').select('*'),
     sb.from('workouts').select('workout_date').order('workout_date',{ascending:false}).limit(1),
+    sb.from('workouts').select('id', {count:'exact', head:true}).gte('workout_date', monthStart),
+    sb.from('user_settings').select('monthly_budget').maybeSingle(),
   ]);
 
   const spent = (ex.data||[]).reduce((s,r) => s + +r.amount, 0);
+  const budget = +(st.data?.monthly_budget || 0);
   const dueChores = (ch.data||[]).filter(c => choreDueDays(c) <= 0);
   const lastWo = wo.data?.[0]?.workout_date;
   document.getElementById('dashStats').innerHTML = `
-    <div class="card"><h3>Spent this month</h3><div class="stat">${NIS(spent)}</div></div>
+    <div class="card"><h3>Spent this month</h3><div class="stat">${NIS(spent)}</div>${budget > 0 ? `
+      <div class="progress-track" style="margin-top:10px"><div class="progress-fill" style="width:${Math.min(100, spent/budget*100)}%${spent > budget ? ';background:var(--red)' : ''}"></div></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">${spent > budget ? NIS(spent-budget) + ' over' : NIS(budget-spent) + ' left of'} ${NIS(budget)} budget</div>` : ''}</div>
+    <div class="card"><h3>Workouts this month</h3><div class="stat">${wc.count ?? 0}</div></div>
     <div class="card"><h3>Active goals</h3><div class="stat">${(go_.data||[]).length}</div></div>
     <div class="card"><h3>Last workout</h3><div class="stat" style="font-size:20px">${lastWo ? fmtDate(lastWo) : '—'} ${lastWo ? daysAgoLabel(lastWo) : ''}</div></div>`;
 
@@ -274,7 +296,7 @@ views.dashboard = async function(){
 
   document.getElementById('dashChores').innerHTML = dueChores.length
     ? dueChores.map(c => `<div class="row"><div class="grow"><div class="title">${esc(c.name)}</div></div>${chorePill(c)}</div>`).join('')
-    : '<div class="empty">All chores done ✨</div>';
+    : '<div class="empty">All chores done</div>';
 };
 function daysAgoLabel(d){
   const days = Math.floor((new Date(todayStr()) - new Date(d)) / 864e5);
@@ -287,24 +309,72 @@ views.schedule = async function(){
     <div class="page-head"><h2>Schedule</h2></div>
     <div class="card" style="margin-bottom:16px"><h3>Add event</h3>
       <div class="form-grid">
-        <input id="evTitle" placeholder="What's happening?" style="grid-column:1/-1">
-        <input id="evDate" type="date" value="${todayStr()}">
-        <input id="evTime" type="time" value="09:00">
+        <div style="grid-column:1/-1"><label class="lbl" for="evTitle">Event title — what's happening?</label>
+          <input id="evTitle" placeholder="e.g. Dentist appointment"></div>
+        <div><label class="lbl" for="evDate">Date</label><input id="evDate" type="date" value="${window._selDate || todayStr()}"></div>
+        <div><label class="lbl" for="evTime">Start time</label><input id="evTime" type="time" value="09:00"></div>
       </div>
       <button class="btn" onclick="addEvent()">Add event</button>
     </div>
-    <div class="card"><h3>Upcoming</h3><div class="list" id="evList"><div class="empty">Loading…</div></div></div>`;
+    <div class="grid cols2">
+      <div class="card" id="calCard"></div>
+      <div class="card"><h3 id="evListTitle">Upcoming</h3><div class="list" id="evList"><div class="empty">Loading…</div></div></div>
+    </div>`;
   const {data, error} = await sb.from('events').select('*').order('starts_at');
   if(error) return err(error);
-  const now = Date.now();
-  const upcoming = data.filter(e => new Date(e.starts_at) >= new Date(now - 864e5));
-  document.getElementById('evList').innerHTML = upcoming.length ? upcoming.map(e => `
-    <div class="row ${e.done?'done':''}">
-      <button class="checkbox ${e.done?'checked':''}" onclick="toggleEvent('${e.id}',${!e.done})">${e.done?'✓':''}</button>
-      <div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div>
-      <button class="icon-btn danger" onclick="delRow('events','${e.id}','schedule')">✕</button>
-    </div>`).join('') : '<div class="empty">No upcoming events</div>';
+  window._events = data;
+  renderCalendar();
+  renderEvList();
 };
+function renderCalendar(){
+  const m = window._calMonth || todayStr().slice(0,7);
+  window._calMonth = m;
+  const [Y, M] = m.split('-').map(Number);
+  const first = new Date(Y, M-1, 1);
+  const start = new Date(Y, M-1, 1 - first.getDay());
+  const byDate = {};
+  (window._events||[]).forEach(e => { const d = new Date(e.starts_at).toLocaleDateString('en-CA'); (byDate[d] = byDate[d] || []).push(e); });
+  let cells = '';
+  for(let i = 0; i < 42; i++){
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const ds = d.toLocaleDateString('en-CA');
+    const cls = ['cal-day', d.getMonth() !== M-1 ? 'other' : '', ds === todayStr() ? 'today' : '', ds === window._selDate ? 'selected' : ''].join(' ');
+    cells += `<div class="${cls}" title="${byDate[ds] ? byDate[ds].length + ' event(s)' : 'No events — click to plan this day'}" onclick="calPick('${ds}')">${d.getDate()}${byDate[ds] ? '<span class="cal-dot"></span>' : ''}</div>`;
+  }
+  document.getElementById('calCard').innerHTML = `
+    <div class="cal-head">
+      <button class="btn-ghost" title="Previous month" onclick="calShift(-1)">‹</button>
+      <h3>${first.toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</h3>
+      <button class="btn-ghost" title="Next month" onclick="calShift(1)">›</button>
+    </div>
+    <div class="cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>`;
+}
+function calShift(n){
+  const [Y, M] = window._calMonth.split('-').map(Number);
+  window._calMonth = new Date(Y, M-1+n, 15).toLocaleDateString('en-CA').slice(0,7);
+  renderCalendar();
+}
+function calPick(ds){
+  window._selDate = window._selDate === ds ? null : ds;
+  const di = document.getElementById('evDate');
+  if(di && window._selDate) di.value = ds;
+  renderCalendar(); renderEvList();
+}
+function renderEvList(){
+  const sel = window._selDate;
+  const evs = (window._events||[]).filter(e => {
+    const ds = new Date(e.starts_at).toLocaleDateString('en-CA');
+    return sel ? ds === sel : new Date(e.starts_at) >= new Date(Date.now() - 864e5);
+  });
+  document.getElementById('evListTitle').innerHTML = sel
+    ? `${fmtDate(sel)} <a style="cursor:pointer;color:var(--accent2);font-size:11px;margin-left:8px" onclick="calPick('${sel}')">show all upcoming</a>` : 'Upcoming';
+  document.getElementById('evList').innerHTML = evs.length ? evs.map(e => `
+    <div class="row ${e.done?'done':''}">
+      <button class="checkbox ${e.done?'checked':''}" title="Mark done" onclick="toggleEvent('${e.id}',${!e.done})">${e.done?'✓':''}</button>
+      <div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div>
+      <button class="icon-btn danger" title="Delete event" onclick="delRow('events','${e.id}','schedule')">✕</button>
+    </div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`;
+}
 async function addEvent(){
   const title = evTitle.value.trim(); if(!title) return toast('Give it a title');
   const {error} = await sb.from('events').insert({title, starts_at: new Date(evDate.value + 'T' + (evTime.value || '09:00')).toISOString()});
@@ -325,7 +395,11 @@ views.gym = async function(){
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Gym</h2></div>
     <div class="card" style="margin-bottom:16px"><h3>Log workout</h3>
-      <div class="form-grid"><input id="woDate" type="date" value="${todayStr()}"><input id="woNotes" placeholder="Notes (optional)" style="grid-column:span 2"></div>
+      <div class="form-grid">
+        <div><label class="lbl" for="woDate">Workout date</label><input id="woDate" type="date" value="${todayStr()}"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="woNotes">Notes (optional) — how did it go?</label><input id="woNotes" placeholder="e.g. Push day, felt strong"></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:2px"><label class="lbl">Exercise name</label><label class="lbl">Repetitions</label><label class="lbl">Weight (kg)</label></div>
       <div id="setRows" class="list" style="margin-bottom:10px"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn-ghost" onclick="addSetRow()">+ Add set</button>
@@ -373,7 +447,7 @@ async function saveWorkout(){
   const {data: wo, error} = await sb.from('workouts').insert({workout_date: woDate.value, notes: woNotes.value.trim() || null}).select().single();
   if(error) return err(error);
   const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: wo.id, set_number: i+1})));
-  e2 ? err(e2) : (toast('Workout saved 💪'), views.gym());
+  e2 ? err(e2) : (toast('Workout saved'), views.gym());
 }
 async function drawGymChart(){
   const ex = document.getElementById('exSelect').value;
@@ -397,22 +471,39 @@ views.money = async function(){
     <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto" onchange="window._moneyMonth=this.value;views.money()"></div>
     <div class="card" style="margin-bottom:16px"><h3>Add expense</h3>
       <div class="form-grid">
-        <input id="exAmount" type="number" placeholder="Amount ₪" min="0" step="0.01">
-        <select id="exCat">${CATS.map(c => `<option>${c}</option>`).join('')}</select>
-        <input id="exDesc" placeholder="Description">
-        <input id="exDate" type="date" value="${todayStr()}">
+        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" placeholder="0.00" min="0" step="0.01"></div>
+        <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries"></div>
+        <div><label class="lbl" for="exDate">Date of purchase</label><input id="exDate" type="date" value="${todayStr()}"></div>
       </div>
       <button class="btn" onclick="addExpense()">Add expense</button>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>Monthly budget</h3>
+      <div id="budgetBar"></div>
+      <div class="form-grid" style="margin:10px 0 0">
+        <div><label class="lbl" for="budgetIn">Budget per month (₪) — your spending target</label><input id="budgetIn" type="number" min="0" step="1" placeholder="e.g. 6000"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn-ghost" onclick="saveBudget()">Save budget</button></div>
+      </div>
+    </div>
     <div class="grid cols2">
       <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>
-      <div class="card"><h3>This month</h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
+      <div class="card"><h3>This month <button class="btn-ghost" style="float:right" title="Download this month's expenses as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
     </div>`;
   const from = month + '-01';
   const to = new Date(new Date(from + 'T00:00').getFullYear(), new Date(from + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
-  const {data, error} = await sb.from('expenses').select('*').gte('spent_at', from).lt('spent_at', to).order('spent_at', {ascending: false});
+  const [{data, error}, st] = await Promise.all([
+    sb.from('expenses').select('*').gte('spent_at', from).lt('spent_at', to).order('spent_at', {ascending: false}),
+    sb.from('user_settings').select('monthly_budget').maybeSingle(),
+  ]);
   if(error) return err(error);
+  window._monthExpenses = data;
   const total = data.reduce((s,r) => s + +r.amount, 0);
+  const budget = +(st.data?.monthly_budget || 0);
+  if(budget > 0){ budgetIn.value = budget;
+    document.getElementById('budgetBar').innerHTML = `
+      <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, total/budget*100)}%${total > budget ? ';background:var(--red)' : ''}"></div></div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${NIS(total)} spent · ${total > budget ? '<span style="color:var(--red)">' + NIS(total-budget) + ' over budget</span>' : NIS(budget-total) + ' remaining'} of ${NIS(budget)}</div>`;
+  } else document.getElementById('budgetBar').innerHTML = '<div class="empty">Set a budget below to track spending against it</div>';
   document.getElementById('moTotal').textContent = NIS(total);
   document.getElementById('exList').innerHTML = data.length ? data.map(x => `
     <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span></div>
@@ -430,13 +521,32 @@ async function addExpense(){
   const {error} = await sb.from('expenses').insert({amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value});
   error ? err(error) : views.money();
 }
+async function saveBudget(){
+  const v = +budgetIn.value; if(v < 0) return toast('Budget must be positive');
+  const {data: u} = await sb.auth.getUser();
+  const {error} = await sb.from('user_settings').upsert({user_id: u.user.id, monthly_budget: v, updated_at: new Date().toISOString()});
+  error ? err(error) : (toast('Budget saved'), views.money());
+}
+function exportCsv(){
+  const rows = window._monthExpenses || [];
+  if(!rows.length) return toast('Nothing to export this month');
+  const csv = 'date,amount_ils,category,description\n' + rows.map(r =>
+    [r.spent_at, r.amount, r.category, '"' + (r.description || '').replace(/"/g, '""') + '"'].join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+  a.download = 'atlas-expenses-' + window._moneyMonth + '.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
 
 /* ================= GOALS ================= */
 views.goals = async function(){
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Goals</h2></div>
     <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
-      <div class="form-grid"><input id="goTitle" placeholder="What do you want to achieve?" style="grid-column:span 2"><input id="goDate" type="date"></div>
+      <div class="form-grid">
+        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year"></div>
+        <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date"></div>
+      </div>
       <button class="btn" onclick="addGoal()">Add goal</button>
     </div>
     <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
@@ -446,7 +556,7 @@ views.goals = async function(){
     <div class="card" style="padding:16px 20px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div class="grow" style="flex:1"><div class="title" style="font-weight:600;${g.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">${esc(g.title)}</div>
-        <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed 🎉' : ''}</div></div>
+        <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed' : ''}</div></div>
         <span style="font-weight:700;font-size:14px">${g.progress}%</span>
         ${g.status !== 'done' ? `<button class="btn-ghost" onclick="setGoal('${g.id}',${Math.min(100, g.progress + 10)})">+10%</button>` : ''}
         <button class="icon-btn danger" onclick="delRow('goals','${g.id}','goals')">✕</button>
@@ -480,7 +590,10 @@ views.chores = async function(){
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Chores</h2></div>
     <div class="card" style="margin-bottom:16px"><h3>Add chore</h3>
-      <div class="form-grid"><input id="chName" placeholder="e.g. Run vacuum cleaner" style="grid-column:span 2"><input id="chFreq" type="number" placeholder="Every X days" min="1" value="7"></div>
+      <div class="form-grid">
+        <div style="grid-column:span 2"><label class="lbl" for="chName">Chore name</label><input id="chName" placeholder="e.g. Run vacuum cleaner"></div>
+        <div><label class="lbl" for="chFreq">Repeat every (days)</label><input id="chFreq" type="number" placeholder="7" min="1" value="7"></div>
+      </div>
       <button class="btn" onclick="addChore()">Add chore</button>
     </div>
     <div class="card"><h3>All chores</h3><div class="list" id="chList"><div class="empty">Loading…</div></div></div>`;
@@ -501,7 +614,7 @@ async function addChore(){
 }
 async function doneChore(id){
   const {error} = await sb.from('chores').update({last_done: todayStr()}).eq('id', id);
-  error ? err(error) : (toast('Nice work ✨'), views.chores());
+  error ? err(error) : (toast('Nice work'), views.chores());
 }
 </script>
 <datalist id="exList">
