@@ -48,19 +48,9 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .logo path{stroke-dasharray:120;stroke-dashoffset:120;animation:draw 1.4s ease forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 
-/* hero: engraving of Atlas catching the globe (two masked layers of one image) */
-.hero{position:relative;width:210px;aspect-ratio:736/1220;margin:0 auto 16px;animation:heroFloat 7s ease-in-out 2.6s infinite}
-.hero img{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:multiply}
-.hero-fig{
-  -webkit-mask-image:radial-gradient(ellipse 45% 27.2% at 50.5% 28.8%,transparent 96%,#000 99%);
-  mask-image:radial-gradient(ellipse 45% 27.2% at 50.5% 28.8%,transparent 96%,#000 99%);
-  animation:heroFig 1s ease .1s both}
-.hero-globe{
-  -webkit-mask-image:radial-gradient(ellipse 45.4% 27.5% at 50.5% 28.8%,#000 97%,transparent 99.5%);
-  mask-image:radial-gradient(ellipse 45.4% 27.5% at 50.5% 28.8%,#000 97%,transparent 99.5%);
-  animation:heroGlobe 1.5s cubic-bezier(.3,1.4,.4,1) .55s both}
-@keyframes heroFig{from{opacity:0;transform:translateY(2%)}to{opacity:1;transform:none}}
-@keyframes heroGlobe{0%{opacity:0;transform:translateY(-15%)}35%{opacity:1}72%{transform:translateY(1.1%)}100%{transform:translateY(0)}}
+/* login hero: transparent engraved logo */
+.hero-logo{display:block;height:200px;margin:0 auto 18px;animation:heroIn 1.2s cubic-bezier(.3,1.3,.4,1) .1s both, heroFloat 7s ease-in-out 2s infinite}
+@keyframes heroIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
 @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .auth-card h1,.auth-card .tag{animation:fadeUp .8s ease 1.7s both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -76,7 +66,7 @@ aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid
 .nav-btn svg{width:18px;height:18px;flex-shrink:0}
 aside .spacer{flex:1}
 main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
-.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;gap:12px;flex-wrap:wrap}
+.page-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:22px;gap:18px;flex-wrap:wrap}
 
 /* ---------- Cards / grids ---------- */
 .grid{display:grid;gap:16px}
@@ -153,11 +143,8 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 <!-- ============ AUTH ============ -->
 <div id="authScreen">
   <div class="auth-card">
-    <div class="hero" id="hero">
-      <img class="hero-fig" src="atlas-reference.jpg" alt=""
-        onerror="document.getElementById('hero').style.display='none';document.querySelector('.auth-card .logo').style.display='inline'">
-      <img class="hero-globe" src="atlas-reference.jpg" alt="Atlas catching the Earth">
-    </div>
+    <img class="hero-logo" src="atlas-logo.png" alt="Atlas holding the Earth"
+      onerror="this.remove();document.querySelector('.auth-card .logo').style.display='inline'">
     <svg class="logo" style="display:none" width="56" height="56" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#3a4132"/><stop offset="1" stop-color="#55604a"/>
@@ -191,7 +178,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v9</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v10</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -214,7 +201,7 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v9');
+console.log('Atlas v10');
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
