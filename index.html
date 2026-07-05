@@ -132,6 +132,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
   aside{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-right:none;border-top:1px solid var(--border);z-index:40;justify-content:space-around}
   .brand,.nav-btn span,aside .spacer,#signOutBtn{display:none}
   .nav-btn{width:auto;padding:10px 13px;justify-content:center}
+  #ver,.page-head img{display:none}
   main{padding:22px 16px 110px}
   .auth-card{padding:28px 22px;max-width:340px}
   .hero{width:150px}
@@ -190,6 +191,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v8</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -212,6 +214,10 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+console.log('Atlas v8');
+// if a file is dropped outside the import box, don't let the browser navigate away to the PDF
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => e.preventDefault());
 Chart.defaults.color = '#6b7160';
 Chart.defaults.borderColor = '#aeb4a1';
 Chart.defaults.font.family = 'Space Grotesk';
@@ -395,7 +401,7 @@ async function delRow(table, id, view){
 let gymSetRows = [];
 views.gym = async function(){
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Gym</h2></div>
+    <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>Log workout</h3>
       <div class="form-grid">
         <div><label class="lbl" for="woDate">Workout date</label><input id="woDate" type="date" value="${todayStr()}"></div>
@@ -501,7 +507,7 @@ views.money = async function(){
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto" onchange="window._moneyMonth=this.value;views.money()"></div>
+    <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto;margin-left:auto" onchange="window._moneyMonth=this.value;views.money()"><img src="hero-money.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>Add expense</h3>
       <div class="form-grid">
         <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" placeholder="0.00" min="0" step="0.01"></div>
@@ -664,7 +670,7 @@ async function handleStatement(files){
         <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
       </div>`).join('') + `</div>
       ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed()">Add ${news} expenses</button>` : ''}`;
-  }catch(e){ err(e); pv.innerHTML = '<div class="empty">Could not read this PDF</div>'; }
+  }catch(e){ err(e); pv.innerHTML = '<div class="empty">Could not read this PDF — ' + esc(e.message || e) + '</div>'; }
 }
 async function importParsed(){
   const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
@@ -721,7 +727,7 @@ function exportCsv(){
 /* ================= GOALS ================= */
 views.goals = async function(){
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Goals</h2></div>
+    <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
       <div class="form-grid">
         <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year"></div>
@@ -787,7 +793,7 @@ function chorePill(c){
 }
 views.chores = async function(){
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Chores</h2></div>
+    <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>Add chore</h3>
       <div class="form-grid">
         <div style="grid-column:span 2"><label class="lbl" for="chName">Chore name</label><input id="chName" placeholder="e.g. Run vacuum cleaner"></div>
