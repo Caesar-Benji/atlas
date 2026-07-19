@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233a4132'/%3E%3Cstop offset='1' stop-color='%2355604a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
@@ -101,6 +101,9 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
 
 .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.ex-grid{display:grid;grid-template-columns:2fr .9fr .9fr 1.1fr 30px;gap:8px;align-items:center}
+.ex-grid input{min-width:0}
+.ex-grid .lbl{margin-bottom:0}
 .sub-logo{width:28px;height:28px;border-radius:7px;flex-shrink:0;object-fit:contain;background:var(--surface)}
 .sub-fallback{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:var(--grad);color:#e9ebe1;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 
@@ -122,7 +125,9 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
   aside{position:fixed;bottom:0;top:auto;left:0;right:0;width:100%;height:auto;flex-direction:row;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-right:none;border-top:1px solid var(--border);z-index:40;justify-content:space-around}
   .brand,.nav-btn span,aside .spacer,#signOutBtn{display:none}
   .nav-btn{width:auto;padding:10px 13px;justify-content:center}
-  #ver,.page-head img{display:none}
+  #ver{display:none}
+  .page-head{gap:12px}
+  .page-head img{height:64px;margin-left:auto}
   main{padding:22px 16px 110px}
   .auth-card{padding:28px 22px;max-width:340px}
   .hero{width:150px}
@@ -178,7 +183,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v10</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v12</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -201,7 +206,7 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v10');
+console.log('Atlas v12');
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
@@ -231,16 +236,20 @@ document.getElementById('authForm').addEventListener('submit', async e => {
 });
 document.getElementById('signOutBtn').addEventListener('click', () => sb.auth.signOut());
 
-sb.auth.onAuthStateChange((_e, session) => {
+sb.auth.onAuthStateChange((ev, session) => {
   document.getElementById('authScreen').classList.toggle('hidden', !!session);
   document.getElementById('app').classList.toggle('hidden', !session);
-  if(session) go(location.hash.slice(1) || 'dashboard');
+  // only route on real sign-in — TOKEN_REFRESHED fires hourly and must not wipe forms mid-typing
+  if(session && !window._booted){ window._booted = true; go(location.hash.slice(1) || 'dashboard'); }
+  if(!session) window._booted = false;
 });
 
 /* ================= ROUTER ================= */
 const views = {};
+window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if(t !== window._curTab) go(t); });
 function go(tab){
   if(!views[tab]) tab = 'dashboard';
+  window._curTab = tab;
   location.hash = tab;
   document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   views[tab]();
@@ -273,6 +282,13 @@ views.dashboard = async function(){
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
   ]);
 
+  const bad = [ev, ex, go_, ch, wo, wc, st].find(r => r.error);
+  if(bad){
+    const retry = `<div class="empty" style="grid-column:1/-1">Couldn't load your data — ${esc(bad.error.message)}.<br>The backend may be waking up. <a style="cursor:pointer;color:var(--accent2);font-weight:600" onclick="views.dashboard()">Retry</a></div>`;
+    document.getElementById('dashStats').innerHTML = retry;
+    document.getElementById('dashEvents').innerHTML = document.getElementById('dashChores').innerHTML = '<div class="empty">—</div>';
+    return;
+  }
   const spent = (ex.data||[]).reduce((s,r) => s + +r.amount, 0);
   const budget = +(st.data?.monthly_budget || 0);
   const dueChores = (ch.data||[]).filter(c => choreDueDays(c) <= 0);
@@ -380,25 +396,28 @@ async function toggleEvent(id, done){
   error ? err(error) : views.schedule();
 }
 async function delRow(table, id, view){
+  if(!confirm('Delete this ' + table.replace(/s$/, '') + '? This cannot be undone.')) return;
   const {error} = await sb.from(table).delete().eq('id', id);
   error ? err(error) : views[view]();
 }
 
 /* ================= GYM ================= */
-let gymSetRows = [];
+let gymRowN = 0;
 views.gym = async function(){
+  const ed = window._editWo;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>Log workout</h3>
+    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit workout — ' + fmtDate(ed.workout_date) : 'Log workout'}</h3>
       <div class="form-grid">
-        <div><label class="lbl" for="woDate">Workout date</label><input id="woDate" type="date" value="${todayStr()}"></div>
-        <div style="grid-column:span 2"><label class="lbl" for="woNotes">Notes (optional) — how did it go?</label><input id="woNotes" placeholder="e.g. Push day, felt strong"></div>
+        <div><label class="lbl" for="woDate">Workout date</label><input id="woDate" type="date" value="${ed ? ed.workout_date : todayStr()}"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="woNotes">Notes (optional) — how did it go?</label><input id="woNotes" placeholder="e.g. Push day, felt strong" value="${ed ? esc(ed.notes || '') : ''}"></div>
       </div>
-      <div class="form-grid" style="margin-bottom:2px"><label class="lbl">Exercise name</label><label class="lbl">Repetitions</label><label class="lbl">Weight (kg)</label></div>
-      <div id="setRows" class="list" style="margin-bottom:10px"></div>
+      <div class="ex-grid" style="margin-bottom:6px"><label class="lbl">Exercise</label><label class="lbl">Sets</label><label class="lbl">Reps</label><label class="lbl">Kg</label><span></span></div>
+      <div id="exRows" class="list" style="margin-bottom:10px"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-ghost" onclick="addSetRow()">+ Add set</button>
-        <button class="btn" onclick="saveWorkout()">Save workout</button>
+        <button class="btn-ghost" onclick="addExRow()">+ Add exercise</button>
+        <button class="btn" onclick="saveWorkout()">${ed ? 'Update workout' : 'Save workout'}</button>
+        ${ed ? '<button class="btn-ghost" onclick="cancelEditWo()">Cancel</button>' : ''}
       </div>
     </div>
     <div class="grid cols2">
@@ -407,7 +426,8 @@ views.gym = async function(){
       <div class="card"><h3>History</h3><div class="list" id="woList"><div class="empty">Loading…</div></div></div>
       <div class="card"><h3>Personal records</h3><div class="list" id="prList"><div class="empty">Loading…</div></div></div>
     </div>`;
-  gymSetRows = []; addSetRow();
+  gymRowN = 0;
+  if(ed && ed.sets.length) ed.sets.forEach(s => addExRow(s)); else addExRow();
   const [wos, sets, allWos] = await Promise.all([
     sb.from('workouts').select('*').order('workout_date', {ascending:false}).limit(20),
     sb.from('workout_sets').select('*').order('created_at'),
@@ -415,38 +435,87 @@ views.gym = async function(){
   ]);
   if(wos.error) return err(wos.error);
   window._gymSets = sets.data || [];
+  window._gymWos = wos.data || [];
   window._woDates = Object.fromEntries((allWos.data||[]).map(w => [w.id, w.workout_date]));
   renderPRs();
   const byWo = {};
   window._gymSets.forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
-  document.getElementById('woList').innerHTML = (wos.data||[]).length ? wos.data.map(w => {
+  document.getElementById('woList').innerHTML = window._gymWos.length ? window._gymWos.map(w => {
     const ss = byWo[w.id] || [];
-    const summary = Object.entries(ss.reduce((m,s) => { (m[s.exercise] = m[s.exercise] || []).push(s); return m; }, {}))
-      .map(([ex, arr]) => `${esc(ex)} ${arr.length}×(${Math.max(...arr.map(a=>+a.weight_kg))}kg)`).join(' · ') || 'no sets';
+    const summary = ss.map(s => `${esc(s.exercise)} ${s.sets || 1}×${s.reps}${+s.weight_kg ? ' @' + (+s.weight_kg) + 'kg' : ''}`).join(' · ') || 'no exercises';
     return `<div class="row"><div class="grow"><div class="title">${fmtDate(w.workout_date)}</div><div class="sub">${summary}${w.notes ? ' — ' + esc(w.notes) : ''}</div></div>
-      <button class="icon-btn danger" onclick="delRow('workouts','${w.id}','gym')">✕</button></div>`;
+      <button class="icon-btn" title="Edit workout" onclick="editWorkout('${w.id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
+      <button class="icon-btn danger" title="Delete workout" onclick="delWorkout('${w.id}')">✕</button></div>`;
   }).join('') : '<div class="empty">No workouts yet — log your first!</div>';
 
   const exercises = [...new Set(window._gymSets.map(s => s.exercise))].sort();
   document.getElementById('exSelect').innerHTML = exercises.map(e => `<option>${esc(e)}</option>`).join('') || '<option>—</option>';
   drawGymChart();
 };
-function addSetRow(){
-  const i = gymSetRows.length; gymSetRows.push(i);
-  document.getElementById('setRows').insertAdjacentHTML('beforeend', `
-    <div class="form-grid" style="margin:0" id="setrow${i}">
-      <input id="ex${i}" placeholder="Exercise" list="exList">
-      <input id="reps${i}" type="number" placeholder="Reps" min="0">
-      <input id="wt${i}" type="number" placeholder="Weight (kg)" min="0" step="0.5">
+function addExRow(pre){
+  const i = gymRowN++;
+  document.getElementById('exRows').insertAdjacentHTML('beforeend', `
+    <div class="ex-grid" id="exrow${i}">
+      <input id="gx${i}" placeholder="Exercise" list="exList" value="${pre ? esc(pre.exercise) : ''}">
+      <input id="gs${i}" type="number" placeholder="3" min="1" value="${pre ? (pre.sets || 1) : ''}">
+      <input id="gr${i}" type="number" placeholder="10" min="0" value="${pre ? pre.reps : ''}">
+      <input id="gw${i}" type="number" placeholder="0" min="0" step="0.5" value="${pre ? +pre.weight_kg : ''}">
+      <button class="icon-btn danger" title="Remove exercise" onclick="exrow${i}.remove()">✕</button>
     </div>`);
 }
+function collectExRows(){
+  const rows = [];
+  for(let i = 0; i < gymRowN; i++){
+    const el = document.getElementById('gx'+i); if(!el) continue;
+    const exercise = el.value.trim(); if(!exercise) continue;
+    rows.push({exercise, sets: Math.max(1, +document.getElementById('gs'+i).value || 1),
+      reps: +document.getElementById('gr'+i).value || 0, weight_kg: +document.getElementById('gw'+i).value || 0});
+  }
+  return rows;
+}
+function editWorkout(id){
+  const w = (window._gymWos || []).find(w => w.id === id); if(!w) return;
+  window._editWo = {...w, sets: (window._gymSets || []).filter(s => s.workout_id === id)};
+  views.gym(); window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function cancelEditWo(){ window._editWo = null; views.gym(); }
+async function delWorkout(id){
+  if(!confirm('Delete this workout and all its exercises? This cannot be undone.')) return;
+  await sb.from('workout_sets').delete().eq('workout_id', id);
+  const {error} = await sb.from('workouts').delete().eq('id', id);
+  if(window._editWo?.id === id) window._editWo = null;
+  error ? err(error) : views.gym();
+}
 async function saveWorkout(){
-  const rows = gymSetRows.map(i => ({exercise: document.getElementById('ex'+i).value.trim(), reps: +document.getElementById('reps'+i).value, weight_kg: +document.getElementById('wt'+i).value})).filter(r => r.exercise);
-  if(!rows.length) return toast('Add at least one set');
-  const {data: wo, error} = await sb.from('workouts').insert({workout_date: woDate.value, notes: woNotes.value.trim() || null}).select().single();
-  if(error) return err(error);
-  const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: wo.id, set_number: i+1})));
-  e2 ? err(e2) : (toast('Workout saved'), views.gym());
+  const rows = collectExRows();
+  if(!rows.length) return toast('Add at least one exercise');
+  const date = woDate.value, notes = woNotes.value.trim() || null;
+  const ed = window._editWo;
+  if(ed){
+    const {error} = await sb.from('workouts').update({workout_date: date, notes}).eq('id', ed.id);
+    if(error) return err(error);
+    await sb.from('workout_sets').delete().eq('workout_id', ed.id);
+    const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: ed.id, set_number: i+1})));
+    if(e2) return err(e2);
+    window._editWo = null;
+    toast('Workout updated'); return views.gym();
+  }
+  // one workout per day: append to an existing workout on the same date
+  const {data: existing, error: e0} = await sb.from('workouts').select('id,notes').eq('workout_date', date).maybeSingle();
+  if(e0) return err(e0);
+  let woId, offset = 0;
+  if(existing){
+    woId = existing.id;
+    offset = (window._gymSets || []).filter(s => s.workout_id === woId).length;
+    if(notes && notes !== existing.notes)
+      await sb.from('workouts').update({notes: existing.notes ? existing.notes + ' · ' + notes : notes}).eq('id', woId);
+  } else {
+    const {data: wo, error} = await sb.from('workouts').insert({workout_date: date, notes}).select().single();
+    if(error) return err(error);
+    woId = wo.id;
+  }
+  const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: woId, set_number: offset + i + 1})));
+  e2 ? err(e2) : (toast(existing ? 'Added to ' + fmtDate(date) + ' workout' : 'Workout saved'), views.gym());
 }
 function renderPRs(){
   const dateOf = window._woDates || {};
@@ -461,7 +530,7 @@ function renderPRs(){
   const fresh = d => (new Date(todayStr()) - new Date(d)) / 864e5 <= 14;
   document.getElementById('prList').innerHTML = prs.length ? prs.map(([ex, p]) => `
     <div class="row"><div class="grow"><div class="title">${esc(ex)}</div>
-      <div class="sub">${+p.weight_kg}kg × ${p.reps} · ${fmtDate(p.date)}</div></div>
+      <div class="sub">${+p.weight_kg}kg × ${p.reps} reps · ${fmtDate(p.date)}</div></div>
       ${fresh(p.date) ? '<span class="pill green">NEW PR</span>' : ''}</div>`).join('')
     : '<div class="empty">Log workouts to start setting records</div>';
 }
@@ -495,14 +564,17 @@ views.money = async function(){
   window._moneyMonth = month;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto;margin-left:auto" onchange="window._moneyMonth=this.value;views.money()"><img src="hero-money.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>Add expense</h3>
+    <div class="card" style="margin-bottom:16px"><h3>${window._editEx ? 'Edit expense' : 'Add expense'}</h3>
       <div class="form-grid">
-        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" placeholder="0.00" min="0" step="0.01"></div>
-        <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c => `<option>${c}</option>`).join('')}</select></div>
-        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries"></div>
-        <div><label class="lbl" for="exDate">Date of purchase</label><input id="exDate" type="date" value="${todayStr()}"></div>
+        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" placeholder="0.00" min="0" step="0.01" value="${window._editEx ? +window._editEx.amount : ''}"></div>
+        <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c => `<option${window._editEx?.category === c ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries" value="${window._editEx ? esc(window._editEx.description || '') : ''}"></div>
+        <div><label class="lbl" for="exDate">Date of purchase</label><input id="exDate" type="date" value="${window._editEx ? window._editEx.spent_at : todayStr()}"></div>
       </div>
-      <button class="btn" onclick="addExpense()">Add expense</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="addExpense()">${window._editEx ? 'Update expense' : 'Add expense'}</button>
+        ${window._editEx ? '<button class="btn-ghost" onclick="window._editEx=null;views.money()">Cancel</button>' : ''}
+      </div>
     </div>
     <div class="card" style="margin-bottom:16px"><h3>Import statement (PDF)</h3>
       <div class="empty" style="cursor:pointer"
@@ -562,10 +634,16 @@ views.money = async function(){
   } else document.getElementById('budgetBar').innerHTML = '<div class="empty">Set a budget below to track spending against it</div>';
   document.getElementById('moTotal').textContent = NIS(total);
   drawBurnChart(data, budget, month);
+  if(window._projSpend != null){
+    const over = budget > 0 && window._projSpend > budget;
+    document.getElementById('budgetBar').insertAdjacentHTML('beforeend',
+      `<div style="font-size:12.5px;margin-top:6px;color:${over ? 'var(--red)' : 'var(--muted)'}">On pace for ${NIS(window._projSpend)} by month end${over ? ' — ' + NIS(window._projSpend - budget) + ' over budget' : ''}</div>`);
+  }
   document.getElementById('exList').innerHTML = data.length ? data.map(x => `
     <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span></div>
     <div class="sub">${esc(x.description) || '—'} · ${fmtDate(x.spent_at)}</div></div>
-    <button class="icon-btn danger" onclick="delRow('expenses','${x.id}','money')">✕</button></div>`).join('') : '<div class="empty">No expenses this month</div>';
+    <button class="icon-btn" title="Edit expense" onclick="editExpense('${x.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
+    <button class="icon-btn danger" title="Delete expense" onclick="delRow('expenses','${x.id}','money')">✕</button></div>`).join('') : '<div class="empty">No expenses this month</div>';
   const byCat = {};
   data.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + +x.amount);
   const cats = Object.keys(byCat);
@@ -653,7 +731,9 @@ async function handleStatement(files){
       <div class="list" style="max-height:320px;overflow:auto">` + txs.map((t,i) => `
       <div class="row" style="${t.dup ? 'opacity:.55' : ''}">
         ${t.dup ? '<span class="pill indigo">already logged</span>' : `<input type="checkbox" id="imp${i}" checked style="width:auto" title="Untick to skip this charge">`}
-        <div class="grow"><div class="title">${NIS(t.amount)} <span class="pill indigo" style="margin-left:6px">${t.category}</span></div>
+        <div class="grow"><div class="title">${NIS(t.amount)}
+          ${t.dup ? `<span class="pill indigo" style="margin-left:6px">${t.category}</span>`
+            : `<select id="impcat${i}" title="Category — fix the guess before importing" style="width:auto;display:inline-block;padding:3px 6px;font-size:12px;margin-left:6px">${CATS.map(c => `<option${c === t.category ? ' selected' : ''}>${c}</option>`).join('')}</select>`}</div>
         <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
       </div>`).join('') + `</div>
       ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed()">Add ${news} expenses</button>` : ''}`;
@@ -661,7 +741,7 @@ async function handleStatement(files){
 }
 async function importParsed(){
   const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
-    ? {spent_at: t.spent_at, amount: t.amount, category: t.category, description: t.description} : null).filter(Boolean);
+    ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description} : null).filter(Boolean);
   if(!rows.length) return toast('Nothing selected');
   const {error} = await sb.from('expenses').insert(rows);
   error ? err(error) : (toast(rows.length + ' expenses imported'), views.money());
@@ -676,6 +756,12 @@ function drawBurnChart(rows, budget, month){
   const lastDay = isCur ? +todayStr().slice(8,10) : dim;
   const datasets = [{label: 'Spent so far', data: cum.map((v,i) => i < lastDay ? v : null),
     borderColor: '#3a4132', backgroundColor: 'rgba(58,65,50,.12)', fill: true, tension: .25, pointRadius: 0, borderWidth: 2}];
+  if(isCur && lastDay >= 2 && lastDay < dim){
+    const rate = cum[lastDay-1] / lastDay;
+    datasets.push({label: 'Projected at current pace', data: Array.from({length: dim}, (_,i) => i < lastDay-1 ? null : +(cum[lastDay-1] + rate*(i-lastDay+1)).toFixed(0)),
+      borderColor: '#8f3d32', borderDash: [3,4], pointRadius: 0, borderWidth: 1.5, fill: false});
+    window._projSpend = cum[lastDay-1] + rate*(dim-lastDay);
+  } else window._projSpend = null;
   if(budget > 0) datasets.push({label: 'Ideal pace to budget', data: Array.from({length: dim}, (_,i) => +(budget*(i+1)/dim).toFixed(0)),
     borderColor: '#8a7a56', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false});
   mkChart('burnChart', {type: 'line', data: {labels: Array.from({length: dim}, (_,i) => i+1), datasets},
@@ -684,8 +770,20 @@ function drawBurnChart(rows, budget, month){
 }
 async function addExpense(){
   const amount = +exAmount.value; if(!amount) return toast('Enter an amount');
-  const {error} = await sb.from('expenses').insert({amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value});
-  error ? err(error) : views.money();
+  if(!exDate.value) return toast('Pick a date');
+  const row = {amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value};
+  const ed = window._editEx;
+  const {error} = ed
+    ? await sb.from('expenses').update(row).eq('id', ed.id)
+    : await sb.from('expenses').insert(row);
+  if(error) return err(error);
+  if(ed){ window._editEx = null; toast('Expense updated'); }
+  views.money();
+}
+function editExpense(id){
+  const x = (window._monthExpenses || []).find(x => x.id === id); if(!x) return;
+  window._editEx = x;
+  views.money(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 async function addSub(){
   const preset = subPreset.value, amount = +subAmount.value;
@@ -706,7 +804,7 @@ function exportCsv(){
   const csv = 'date,amount_ils,category,description\n' + rows.map(r =>
     [r.spent_at, r.amount, r.category, '"' + (r.description || '').replace(/"/g, '""') + '"'].join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+  a.href = URL.createObjectURL(new Blob([String.fromCharCode(0xFEFF) + csv], {type: 'text/csv;charset=utf-8'}));
   a.download = 'atlas-expenses-' + window._moneyMonth + '.csv';
   a.click(); URL.revokeObjectURL(a.href);
 }
