@@ -112,7 +112,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .cal-head h3{margin:0}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal-dow{font-size:10px;font-weight:600;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase}
-.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid transparent}
+.cal-day{aspect-ratio:1;min-height:40px;padding:2px;display:flex;align-items:center;justify-content:center;position:relative;border-radius:8px;font-size:clamp(11px,3.1vw,13px);line-height:1;cursor:pointer;border:1px solid transparent}
 .cal-day:hover{background:var(--surface2)}
 .cal-day.other{color:#9aa08c}
 .cal-day.today{border-color:var(--accent)}
@@ -126,6 +126,9 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
   .brand,.nav-btn span,aside .spacer,#signOutBtn{display:none}
   .nav-btn{width:auto;padding:10px 13px;justify-content:center}
   #ver{display:none}
+  .cal-grid{gap:2px}
+  .cal-day{border-radius:7px}
+  .cal-dot{bottom:3px}
   .page-head{gap:12px}
   .page-head img{height:64px;margin-left:auto}
   main{padding:22px 16px 110px}
@@ -183,7 +186,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v12</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v13</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -206,7 +209,7 @@ function toast(msg){ const t = document.getElementById('toast'); t.textContent =
 function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v12');
+console.log('Atlas v13');
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
