@@ -97,8 +97,9 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .chart-box{position:relative;height:240px}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:11px;font-size:14px;box-shadow:var(--shadow);transition:transform .25s;z-index:50}
 #toast.show{transform:translateX(-50%) translateY(0)}
-.checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0}
+.checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;position:relative}
 .checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
+.btn:disabled,.btn-ghost:disabled{opacity:.55;pointer-events:none}
 
 .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
 .ex-grid{display:grid;grid-template-columns:2fr .9fr .9fr 1.1fr 30px;gap:8px;align-items:center}
@@ -140,6 +141,8 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
   .row{flex-wrap:wrap}
   .row .grow{flex:1 1 140px}
   .btn-ghost{padding:7px 11px}
+  .icon-btn{padding:13px;margin:-7px}
+  .checkbox::after{content:'';position:absolute;inset:-11px}
   .card{padding:16px}
   .chart-box{height:200px}
   .page-head input[type=month]{max-width:150px}
@@ -168,6 +171,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     </form>
     <div class="auth-msg" id="authMsg"></div>
     <div class="auth-switch" id="authSwitch">No account? <a onclick="toggleAuthMode()">Sign up</a></div>
+    <div class="auth-switch" style="margin-top:8px"><a onclick="forgotPassword()">Forgot password?</a></div>
   </div>
 </div>
 
@@ -186,7 +190,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v13</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v14</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -206,10 +210,22 @@ const fmtDT = d => new Date(d).toLocaleString('en-GB', {weekday:'short', day:'nu
 let charts = {};
 function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); const el = document.getElementById(id); if(!el) return; charts[id] = new Chart(el, cfg); }
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
-function err(e){ console.error(e); toast(e.message || 'Something went wrong'); }
+function err(e){ console.error(e); toast(e && e.message || 'Something went wrong'); }
+// safety net: surface any uncaught error/rejection via the toast instead of vanishing silently
+window.addEventListener('unhandledrejection', e => { e.preventDefault(); err(e.reason || new Error('Something went wrong')); });
+window.addEventListener('error', e => { if(e.error) err(e.error); });
+// shared submit handler: prevents default, disables the submit button while the async call is in flight
+async function submitGuard(e, fn){
+  e.preventDefault();
+  const btn = e.submitter || e.target.querySelector('[type=submit]');
+  if(btn){ if(btn.disabled) return; btn.disabled = true; }
+  try{ await fn(); }
+  catch(ex){ err(ex); }
+  finally{ if(btn) btn.disabled = false; }
+}
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v13');
+console.log('Atlas v14');
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
@@ -238,6 +254,12 @@ document.getElementById('authForm').addEventListener('submit', async e => {
   if(signupMode){ msg.className = 'auth-msg ok'; msg.textContent = 'Account created! If asked, confirm via the email we sent — then sign in.'; signupMode = false; toggleAuthMode(); toggleAuthMode(); }
 });
 document.getElementById('signOutBtn').addEventListener('click', () => sb.auth.signOut());
+async function forgotPassword(){
+  const email = authEmail.value.trim() || (prompt('Enter your account email') || '').trim();
+  if(!email) return toast('Enter your email first');
+  const {error} = await sb.auth.resetPasswordForEmail(email);
+  error ? err(error) : toast('Password reset email sent to ' + email);
+}
 
 sb.auth.onAuthStateChange((ev, session) => {
   document.getElementById('authScreen').classList.toggle('hidden', !!session);
@@ -274,14 +296,15 @@ views.dashboard = async function(){
     </div>`;
 
   const monthStart = todayStr().slice(0,8) + '01';
+  const monthEnd = new Date(new Date(monthStart + 'T00:00').getFullYear(), new Date(monthStart + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
   const now = new Date(); const dayStart = new Date(now); dayStart.setHours(0,0,0,0);
   const [ev, ex, go_, ch, wo, wc, st] = await Promise.all([
     sb.from('events').select('*').gte('starts_at', dayStart.toISOString()).order('starts_at').limit(6),
-    sb.from('expenses').select('amount').gte('spent_at', monthStart),
+    sb.from('expenses').select('amount').gte('spent_at', monthStart).lt('spent_at', monthEnd),
     sb.from('goals').select('*').eq('status','active'),
     sb.from('chores').select('*'),
     sb.from('workouts').select('workout_date').order('workout_date',{ascending:false}).limit(1),
-    sb.from('workouts').select('id', {count:'exact', head:true}).gte('workout_date', monthStart),
+    sb.from('workouts').select('id', {count:'exact', head:true}).gte('workout_date', monthStart).lt('workout_date', monthEnd),
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
   ]);
 
@@ -319,16 +342,23 @@ function daysAgoLabel(d){
 
 /* ================= SCHEDULE ================= */
 views.schedule = async function(){
+  const ed = window._editEv;
+  const edD = ed ? new Date(ed.starts_at) : null;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Schedule</h2><img src="hero-schedule.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>Add event</h3>
+    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit event' : 'Add event'}</h3>
+      <form onsubmit="submitGuard(event, addEvent)">
       <div class="form-grid">
         <div style="grid-column:1/-1"><label class="lbl" for="evTitle">Event title — what's happening?</label>
-          <input id="evTitle" placeholder="e.g. Dentist appointment"></div>
-        <div><label class="lbl" for="evDate">Date</label><input id="evDate" type="date" value="${window._selDate || todayStr()}"></div>
-        <div><label class="lbl" for="evTime">Start time</label><input id="evTime" type="time" value="09:00"></div>
+          <input id="evTitle" placeholder="e.g. Dentist appointment" enterkeyhint="done" value="${ed ? esc(ed.title) : ''}"></div>
+        <div><label class="lbl" for="evDate">Date</label><input id="evDate" type="date" value="${ed ? edD.toLocaleDateString('en-CA') : (window._selDate || todayStr())}"></div>
+        <div><label class="lbl" for="evTime">Start time</label><input id="evTime" type="time" value="${ed ? edD.toTimeString().slice(0,5) : '09:00'}"></div>
       </div>
-      <button class="btn" onclick="addEvent()">Add event</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="submit">${ed ? 'Update event' : 'Add event'}</button>
+        ${ed ? '<button class="btn-ghost" type="button" onclick="window._editEv=null;views.schedule()">Cancel</button>' : ''}
+      </div>
+      </form>
     </div>
     <div class="grid cols2">
       <div class="card" id="calCard"></div>
@@ -386,17 +416,33 @@ function renderEvList(){
     <div class="row ${e.done?'done':''}">
       <button class="checkbox ${e.done?'checked':''}" title="Mark done" onclick="toggleEvent('${e.id}',${!e.done})">${e.done?'✓':''}</button>
       <div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div>
+      <button class="icon-btn" title="Edit event" onclick="editEvent('${e.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
       <button class="icon-btn danger" title="Delete event" onclick="delRow('events','${e.id}','schedule')">✕</button>
     </div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`;
 }
 async function addEvent(){
   const title = evTitle.value.trim(); if(!title) return toast('Give it a title');
-  const {error} = await sb.from('events').insert({title, starts_at: new Date(evDate.value + 'T' + (evTime.value || '09:00')).toISOString()});
-  error ? err(error) : views.schedule();
+  if(!evDate.value) return toast('Pick a date');
+  const starts_at = new Date(evDate.value + 'T' + (evTime.value || '09:00')).toISOString();
+  const ed = window._editEv;
+  const {error} = ed
+    ? await sb.from('events').update({title, starts_at}).eq('id', ed.id)
+    : await sb.from('events').insert({title, starts_at});
+  if(error) return err(error);
+  if(ed){ window._editEv = null; toast('Event updated'); } else toast('Event added');
+  views.schedule();
+}
+function editEvent(id){
+  const e = (window._events || []).find(x => x.id === id); if(!e) return;
+  window._editEv = e;
+  views.schedule(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 async function toggleEvent(id, done){
+  // optimistic: flip locally first so in-progress form input isn't wiped by a full re-render
+  const e = (window._events || []).find(x => x.id === id);
+  if(e){ e.done = done; renderEvList(); }
   const {error} = await sb.from('events').update({done}).eq('id', id);
-  error ? err(error) : views.schedule();
+  if(error){ if(e){ e.done = !done; renderEvList(); } err(error); }
 }
 async function delRow(table, id, view){
   if(!confirm('Delete this ' + table.replace(/s$/, '') + '? This cannot be undone.')) return;
@@ -411,17 +457,19 @@ views.gym = async function(){
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit workout — ' + fmtDate(ed.workout_date) : 'Log workout'}</h3>
+      <form onsubmit="submitGuard(event, saveWorkout)">
       <div class="form-grid">
         <div><label class="lbl" for="woDate">Workout date</label><input id="woDate" type="date" value="${ed ? ed.workout_date : todayStr()}"></div>
-        <div style="grid-column:span 2"><label class="lbl" for="woNotes">Notes (optional) — how did it go?</label><input id="woNotes" placeholder="e.g. Push day, felt strong" value="${ed ? esc(ed.notes || '') : ''}"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="woNotes">Notes (optional) — how did it go?</label><input id="woNotes" placeholder="e.g. Push day, felt strong" enterkeyhint="done" value="${ed ? esc(ed.notes || '') : ''}"></div>
       </div>
       <div class="ex-grid" style="margin-bottom:6px"><label class="lbl">Exercise</label><label class="lbl">Sets</label><label class="lbl">Reps</label><label class="lbl">Kg</label><span></span></div>
       <div id="exRows" class="list" style="margin-bottom:10px"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn-ghost" onclick="addExRow()">+ Add exercise</button>
-        <button class="btn" onclick="saveWorkout()">${ed ? 'Update workout' : 'Save workout'}</button>
-        ${ed ? '<button class="btn-ghost" onclick="cancelEditWo()">Cancel</button>' : ''}
+        <button class="btn-ghost" type="button" onclick="addExRow()">+ Add exercise</button>
+        <button class="btn" type="submit">${ed ? 'Update workout' : 'Save workout'}</button>
+        ${ed ? '<button class="btn-ghost" type="button" onclick="cancelEditWo()">Cancel</button>' : ''}
       </div>
+      </form>
     </div>
     <div class="grid cols2">
       <div class="card"><h3>Progress — <select id="exSelect" style="width:auto;display:inline-block;padding:4px 8px;font-size:13px" onchange="drawGymChart()"></select></h3>
@@ -436,7 +484,13 @@ views.gym = async function(){
     sb.from('workout_sets').select('*').order('created_at'),
     sb.from('workouts').select('id,workout_date'),
   ]);
-  if(wos.error) return err(wos.error);
+  const bad = [wos, sets, allWos].find(r => r.error);
+  if(bad){
+    err(bad.error);
+    document.getElementById('woList').innerHTML = document.getElementById('prList').innerHTML =
+      `<div class="empty">Couldn't load — ${esc(bad.error.message)}</div>`;
+    return;
+  }
   window._gymSets = sets.data || [];
   window._gymWos = wos.data || [];
   window._woDates = Object.fromEntries((allWos.data||[]).map(w => [w.id, w.workout_date]));
@@ -457,13 +511,14 @@ views.gym = async function(){
 };
 function addExRow(pre){
   const i = gymRowN++;
+  const num = x => (x === '' || x == null) ? '' : +x;
   document.getElementById('exRows').insertAdjacentHTML('beforeend', `
     <div class="ex-grid" id="exrow${i}">
-      <input id="gx${i}" placeholder="Exercise" list="exList" value="${pre ? esc(pre.exercise) : ''}">
-      <input id="gs${i}" type="number" placeholder="3" min="1" value="${pre ? (pre.sets || 1) : ''}">
-      <input id="gr${i}" type="number" placeholder="10" min="0" value="${pre ? pre.reps : ''}">
-      <input id="gw${i}" type="number" placeholder="0" min="0" step="0.5" value="${pre ? +pre.weight_kg : ''}">
-      <button class="icon-btn danger" title="Remove exercise" onclick="exrow${i}.remove()">✕</button>
+      <input id="gx${i}" placeholder="Exercise" list="exerciseList" value="${pre ? esc(pre.exercise) : ''}">
+      <input id="gs${i}" type="number" inputmode="numeric" placeholder="3" min="1" value="${pre ? (num(pre.sets) || 1) : ''}">
+      <input id="gr${i}" type="number" inputmode="numeric" placeholder="10" min="0" value="${pre ? num(pre.reps) : ''}">
+      <input id="gw${i}" type="number" inputmode="decimal" placeholder="0" min="0" step="0.5" value="${pre ? num(pre.weight_kg) : ''}">
+      <button class="icon-btn danger" type="button" title="Remove exercise" onclick="exrow${i}.remove()">✕</button>
     </div>`);
 }
 function collectExRows(){
@@ -482,30 +537,64 @@ function editWorkout(id){
   views.gym(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 function cancelEditWo(){ window._editWo = null; views.gym(); }
+// snapshot/restore the log-workout form so deleting a history item doesn't wipe typed rows
+function snapGymForm(){
+  const rows = [];
+  for(let i = 0; i < gymRowN; i++){
+    const el = document.getElementById('gx'+i); if(!el) continue;
+    const r = {exercise: el.value.trim(), sets: document.getElementById('gs'+i).value,
+      reps: document.getElementById('gr'+i).value, weight_kg: document.getElementById('gw'+i).value};
+    if(r.exercise || r.reps || r.weight_kg) rows.push(r);
+  }
+  return {date: document.getElementById('woDate')?.value, notes: document.getElementById('woNotes')?.value, rows};
+}
+function restoreGymForm(s){
+  if(!s) return;
+  const d = document.getElementById('woDate'), n = document.getElementById('woNotes');
+  if(d && s.date) d.value = s.date;
+  if(n) n.value = s.notes || '';
+  if(s.rows.length){ document.getElementById('exRows').innerHTML = ''; s.rows.forEach(r => addExRow(r)); }
+}
 async function delWorkout(id){
   if(!confirm('Delete this workout and all its exercises? This cannot be undone.')) return;
-  await sb.from('workout_sets').delete().eq('workout_id', id);
+  const snap = window._editWo ? null : snapGymForm();
+  const {error: eS} = await sb.from('workout_sets').delete().eq('workout_id', id);
+  if(eS) return err(eS);
   const {error} = await sb.from('workouts').delete().eq('id', id);
   if(window._editWo?.id === id) window._editWo = null;
-  error ? err(error) : views.gym();
+  if(error) return err(error);
+  await views.gym();
+  restoreGymForm(snap);
 }
 async function saveWorkout(){
   const rows = collectExRows();
   if(!rows.length) return toast('Add at least one exercise');
   const date = woDate.value, notes = woNotes.value.trim() || null;
+  if(!date) return toast('Pick a date');
   const ed = window._editWo;
   if(ed){
+    if(date !== ed.workout_date){
+      const {data: clash, error: eC} = await sb.from('workouts').select('id').eq('workout_date', date).neq('id', ed.id).limit(1);
+      if(eC) return err(eC);
+      if(clash && clash.length) return toast('A workout already exists on ' + fmtDate(date) + ' — edit that one instead');
+    }
     const {error} = await sb.from('workouts').update({workout_date: date, notes}).eq('id', ed.id);
     if(error) return err(error);
-    await sb.from('workout_sets').delete().eq('workout_id', ed.id);
+    // insert the replacement sets first, then delete the old ones by id — a failed insert never loses data
     const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: ed.id, set_number: i+1})));
     if(e2) return err(e2);
+    const oldIds = (ed.sets || []).map(s => s.id).filter(Boolean);
+    if(oldIds.length){
+      const {error: e3} = await sb.from('workout_sets').delete().in('id', oldIds);
+      if(e3) return err(e3);
+    }
     window._editWo = null;
     toast('Workout updated'); return views.gym();
   }
-  // one workout per day: append to an existing workout on the same date
-  const {data: existing, error: e0} = await sb.from('workouts').select('id,notes').eq('workout_date', date).maybeSingle();
+  // one workout per day: append to an existing workout on the same date (tolerate accidental duplicates — take the first)
+  const {data: existingRows, error: e0} = await sb.from('workouts').select('id,notes').eq('workout_date', date).limit(1);
   if(e0) return err(e0);
+  const existing = existingRows && existingRows[0];
   let woId, offset = 0;
   if(existing){
     woId = existing.id;
@@ -566,19 +655,22 @@ views.money = async function(){
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto;margin-left:auto" onchange="window._moneyMonth=this.value;views.money()"><img src="hero-money.png" alt="" style="height:110px" onerror="this.remove()"></div>
+    <div class="page-head"><h2>Money</h2><input type="month" value="${month}" style="width:auto;margin-left:auto" onchange="window._moneyMonth=this.value||todayStr().slice(0,7);views.money()"><img src="hero-money.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>${window._editEx ? 'Edit expense' : 'Add expense'}</h3>
+      <form onsubmit="submitGuard(event, addExpense)">
       <div class="form-grid">
-        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" placeholder="0.00" min="0" step="0.01" value="${window._editEx ? +window._editEx.amount : ''}"></div>
+        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" inputmode="decimal" placeholder="0.00" min="0" step="0.01" value="${window._editEx ? +window._editEx.amount : ''}"></div>
         <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c => `<option${window._editEx?.category === c ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
-        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries" value="${window._editEx ? esc(window._editEx.description || '') : ''}"></div>
+        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries" enterkeyhint="done" value="${window._editEx ? esc(window._editEx.description || '') : ''}"></div>
         <div><label class="lbl" for="exDate">Date of purchase</label><input id="exDate" type="date" value="${window._editEx ? window._editEx.spent_at : todayStr()}"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" onclick="addExpense()">${window._editEx ? 'Update expense' : 'Add expense'}</button>
-        ${window._editEx ? '<button class="btn-ghost" onclick="window._editEx=null;views.money()">Cancel</button>' : ''}
+        <button class="btn" type="submit">${window._editEx ? 'Update expense' : 'Add expense'}</button>
+        ${window._editEx ? '<button class="btn-ghost" type="button" onclick="window._editEx=null;views.money()">Cancel</button>' : ''}
       </div>
+      </form>
     </div>
+    <div class="card" style="margin-bottom:16px"><h3>This month <button class="btn-ghost" type="button" style="float:right" title="Download this month's expenses as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
     <div class="card" style="margin-bottom:16px"><h3>Import statement (PDF)</h3>
       <div class="empty" style="cursor:pointer"
         ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
@@ -590,36 +682,46 @@ views.money = async function(){
     </div>
     <div class="card" style="margin-bottom:16px"><h3>Monthly budget</h3>
       <div id="budgetBar"></div>
+      <form onsubmit="submitGuard(event, saveBudget)">
       <div class="form-grid" style="margin:10px 0 0">
-        <div><label class="lbl" for="budgetIn">Budget per month (₪) — your spending target</label><input id="budgetIn" type="number" min="0" step="1" placeholder="e.g. 6000"></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn-ghost" onclick="saveBudget()">Save budget</button></div>
+        <div><label class="lbl" for="budgetIn">Budget per month (₪) — your spending target</label><input id="budgetIn" type="number" inputmode="decimal" enterkeyhint="done" min="0" step="1" placeholder="e.g. 6000"></div>
+        <div style="display:flex;align-items:flex-end"><button class="btn-ghost" type="submit">Save budget</button></div>
       </div>
+      </form>
     </div>
     <div class="card" style="margin-bottom:16px"><h3>Subscriptions — <span id="subTotal" style="color:var(--text)"></span></h3>
       <div class="list" id="subList" style="margin-bottom:14px"><div class="empty">Loading…</div></div>
+      <form onsubmit="submitGuard(event, addSub)">
       <div class="form-grid">
         <div><label class="lbl" for="subPreset">Service</label><select id="subPreset">${Object.keys(SUBS).map(s => `<option>${s}</option>`).join('')}</select></div>
         <div><label class="lbl" for="subName">Custom name (only for "Other")</label><input id="subName" placeholder="e.g. Gym membership"></div>
-        <div><label class="lbl" for="subAmount">Price per month (₪)</label><input id="subAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
-        <div><label class="lbl" for="subDay">Billing day of month (1–28)</label><input id="subDay" type="number" min="1" max="28" value="1"></div>
+        <div><label class="lbl" for="subAmount">Price per month (₪)</label><input id="subAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        <div><label class="lbl" for="subDay">Billing day of month (1–28)</label><input id="subDay" type="number" inputmode="numeric" enterkeyhint="done" min="1" max="28" value="1"></div>
       </div>
-      <button class="btn" onclick="addSub()">Add subscription</button>
+      <button class="btn" type="submit">Add subscription</button>
+      </form>
     </div>
     <div class="card" style="margin-bottom:16px"><h3>Month burn-down — your spend pace vs budget</h3><div class="chart-box"><canvas id="burnChart"></canvas></div></div>
-    <div class="grid cols2">
-      <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>
-      <div class="card"><h3>This month <button class="btn-ghost" style="float:right" title="Download this month's expenses as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3><div class="list" id="exList"><div class="empty">Loading…</div></div></div>
-    </div>`;
+    <div class="card"><h3>By category — <span id="moTotal" style="color:var(--text)"></span></h3><div class="chart-box"><canvas id="catChart"></canvas></div></div>`;
   const from = month + '-01';
   const to = new Date(new Date(from + 'T00:00').getFullYear(), new Date(from + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
-  const [{data, error}, st, subs] = await Promise.all([
+  const [exq, st, subs] = await Promise.all([
     sb.from('expenses').select('*').gte('spent_at', from).lt('spent_at', to).order('spent_at', {ascending: false}),
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
     sb.from('subscriptions').select('*').order('billing_day'),
   ]);
-  if(error) return err(error);
+  const bad = [exq, st, subs].find(r => r.error);
+  if(bad){
+    err(bad.error);
+    document.getElementById('exList').innerHTML = document.getElementById('subList').innerHTML =
+      `<div class="empty">Couldn't load — ${esc(bad.error.message)}</div>`;
+    document.getElementById('budgetBar').innerHTML = '';
+    return;
+  }
+  const data = exq.data || [];
   const subRows = subs.data || [];
-  document.getElementById('subTotal').textContent = NIS(subRows.reduce((s,r) => s + +r.amount, 0)) + '/month';
+  const subMonthly = subRows.reduce((s,r) => s + +r.amount, 0);
+  document.getElementById('subTotal').textContent = NIS(subMonthly) + '/month';
   document.getElementById('subList').innerHTML = subRows.length ? subRows.map(s => {
     const nc = nextCharge(s.billing_day);
     return `<div class="row">${subLogo(s)}
@@ -635,6 +737,8 @@ views.money = async function(){
       <div class="progress-track"><div class="progress-fill" style="width:${Math.min(100, total/budget*100)}%${total > budget ? ';background:var(--red)' : ''}"></div></div>
       <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${NIS(total)} spent · ${total > budget ? '<span style="color:var(--red)">' + NIS(total-budget) + ' over budget</span>' : NIS(budget-total) + ' remaining'} of ${NIS(budget)}</div>`;
   } else document.getElementById('budgetBar').innerHTML = '<div class="empty">Set a budget below to track spending against it</div>';
+  if(subMonthly > 0) document.getElementById('budgetBar').insertAdjacentHTML('beforeend',
+    `<div style="font-size:12px;color:var(--muted);margin-top:6px">+ ${NIS(subMonthly)}/mo in subscriptions</div>`);
   document.getElementById('moTotal').textContent = NIS(total);
   drawBurnChart(data, budget, month);
   if(window._projSpend != null){
@@ -652,7 +756,7 @@ views.money = async function(){
   const cats = Object.keys(byCat);
   mkChart('catChart', {type: 'doughnut', data: {labels: cats, datasets: [{data: cats.map(c => byCat[c]),
     backgroundColor: ['#3a4132','#55604a','#7d611f','#8f3d32','#6b7160','#3f5c3a','#8a7a56','#4a5568','#9aa08c'], borderWidth: 0}]},
-    options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'right'}}}});
+    options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'bottom'}}}});
 };
 /* ---- PDF statement import ---- */
 function fixHeb(s){
@@ -739,15 +843,24 @@ async function handleStatement(files){
             : `<select id="impcat${i}" title="Category — fix the guess before importing" style="width:auto;display:inline-block;padding:3px 6px;font-size:12px;margin-left:6px">${CATS.map(c => `<option${c === t.category ? ' selected' : ''}>${c}</option>`).join('')}</select>`}</div>
         <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
       </div>`).join('') + `</div>
-      ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed()">Add ${news} expenses</button>` : ''}`;
+      ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed(this)">Add ${news} expenses</button>` : ''}`;
   }catch(e){ err(e); pv.innerHTML = '<div class="empty">Could not read this PDF — ' + esc(e.message || e) + '</div>'; }
 }
-async function importParsed(){
-  const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
-    ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description} : null).filter(Boolean);
-  if(!rows.length) return toast('Nothing selected');
-  const {error} = await sb.from('expenses').insert(rows);
-  error ? err(error) : (toast(rows.length + ' expenses imported'), views.money());
+async function importParsed(btn){
+  if(btn){ if(btn.disabled) return; btn.disabled = true; }
+  try{
+    const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
+      ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description} : null).filter(Boolean);
+    if(!rows.length) return toast('Nothing selected');
+    const {error} = await sb.from('expenses').insert(rows);
+    if(error) return err(error);
+    // jump to the statement's month so the imported expenses are visible
+    const m = rows[rows.length - 1].spent_at.slice(0, 7);
+    window._moneyMonth = m;
+    toast(rows.length + ' expenses imported to ' + new Date(m + '-01T00:00').toLocaleDateString('en-GB', {month: 'long', year: 'numeric'}));
+    views.money();
+  }catch(e){ err(e); }
+  finally{ if(btn) btn.disabled = false; }
 }
 function drawBurnChart(rows, budget, month){
   const [Y, M] = month.split('-').map(Number);
@@ -772,7 +885,7 @@ function drawBurnChart(rows, budget, month){
       plugins: {legend: {labels: {boxWidth: 18}}}, scales: {y: {beginAtZero: true}}}});
 }
 async function addExpense(){
-  const amount = +exAmount.value; if(!amount) return toast('Enter an amount');
+  const amount = +exAmount.value; if(!(amount > 0)) return toast('Enter an amount above zero');
   if(!exDate.value) return toast('Pick a date');
   const row = {amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value};
   const ed = window._editEx;
@@ -780,7 +893,7 @@ async function addExpense(){
     ? await sb.from('expenses').update(row).eq('id', ed.id)
     : await sb.from('expenses').insert(row);
   if(error) return err(error);
-  if(ed){ window._editEx = null; toast('Expense updated'); }
+  if(ed){ window._editEx = null; toast('Expense updated'); } else toast('Expense added');
   views.money();
 }
 function editExpense(id){
@@ -790,14 +903,19 @@ function editExpense(id){
 }
 async function addSub(){
   const preset = subPreset.value, amount = +subAmount.value;
-  if(!amount) return toast('Enter the monthly price');
+  if(!(amount > 0)) return toast('Enter the monthly price');
   const name = preset === 'Other' ? (subName.value.trim() || 'Subscription') : preset;
   const {error} = await sb.from('subscriptions').insert({name, domain: SUBS[preset] || null, amount, billing_day: Math.min(28, Math.max(1, +subDay.value || 1))});
-  error ? err(error) : views.money();
+  error ? err(error) : (toast('Subscription added'), views.money());
 }
 async function saveBudget(){
-  const v = +budgetIn.value; if(v < 0) return toast('Budget must be positive');
-  const {data: u} = await sb.auth.getUser();
+  const raw = budgetIn.value.trim();
+  if(raw === '') return toast('Enter a budget amount — nothing changed');
+  const v = +raw;
+  if(!Number.isFinite(v) || v < 0) return toast('Budget must be zero or more');
+  const {data: u, error: eU} = await sb.auth.getUser();
+  if(eU) return err(eU);
+  if(!u?.user) return toast('Session expired — please sign in again');
   const {error} = await sb.from('user_settings').upsert({user_id: u.user.id, monthly_budget: v, updated_at: new Date().toISOString()});
   error ? err(error) : (toast('Budget saved'), views.money());
 }
@@ -817,11 +935,13 @@ views.goals = async function(){
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
+      <form onsubmit="submitGuard(event, addGoal)">
       <div class="form-grid">
-        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year" enterkeyhint="done"></div>
         <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date"></div>
       </div>
-      <button class="btn" onclick="addGoal()">Add goal</button>
+      <button class="btn" type="submit">Add goal</button>
+      </form>
     </div>
     <div class="card" style="margin-bottom:16px"><h3>Timeline — progress vs time elapsed (▎= where you should be by today)</h3>
       <div class="list" id="goTimeline"></div></div>
@@ -852,19 +972,28 @@ views.goals = async function(){
         <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed' : ''}</div></div>
         <span style="font-weight:700;font-size:14px">${g.progress}%</span>
         ${g.status !== 'done' ? `<button class="btn-ghost" onclick="setGoal('${g.id}',${Math.min(100, g.progress + 10)})">+10%</button>` : ''}
-        <button class="icon-btn danger" onclick="delRow('goals','${g.id}','goals')">✕</button>
+        <button class="icon-btn danger" title="Delete goal" onclick="delRow('goals','${g.id}','goals')">✕</button>
       </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+      <div title="Tap the bar to set progress" style="padding:9px 0;margin:-9px 0;cursor:pointer" onclick="barSetGoal(event,'${g.id}')">
+        <div class="progress-track"><div class="progress-fill" style="width:${g.progress}%"></div></div>
+      </div>
     </div>`).join('') : '<div class="empty">No goals yet — dream big</div>';
 };
 async function addGoal(){
   const title = goTitle.value.trim(); if(!title) return toast('Name your goal');
   const {error} = await sb.from('goals').insert({title, target_date: goDate.value || null});
-  error ? err(error) : views.goals();
+  error ? err(error) : (toast('Goal added'), views.goals());
 }
 async function setGoal(id, progress){
   const {error} = await sb.from('goals').update({progress, status: progress >= 100 ? 'done' : 'active'}).eq('id', id);
   error ? err(error) : views.goals();
+}
+// tap anywhere on a goal's progress bar to set progress to that position (snaps to 5%)
+function barSetGoal(e, id){
+  const r = e.currentTarget.querySelector('.progress-track').getBoundingClientRect();
+  const pct = Math.max(0, Math.min(100, Math.round((e.clientX - r.left) / r.width * 20) * 5));
+  toast('Progress set to ' + pct + '%');
+  setGoal(id, pct);
 }
 
 /* ================= CHORES ================= */
@@ -880,37 +1009,65 @@ function chorePill(c){
   return `<span class="pill green">in ${d}d</span>`;
 }
 views.chores = async function(){
+  const ed = window._editCh;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>Add chore</h3>
+    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit chore' : 'Add chore'}</h3>
+      <form onsubmit="submitGuard(event, addChore)">
       <div class="form-grid">
-        <div style="grid-column:span 2"><label class="lbl" for="chName">Chore name</label><input id="chName" placeholder="e.g. Run vacuum cleaner"></div>
-        <div><label class="lbl" for="chFreq">Repeat every (days)</label><input id="chFreq" type="number" placeholder="7" min="1" value="7"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="chName">Chore name</label><input id="chName" placeholder="e.g. Run vacuum cleaner" value="${ed ? esc(ed.name) : ''}"></div>
+        <div><label class="lbl" for="chFreq">Repeat every (days)</label><input id="chFreq" type="number" inputmode="numeric" enterkeyhint="done" placeholder="7" min="1" value="${ed ? ed.frequency_days : 7}"></div>
       </div>
-      <button class="btn" onclick="addChore()">Add chore</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="submit">${ed ? 'Update chore' : 'Add chore'}</button>
+        ${ed ? '<button class="btn-ghost" type="button" onclick="window._editCh=null;views.chores()">Cancel</button>' : ''}
+      </div>
+      </form>
     </div>
     <div class="card"><h3>All chores</h3><div class="list" id="chList"><div class="empty">Loading…</div></div></div>`;
   const {data, error} = await sb.from('chores').select('*');
   if(error) return err(error);
-  data.sort((a,b) => choreDueDays(a) - choreDueDays(b));
-  document.getElementById('chList').innerHTML = data.length ? data.map(c => `
+  window._chores = data;
+  renderChores();
+};
+function renderChores(){
+  const el = document.getElementById('chList'); if(!el) return;
+  const data = [...(window._chores || [])].sort((a,b) => choreDueDays(a) - choreDueDays(b));
+  el.innerHTML = data.length ? data.map(c => `
     <div class="row"><div class="grow"><div class="title">${esc(c.name)}</div>
       <div class="sub">every ${c.frequency_days}d · last: ${c.last_done ? fmtDate(c.last_done) : 'never'}</div></div>
       ${chorePill(c)}
       <button class="btn-ghost" onclick="doneChore('${c.id}')">Done ✓</button>
-      <button class="icon-btn danger" onclick="delRow('chores','${c.id}','chores')">✕</button></div>`).join('') : '<div class="empty">No chores yet</div>';
-};
+      <button class="icon-btn" title="Edit chore" onclick="editChore('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
+      <button class="icon-btn danger" title="Delete chore" onclick="delRow('chores','${c.id}','chores')">✕</button></div>`).join('') : '<div class="empty">No chores yet</div>';
+}
 async function addChore(){
   const name = chName.value.trim(); if(!name) return toast('Name the chore');
-  const {error} = await sb.from('chores').insert({name, frequency_days: +chFreq.value || 7});
-  error ? err(error) : views.chores();
+  const frequency_days = Math.max(1, +chFreq.value || 7);
+  const ed = window._editCh;
+  const {error} = ed
+    ? await sb.from('chores').update({name, frequency_days}).eq('id', ed.id)
+    : await sb.from('chores').insert({name, frequency_days});
+  if(error) return err(error);
+  if(ed){ window._editCh = null; toast('Chore updated'); } else toast('Chore added');
+  views.chores();
+}
+function editChore(id){
+  const c = (window._chores || []).find(x => x.id === id); if(!c) return;
+  window._editCh = c;
+  views.chores(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 async function doneChore(id){
+  // optimistic: update local state and just the list, so the add-chore form isn't wiped
+  const c = (window._chores || []).find(x => x.id === id);
+  const prev = c ? c.last_done : null;
+  if(c){ c.last_done = todayStr(); renderChores(); }
   const {error} = await sb.from('chores').update({last_done: todayStr()}).eq('id', id);
-  error ? err(error) : (toast('Nice work'), views.chores());
+  if(error){ if(c){ c.last_done = prev; renderChores(); } err(error); }
+  else toast('Nice work');
 }
 </script>
-<datalist id="exList">
+<datalist id="exerciseList">
   <option>Bench Press</option><option>Squat</option><option>Deadlift</option><option>Overhead Press</option>
   <option>Barbell Row</option><option>Pull Up</option><option>Lat Pulldown</option><option>Bicep Curl</option>
   <option>Tricep Pushdown</option><option>Leg Press</option><option>Lunges</option><option>Plank</option>
