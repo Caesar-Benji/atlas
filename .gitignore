@@ -1,3 +1,7 @@
 .DS_Store
 *.pdf
 ChatGPT Image*.png
+
+# working files for the login hero animation (not shipped)
+hf_*.mp4
+_anim_*.png

@@ -48,13 +48,22 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .logo path{stroke-dasharray:120;stroke-dashoffset:120;animation:draw 1.4s ease forwards}
 @keyframes draw{to{stroke-dashoffset:0}}
 
-/* login hero: transparent engraved logo */
-.hero-logo{display:block;height:200px;margin:0 auto 18px;animation:heroIn 1.2s cubic-bezier(.3,1.3,.4,1) .1s both, heroFloat 7s ease-in-out 2s infinite}
-@keyframes heroIn{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+/* login hero: Atlas catching the world (video, multiply-blended onto the card) */
+/* the wrapper must paint --surface itself: the heroIn/heroFloat animations make it an
+   isolated stacking context, so the multiply below has no backdrop to blend with otherwise */
+.hero-anim{position:relative;width:119px;height:200px;margin:0 auto 18px;background:var(--surface);animation:heroIn .9s ease both}
+.hero-anim video,.hero-anim img{display:block;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;pointer-events:none}
+.hero-anim .hero-still{display:none}
+.hero-anim.settled{animation:heroFloat 7s ease-in-out infinite}
+@keyframes heroIn{from{opacity:0}to{opacity:1}}
 @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 .auth-card h1,.auth-card .tag{animation:fadeUp .8s ease 1.7s both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.hero,.hero img,.auth-card h1,.auth-card .tag,.logo path{animation:none!important;stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){
+  .hero-anim,.hero-anim.settled,.auth-card h1,.auth-card .tag,.logo path{animation:none!important;stroke-dashoffset:0}
+  .hero-anim .hero-video{display:none}
+  .hero-anim .hero-still{display:block}
+}
 
 /* ---------- Layout ---------- */
 #app{display:flex;min-height:100vh;position:relative;z-index:1}
@@ -134,7 +143,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
   .page-head img{height:64px;margin-left:auto}
   main{padding:22px 16px 110px}
   .auth-card{padding:28px 22px;max-width:340px}
-  .hero{width:150px}
+  .hero-anim{width:98px;height:165px}
   .auth-card h1{font-size:22px}
   h2{font-size:19px}
   .stat{font-size:23px}
@@ -154,8 +163,14 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 <!-- ============ AUTH ============ -->
 <div id="authScreen">
   <div class="auth-card">
-    <img class="hero-logo" src="atlas-logo.png" alt="Atlas holding the Earth"
-      onerror="this.remove();document.querySelector('.auth-card .logo').style.display='inline'">
+    <div class="hero-anim" id="heroAnim">
+      <video class="hero-video" id="heroVideo" src="hero-atlas-catch.mp4" poster="hero-atlas-poster.png"
+        width="286" height="480" autoplay muted playsinline preload="auto"
+        disablepictureinpicture aria-hidden="true"
+        onerror="heroFallback()"></video>
+      <img class="hero-still" src="hero-atlas-poster.png" alt="Atlas catching the Earth"
+        onerror="document.getElementById('heroAnim').remove();document.querySelector('.auth-card .logo').style.display='inline'">
+    </div>
     <svg class="logo" style="display:none" width="56" height="56" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#3a4132"/><stop offset="1" stop-color="#55604a"/>
@@ -190,7 +205,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v15</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v17</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -225,7 +240,25 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v15');
+console.log('Atlas v17');
+
+// ---------- login hero video ----------
+// Plays the catch once, then holds the last frame with a slow float.
+// Falls back to the poster still if the video can't load or autoplay is blocked.
+function heroFallback(){
+  const v = document.getElementById('heroVideo');
+  if(v) v.style.display = 'none';
+  const s = document.querySelector('.hero-anim .hero-still');
+  if(s) s.style.display = 'block';
+}
+(function initHero(){
+  const v = document.getElementById('heroVideo');
+  if(!v) return;
+  v.muted = true;                                   // required for autoplay on iOS/Safari
+  v.addEventListener('ended', () => document.getElementById('heroAnim')?.classList.add('settled'));
+  const p = v.play();
+  if(p && p.catch) p.catch(heroFallback);           // autoplay blocked (e.g. iOS Low Power Mode)
+})();
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
