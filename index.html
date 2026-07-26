@@ -205,7 +205,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v17</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v18</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -240,7 +240,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v17');
+console.log('Atlas v18');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -304,6 +304,14 @@ sb.auth.onAuthStateChange((ev, session) => {
 
 /* ================= ROUTER ================= */
 const views = {};
+/* Views render asynchronously: they paint #main, then await Supabase. If the user
+   navigates (or triggers a re-render) while a query is in flight, #main has already
+   been rewritten and that render's element ids no longer exist — writing into them
+   threw "null is not an object". Every render takes a token and bails out if a newer
+   render has started in the meantime. */
+let _renderSeq = 0;
+const renderStart = () => ++_renderSeq;
+const stale = seq => seq !== _renderSeq;
 window.addEventListener('hashchange', () => { const t = location.hash.slice(1); if(t !== window._curTab) go(t); });
 function go(tab){
   if(!views[tab]) tab = 'dashboard';
@@ -316,6 +324,7 @@ document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.addEventListener(
 
 /* ================= DASHBOARD ================= */
 views.dashboard = async function(){
+  const seq = renderStart();
   const main = document.getElementById('main');
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -341,6 +350,7 @@ views.dashboard = async function(){
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
   ]);
 
+  if(stale(seq)) return;
   const bad = [ev, ex, go_, ch, wo, wc, st].find(r => r.error);
   if(bad){
     const retry = `<div class="empty" style="grid-column:1/-1">Couldn't load your data — ${esc(bad.error.message)}.<br>The backend may be waking up. <a style="cursor:pointer;color:var(--accent2);font-weight:600" onclick="views.dashboard()">Retry</a></div>`;
@@ -375,6 +385,7 @@ function daysAgoLabel(d){
 
 /* ================= SCHEDULE ================= */
 views.schedule = async function(){
+  const seq = renderStart();
   const ed = window._editEv;
   const edD = ed ? new Date(ed.starts_at) : null;
   document.getElementById('main').innerHTML = `
@@ -398,6 +409,7 @@ views.schedule = async function(){
       <div class="card"><h3 id="evListTitle">Upcoming</h3><div class="list" id="evList"><div class="empty">Loading…</div></div></div>
     </div>`;
   const {data, error} = await sb.from('events').select('*').order('starts_at');
+  if(stale(seq)) return;
   if(error) return err(error);
   window._events = data;
   renderCalendar();
@@ -486,6 +498,7 @@ async function delRow(table, id, view){
 /* ================= GYM ================= */
 let gymRowN = 0;
 views.gym = async function(){
+  const seq = renderStart();
   const ed = window._editWo;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" style="height:110px" onerror="this.remove()"></div>
@@ -517,6 +530,7 @@ views.gym = async function(){
     sb.from('workout_sets').select('*').order('created_at'),
     sb.from('workouts').select('id,workout_date'),
   ]);
+  if(stale(seq)) return;
   const bad = [wos, sets, allWos].find(r => r.error);
   if(bad){
     err(bad.error);
@@ -586,7 +600,8 @@ function restoreGymForm(s){
   const d = document.getElementById('woDate'), n = document.getElementById('woNotes');
   if(d && s.date) d.value = s.date;
   if(n) n.value = s.notes || '';
-  if(s.rows.length){ document.getElementById('exRows').innerHTML = ''; s.rows.forEach(r => addExRow(r)); }
+  const rowsEl = document.getElementById('exRows');   // gone if a newer render replaced the Gym view
+  if(s.rows.length && rowsEl){ rowsEl.innerHTML = ''; s.rows.forEach(r => addExRow(r)); }
 }
 async function delWorkout(id){
   if(!confirm('Delete this workout and all its exercises? This cannot be undone.')) return;
@@ -685,6 +700,7 @@ function nextCharge(day){
   return {date: d, days: Math.round((d - new Date(todayStr()+'T00:00'))/864e5)};
 }
 views.money = async function(){
+  const seq = renderStart();
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
   document.getElementById('main').innerHTML = `
@@ -743,6 +759,7 @@ views.money = async function(){
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
     sb.from('subscriptions').select('*').order('billing_day'),
   ]);
+  if(stale(seq)) return;
   const bad = [exq, st, subs].find(r => r.error);
   if(bad){
     err(bad.error);
@@ -965,6 +982,7 @@ function exportCsv(){
 
 /* ================= GOALS ================= */
 views.goals = async function(){
+  const seq = renderStart();
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" style="height:110px" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
@@ -980,6 +998,7 @@ views.goals = async function(){
       <div class="list" id="goTimeline"></div></div>
     <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
   const {data, error} = await sb.from('goals').select('*').order('created_at');
+  if(stale(seq)) return;
   if(error) return err(error);
   const timed = data.filter(g => g.target_date && g.status !== 'done');
   document.getElementById('goTimeline').innerHTML = timed.length ? timed.map(g => {
@@ -1042,6 +1061,7 @@ function chorePill(c){
   return `<span class="pill green">in ${d}d</span>`;
 }
 views.chores = async function(){
+  const seq = renderStart();
   const ed = window._editCh;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" style="height:110px" onerror="this.remove()"></div>
@@ -1059,6 +1079,7 @@ views.chores = async function(){
     </div>
     <div class="card"><h3>All chores</h3><div class="list" id="chList"><div class="empty">Loading…</div></div></div>`;
   const {data, error} = await sb.from('chores').select('*');
+  if(stale(seq)) return;
   if(error) return err(error);
   window._chores = data;
   renderChores();
