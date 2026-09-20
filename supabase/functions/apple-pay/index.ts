@@ -6,19 +6,22 @@
 // expense. verify_jwt is off because Shortcuts can't do a Supabase auth handshake —
 // auth is instead a bearer token whose SHA-256 lives in public.webhook_tokens, so it
 // can be revoked without redeploying.
+//
+// Deliberately NO CORS headers: the only client is Shortcuts, which is not a browser and
+// never sends a preflight. A wildcard origin here would be surface with no consumer.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const CORS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-atlas-token, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const MAX_BODY = 8 * 1024;   // a tap payload is ~150 bytes
+const MAX_MERCHANT = 200;    // terminal strings are short; anything longer is junk or abuse
+const MAX_DESC = 240;
+const RATE_LIMIT = 30;       // requests per minute per token
+
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS, "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
   });
 
 async function sha256(s: string): Promise<string> {
@@ -65,9 +68,13 @@ function parseDate(v: unknown): string {
   return isNaN(+d) ? israelToday() : d.toISOString().slice(0, 10);
 }
 
+const clip = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
+
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
+
+  const declared = Number(req.headers.get("content-length") ?? 0);
+  if (declared > MAX_BODY) return json({ error: "payload too large" }, 413);
 
   const auth = req.headers.get("authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim() ||
@@ -87,6 +94,18 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (!tok || tok.revoked) return json({ error: "bad token" }, 401);
 
+  // Atomic check-and-consume under a row lock, before any work is done on the payload.
+  const { data: gate, error: gateErr } = await sb
+    .rpc("consume_token", { p_id: tok.id, p_limit: RATE_LIMIT })
+    .maybeSingle();
+  if (gateErr) return json({ error: "rate check failed" }, 500);
+  if (!gate?.allowed) {
+    return json({
+      error: "rate limited",
+      message: `More than ${RATE_LIMIT} requests in a minute on this token — refused.`,
+    }, 429);
+  }
+
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
 
@@ -104,12 +123,13 @@ Deno.serve(async (req) => {
       hint: "Open 'Get contents of URL' > Request Body and set each field to the matching Transaction variable.",
     }, 400);
   }
+  if (amount > 1_000_000) return json({ error: "amount out of range", got: amount }, 400);
 
-  const rawMerchant = String(body.merchant ?? "").trim();
+  const rawMerchant = clip(body.merchant, MAX_MERCHANT);
   const key = merchantKey(rawMerchant);
-  const currency = (String(body.currency ?? "ILS").trim().toUpperCase()) || "ILS";
+  const currency = clip(body.currency, 8).toUpperCase() || "ILS";
   const spent_at = parseDate(body.date);
-  const card = String(body.card ?? "").trim();
+  const card = clip(body.card, 80);
 
   // What did Benji last call this merchant?
   let category = "Other";
@@ -128,6 +148,7 @@ Deno.serve(async (req) => {
   // A foreign-currency tap is the original amount, not what Cal will actually charge —
   // say so on the row so it's obvious why the statement won't match it later.
   if (currency !== "ILS") description = `${description} (${currency} ${amount})`;
+  description = description.slice(0, MAX_DESC);
 
   const { data: ins, error } = await sb.from("expenses").insert({
     user_id: tok.user_id, amount, category, description,
@@ -135,8 +156,6 @@ Deno.serve(async (req) => {
     merchant: rawMerchant || null, merchant_key: key || null,
   }).select("id").single();
   if (error) return json({ error: error.message }, 500);
-
-  await sb.rpc("bump_token_use", { p_id: tok.id });
 
   // Returned so the Shortcut can show it in its completion notification.
   return json({
