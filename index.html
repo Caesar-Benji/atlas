@@ -101,9 +101,9 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-col.right .tile:nth-child(1){animation-delay:.07s}
 .hub-col.right .tile:nth-child(2){animation-delay:.12s}
 .hub-col.right .tile:nth-child(3){animation-delay:.17s}
-.hub-figure{position:relative;display:flex;align-items:center;justify-content:center;width:clamp(240px,26vw,320px)}
-.hub-ring{position:absolute;width:clamp(230px,25vw,300px);aspect-ratio:1;border-radius:50%;background:var(--surface2);border:1px solid var(--border);box-shadow:0 0 0 10px var(--bg),0 0 0 11px var(--border)}
-.hub-figure img{position:relative;height:clamp(290px,44vh,420px);object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn .85s ease both}
+.hub-figure{--figh:clamp(330px,56vh,520px);position:relative;display:flex;align-items:center;justify-content:center;width:calc(var(--figh) * .5)}
+.hub-ring{position:absolute;top:50%;left:50%;transform:translate(-50%,calc(-50% - var(--figh) * .09));width:calc(var(--figh) * .46);aspect-ratio:1;border-radius:50%;background:var(--surface2);border:1px solid var(--border);box-shadow:0 0 0 8px var(--bg),0 0 0 9px var(--border)}
+.hub-figure img{position:relative;height:var(--figh);object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn .85s ease both}
 .hub-foot{display:flex;justify-content:center;font-size:10px;color:var(--muted)}
 @keyframes tileIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes figIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -189,8 +189,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
   .hub-col{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:16px 20px}
   .hub-col.left,.hub-col.right{align-items:flex-start;justify-self:center}
   .hub-col .tile{margin:0!important}
-  .hub-figure img{height:clamp(170px,28vh,235px)}
-  .hub-ring{width:clamp(145px,42vw,195px)}
+  .hub-figure{--figh:clamp(210px,32vh,290px)}
   .tile .ic{width:56px;height:56px;border-radius:17px}
   .cal-grid{gap:2px}
   .cal-day{border-radius:7px}
