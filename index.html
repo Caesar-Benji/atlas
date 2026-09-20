@@ -292,6 +292,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .wo-icos svg+svg{margin-left:-7px}
 .wo-acts{display:flex;gap:2px;flex:none}
 .pr-ico{width:34px;height:34px;flex:none;color:var(--accent2)}
+.tap-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px 1px 5px;margin-left:6px;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px}
 
 @media(max-width:560px){
   .ex-card{grid-template-columns:46px 1fr auto;gap:9px;padding:10px}
@@ -389,7 +390,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v27</span></div>
+    <div class="hub-foot"><span id="ver">v28</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -441,7 +442,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v27');
+console.log('Atlas v28');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -812,6 +813,8 @@ const ICO = {
   edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg>',
   redo:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg>',
   play:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4l13 8-13 8z"/></svg>',
+  tap:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M9 11V6a2 2 0 014 0v7M13 9a2 2 0 014 0v5a6 6 0 01-6 6h-1a6 6 0 01-6-6v-1a2 2 0 014 0"/></svg>',
+  forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M10 11v6M14 11v6M5 6l1 14h12l1-14"/></svg>',
   pause:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>',
 };
 const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 1});
@@ -1349,8 +1352,9 @@ views.money = async function(){
       `<div style="font-size:12.5px;margin-top:6px;color:${over ? 'var(--red)' : 'var(--muted)'}">On pace for ${NIS(window._projSpend)} by month end${over ? ' — ' + NIS(window._projSpend - budget) + ' over budget' : ''}</div>`);
   }
   document.getElementById('exList').innerHTML = data.length ? data.map(x => `
-    <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span></div>
-    <div class="sub">${esc(x.description) || '—'} · ${fmtDate(x.spent_at)}</div></div>
+    <div class="row"><div class="grow"><div class="title">${NIS(x.amount)} <span class="pill indigo" style="margin-left:6px">${esc(x.category)}</span>${x.source === 'applepay' ? ' <span class="tap-tag" title="Captured from an Apple Pay tap">' + ICO.tap + 'tap</span>' : ''}</div>
+    <div class="sub">${esc(x.description) || '—'} · ${fmtDate(x.spent_at)}${x.source === 'applepay' && x.merchant && x.merchant !== x.description ? ' · <span style="opacity:.75">' + esc(x.merchant) + '</span>' : ''}</div></div>
+    ${x.merchant_key ? `<button class="icon-btn" type="button" title="Forget the category rule for this merchant" onclick="forgetMerchant('${esc(x.merchant_key)}')">${ICO.forget}</button>` : ''}
     <button class="icon-btn" title="Edit expense" onclick="editExpense('${x.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
     <button class="icon-btn danger" title="Delete expense" onclick="delRow('expenses','${x.id}','money')">✕</button></div>`).join('') : '<div class="empty">No expenses this month</div>';
   const byCat = {};
@@ -1454,7 +1458,7 @@ async function importParsed(btn){
     const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
       ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description} : null).filter(Boolean);
     if(!rows.length) return toast('Nothing selected');
-    const {error} = await sb.from('expenses').insert(rows);
+    const {error} = await sb.from('expenses').insert(rows.map(r => ({...r, source: 'pdf'})));
     if(error) return err(error);
     // jump to the statement's month so the imported expenses are visible
     const m = rows[rows.length - 1].spent_at.slice(0, 7);
@@ -1491,12 +1495,45 @@ async function addExpense(){
   if(!exDate.value) return toast('Pick a date');
   const row = {amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value};
   const ed = window._editEx;
+  // snapshot before the write: the learning check asks "what did he change?", so it must
+  // compare against the pre-update values, not a row the update may already have touched
+  const was = ed ? {category: ed.category, description: ed.description, merchant_key: ed.merchant_key} : null;
   const {error} = ed
     ? await sb.from('expenses').update(row).eq('id', ed.id)
     : await sb.from('expenses').insert(row);
   if(error) return err(error);
-  if(ed){ window._editEx = null; toast('Expense updated'); } else toast('Expense added');
+  let learned = '';
+  if(was && was.merchant_key) learned = await learnMerchant(was.merchant_key, row.category, row.description, was);
+  if(ed){ window._editEx = null; toast('Expense updated' + learned); } else toast('Expense added');
   views.money();
+}
+/* An Apple Pay tap arrives with a raw terminal string ("SHUFERSAL DEAL 1234") and no
+   category. The first time Benji fixes one, remember the choice against the normalised
+   merchant key so every later tap at that shop lands already named and categorised.
+   Same normalisation as the apple-pay Edge Function — keep the two in step. */
+function merchantKey(raw){
+  return (raw || '').normalize('NFKC').replace(/[^\p{L} ]+/gu, ' ')
+    .replace(/\s+/g, ' ').trim().toUpperCase().slice(0, 80);
+}
+async function learnMerchant(key, category, description, before){
+  if(!key) return '';
+  const changed = category !== before.category || (description || '') !== (before.description || '');
+  if(!changed) return '';
+  const {error} = await sb.from('merchant_rules')
+    .upsert({merchant_key: key, category, description: description || null, updated_at: new Date().toISOString()},
+            {onConflict: 'user_id,merchant_key'});
+  if(error){ console.warn('rule not saved', error); return ''; }
+  // apply it to any other taps from the same shop that are still sitting uncategorised
+  await sb.from('expenses')
+    .update({category, description: description || null})
+    .eq('merchant_key', key).eq('source', 'applepay').eq('category', 'Other');
+  return ' — future ' + (description || key) + ' taps will file as ' + category;
+}
+/* Merchant rules are learned, so they need a way to be unlearned. */
+async function forgetMerchant(key){
+  if(!confirm('Forget the rule for this merchant? Future taps there will come in as Other again.')) return;
+  const {error} = await sb.from('merchant_rules').delete().eq('merchant_key', key);
+  error ? err(error) : (toast('Rule forgotten'), views.money());
 }
 function editExpense(id){
   const x = (window._monthExpenses || []).find(x => x.id === id); if(!x) return;

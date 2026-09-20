@@ -1,0 +1,135 @@
+// Atlas — Apple Pay tap receiver.
+//
+// The iOS Shortcuts "Transaction" automation fires the moment a contactless tap
+// completes and POSTs {amount, merchant, card, date, currency} here. We normalise the
+// merchant string, apply whatever category/name Benji taught us for it, and insert the
+// expense. verify_jwt is off because Shortcuts can't do a Supabase auth handshake —
+// auth is instead a bearer token whose SHA-256 lives in public.webhook_tokens, so it
+// can be revoked without redeploying.
+
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-atlas-token, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+
+async function sha256(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// "SHUFERSAL DEAL 1234" and "shufersal deal  #77" both collapse to "SHUFERSAL DEAL",
+// so one taught rule covers every branch of the same shop. Hebrew is preserved.
+// NOTE: index.html has an identical merchantKey() — change both together.
+function merchantKey(raw: string): string {
+  return raw
+    .normalize("NFKC")
+    .replace(/[^\p{L} ]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase()
+    .slice(0, 80);
+}
+
+// Shortcuts sends the amount in the device locale; be liberal about what we accept.
+function parseAmount(v: unknown): number | null {
+  if (typeof v === "number") return isFinite(v) ? Math.abs(v) : null;
+  if (typeof v !== "string") return null;
+  let s = v.replace(/[^\d.,-]/g, "").trim();
+  if (s.includes(",") && s.includes(".")) {
+    s = s.lastIndexOf(",") > s.lastIndexOf(".")
+      ? s.replace(/\./g, "").replace(",", ".")
+      : s.replace(/,/g, "");
+  } else if (s.includes(",")) {
+    s = /,\d{1,2}$/.test(s) ? s.replace(",", ".") : s.replace(/,/g, "");
+  }
+  const n = Math.abs(parseFloat(s));
+  return isFinite(n) ? n : null;
+}
+
+// Accept an ISO date, a plain YYYY-MM-DD, or nothing (then: today in Israel).
+function parseDate(v: unknown): string {
+  const israelToday = () => new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
+  if (typeof v !== "string" || !v.trim()) return israelToday();
+  const m = v.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  const d = new Date(v);
+  return isNaN(+d) ? israelToday() : d.toISOString().slice(0, 10);
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return json({ error: "POST only" }, 405);
+
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "").trim() ||
+    (req.headers.get("x-atlas-token") ?? "").trim();
+  if (!token) return json({ error: "missing token" }, 401);
+
+  const sb = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } },
+  );
+
+  const { data: tok } = await sb
+    .from("webhook_tokens")
+    .select("id,user_id,revoked")
+    .eq("token_sha256", await sha256(token))
+    .maybeSingle();
+  if (!tok || tok.revoked) return json({ error: "bad token" }, 401);
+
+  let body: Record<string, unknown>;
+  try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
+
+  const amount = parseAmount(body.amount);
+  if (amount === null || amount === 0) return json({ error: "bad amount", got: body.amount }, 400);
+
+  const rawMerchant = String(body.merchant ?? "").trim();
+  const key = merchantKey(rawMerchant);
+  const currency = (String(body.currency ?? "ILS").trim().toUpperCase()) || "ILS";
+  const spent_at = parseDate(body.date);
+  const card = String(body.card ?? "").trim();
+
+  // What did Benji last call this merchant?
+  let category = "Other";
+  let description = rawMerchant || card || "Apple Pay";
+  if (key) {
+    const { data: rule } = await sb
+      .from("merchant_rules")
+      .select("category,description")
+      .eq("user_id", tok.user_id).eq("merchant_key", key)
+      .maybeSingle();
+    if (rule) {
+      category = rule.category ?? "Other";
+      if (rule.description) description = rule.description;
+    }
+  }
+  // A foreign-currency tap is the original amount, not what Cal will actually charge —
+  // say so on the row so it's obvious why the statement won't match it later.
+  if (currency !== "ILS") description = `${description} (${currency} ${amount})`;
+
+  const { data: ins, error } = await sb.from("expenses").insert({
+    user_id: tok.user_id, amount, category, description,
+    spent_at, source: "applepay",
+    merchant: rawMerchant || null, merchant_key: key || null,
+  }).select("id").single();
+  if (error) return json({ error: error.message }, 500);
+
+  await sb.rpc("bump_token_use", { p_id: tok.id });
+
+  // Returned so the Shortcut can show it in its completion notification.
+  return json({
+    ok: true, id: ins.id, amount, currency, category, description,
+    learned: category !== "Other",
+    message: `${description} · ${currency === "ILS" ? "₪" : currency + " "}${amount} · ${category}`,
+  });
+});
