@@ -91,7 +91,19 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ error: "bad json" }, 400); }
 
   const amount = parseAmount(body.amount);
-  if (amount === null || amount === 0) return json({ error: "bad amount", got: body.amount }, 400);
+  if (amount === null || amount === 0) {
+    // Surfaced straight into the Shortcut's notification: when the magic variables aren't
+    // mapped (or a manual run supplies none) every field arrives empty, and guessing at
+    // that from a bare "bad amount" is miserable on a phone.
+    const seen = Object.keys(body).length
+      ? Object.entries(body).map(([k, v]) => `${k}=${v === "" ? "(empty)" : JSON.stringify(v)}`).join("  ")
+      : "(no fields at all)";
+    return json({
+      error: "no usable amount",
+      message: `Shortcut sent: ${seen}`,
+      hint: "Open 'Get contents of URL' > Request Body and set each field to the matching Transaction variable.",
+    }, 400);
+  }
 
   const rawMerchant = String(body.merchant ?? "").trim();
   const key = merchantKey(rawMerchant);
