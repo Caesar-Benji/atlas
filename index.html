@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas — Your life, organized</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233a4132'/%3E%3Cstop offset='1' stop-color='%2355604a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2323221f'/%3E%3Cstop offset='1' stop-color='%234a4741'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
@@ -12,11 +12,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root{
-  --bg:#c6cabb; --surface:#d2d5c8; --surface2:#bec3b2; --border:#a8ae9a;
-  --text:#262b21; --muted:#6b7160; --accent:#3a4132; --accent2:#55604a;
-  --grad:linear-gradient(135deg,#3a4132,#4d5643);
-  --red:#8f3d32; --amber:#7d611f; --green:#3f5c3a;
-  --radius:12px; --shadow:0 2px 10px rgba(38,43,33,.08);
+  /* e-book / paper theme: near-white page, ink-black type, grey hairlines */
+  --bg:#f3f2ef; --surface:#fbfaf8; --surface2:#eceae6; --border:#dcd9d3;
+  --text:#1a1a18; --muted:#78756e; --accent:#23221f; --accent2:#4a4741;
+  --grad:linear-gradient(135deg,#2b2a27,#45423c);
+  --on-ink:#faf9f7;
+  --red:#9b463a; --amber:#8a6b22; --green:#4a6a44;
+  --radius:12px; --shadow:0 1px 2px rgba(26,26,24,.06);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -24,7 +26,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 button{font-family:inherit;cursor:pointer}
 input,select,textarea{font-family:inherit;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-::placeholder{color:#878d7b}
+::placeholder{color:#a5a29b}
 h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .hidden{display:none!important}
 
@@ -35,7 +37,7 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .auth-card h1{font-size:26px;font-weight:700;letter-spacing:-.03em}
 .auth-card .tag{color:var(--muted);font-size:13px;margin:6px 0 24px}
 .auth-card form{display:flex;flex-direction:column;gap:12px;text-align:left}
-.btn{background:var(--grad);color:#e9ebe1;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:opacity .15s,transform .1s}
+.btn{background:var(--grad);color:var(--on-ink);border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;transition:opacity .15s,transform .1s}
 .btn:hover{opacity:.9}.btn:active{transform:scale(.98)}
 .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:500}
 .btn-ghost:hover{color:var(--text);border-color:var(--accent)}
@@ -52,7 +54,7 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 /* the wrapper must paint --surface itself: the heroIn/heroFloat animations make it an
    isolated stacking context, so the multiply below has no backdrop to blend with otherwise */
 .hero-anim{position:relative;width:119px;height:200px;margin:0 auto 18px;background:var(--surface);animation:heroIn .9s ease both}
-.hero-anim video,.hero-anim img{display:block;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;pointer-events:none}
+.hero-anim video,.hero-anim img{display:block;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;pointer-events:none;filter:grayscale(1) contrast(1.08)}
 .hero-anim .hero-still{display:none}
 .hero-anim.settled{animation:heroFloat 7s ease-in-out infinite}
 @keyframes heroIn{from{opacity:0}to{opacity:1}}
@@ -71,10 +73,12 @@ aside{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid
 .brand{display:flex;align-items:center;gap:10px;padding:0 10px 22px;font-weight:700;font-size:18px;letter-spacing:-.02em}
 .nav-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--muted);border-radius:10px;font-size:14px;font-weight:500;text-align:left;transition:.15s}
 .nav-btn:hover{color:var(--text);background:var(--surface2)}
-.nav-btn.active{color:#e9ebe1;background:var(--grad);border:1px solid var(--accent)}
+.nav-btn.active{color:var(--on-ink);background:var(--grad);border:1px solid var(--accent)}
 .nav-btn svg{width:18px;height:18px;flex-shrink:0}
 aside .spacer{flex:1}
 main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
+.page-head img{filter:grayscale(1) contrast(1.06) brightness(1.02)}
+.brand img,.auth-card>img{filter:grayscale(1) contrast(1.06)}
 .page-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:22px;gap:18px;flex-wrap:wrap}
 
 /* ---------- Cards / grids ---------- */
@@ -95,10 +99,10 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .icon-btn:hover{color:var(--text);background:var(--border)}
 .icon-btn.danger:hover{color:var(--red)}
 .pill{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;white-space:nowrap}
-.pill.red{background:rgba(143,61,50,.14);color:var(--red)}
-.pill.amber{background:rgba(125,97,31,.14);color:var(--amber)}
-.pill.green{background:rgba(63,92,58,.14);color:var(--green)}
-.pill.indigo{background:rgba(58,65,50,.12);color:var(--accent)}
+.pill.red{background:rgba(155,70,58,.12);color:var(--red)}
+.pill.amber{background:rgba(138,107,34,.13);color:var(--amber)}
+.pill.green{background:rgba(74,106,68,.12);color:var(--green)}
+.pill.indigo{background:rgba(35,34,31,.08);color:var(--accent)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
 .empty{color:var(--muted);font-size:13.5px;padding:18px;text-align:center;border:1px dashed var(--border);border-radius:11px}
 .progress-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
@@ -107,7 +111,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:11px;font-size:14px;box-shadow:var(--shadow);transition:transform .25s;z-index:50}
 #toast.show{transform:translateX(-50%) translateY(0)}
 .checkbox{width:19px;height:19px;border-radius:6px;border:2px solid var(--border);background:transparent;flex-shrink:0;display:flex;align-items:center;justify-content:center;padding:0;position:relative}
-.checkbox.checked{background:var(--grad);border-color:transparent;color:#e9ebe1}
+.checkbox.checked{background:var(--grad);border-color:transparent;color:var(--on-ink)}
 .btn:disabled,.btn-ghost:disabled{opacity:.55;pointer-events:none}
 
 .lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
@@ -115,7 +119,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .ex-grid input{min-width:0}
 .ex-grid .lbl{margin-bottom:0}
 .sub-logo{width:28px;height:28px;border-radius:7px;flex-shrink:0;object-fit:contain;background:var(--surface)}
-.sub-fallback{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:var(--grad);color:#e9ebe1;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.sub-fallback{width:28px;height:28px;border-radius:7px;flex-shrink:0;background:var(--grad);color:var(--on-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 
 /* calendar */
 .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
@@ -124,11 +128,11 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
 .cal-dow{font-size:10px;font-weight:600;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase}
 .cal-day{aspect-ratio:1;min-height:40px;padding:2px;display:flex;align-items:center;justify-content:center;position:relative;border-radius:8px;font-size:clamp(11px,3.1vw,13px);line-height:1;cursor:pointer;border:1px solid transparent}
 .cal-day:hover{background:var(--surface2)}
-.cal-day.other{color:#9aa08c}
+.cal-day.other{color:#b8b5ae}
 .cal-day.today{border-color:var(--accent)}
-.cal-day.selected{background:var(--grad);color:#e9ebe1}
+.cal-day.selected{background:var(--grad);color:var(--on-ink)}
 .cal-dot{position:absolute;bottom:4px;width:4px;height:4px;border-radius:99px;background:var(--accent)}
-.cal-day.selected .cal-dot{background:#e9ebe1}
+.cal-day.selected .cal-dot{background:var(--on-ink)}
 
 /* mobile */
 @media(max-width:760px){
@@ -175,7 +179,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     </div>
     <svg class="logo" style="display:none" width="56" height="56" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#3a4132"/><stop offset="1" stop-color="#55604a"/>
+        <stop offset="0" stop-color="#23221f"/><stop offset="1" stop-color="#4a4741"/>
       </linearGradient></defs>
       <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="3.5" stroke-linecap="round"/>
     </svg>
@@ -208,7 +212,7 @@ main{flex:1;padding:32px 36px 90px;max-width:1060px;margin:0 auto;width:100%}
     <button class="nav-btn" data-tab="chores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg><span>Chores</span></button>
     <div class="spacer"></div>
     <button class="nav-btn" id="signOutBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Sign out</span></button>
-    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v19</div>
+    <div id="ver" style="font-size:10px;color:var(--muted);text-align:center;padding-top:6px">v20</div>
   </aside>
   <main id="main"></main>
 </div>
@@ -243,7 +247,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v19');
+console.log('Atlas v20');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -265,8 +269,8 @@ function heroFallback(){
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
-Chart.defaults.color = '#6b7160';
-Chart.defaults.borderColor = '#aeb4a1';
+Chart.defaults.color = '#78756e';
+Chart.defaults.borderColor = '#e3e0da';
 Chart.defaults.font.family = 'Space Grotesk';
 
 /* ================= AUTH ================= */
@@ -684,7 +688,7 @@ async function drawGymChart(){
   const byDate = {};
   sets.forEach(s => { const d = dateOf[s.workout_id]; if(d) byDate[d] = Math.max(byDate[d] || 0, +s.weight_kg); });
   const labels = Object.keys(byDate).sort();
-  mkChart('gymChart', {type: 'line', data: {labels: labels.map(fmtDate), datasets: [{label: 'Max weight (kg)', data: labels.map(d => byDate[d]), borderColor: '#3a4132', backgroundColor: 'rgba(58,65,50,.12)', fill: true, tension: .35, pointBackgroundColor: '#55604a'}]},
+  mkChart('gymChart', {type: 'line', data: {labels: labels.map(fmtDate), datasets: [{label: 'Max weight (kg)', data: labels.map(d => byDate[d]), borderColor: '#23221f', backgroundColor: 'rgba(35,34,31,.09)', fill: true, tension: .35, pointBackgroundColor: '#4a4741'}]},
     options: {maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: false}}}});
 }
 
@@ -808,7 +812,7 @@ views.money = async function(){
   data.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + +x.amount);
   const cats = Object.keys(byCat);
   mkChart('catChart', {type: 'doughnut', data: {labels: cats, datasets: [{data: cats.map(c => byCat[c]),
-    backgroundColor: ['#3a4132','#55604a','#7d611f','#8f3d32','#6b7160','#3f5c3a','#8a7a56','#4a5568','#9aa08c'], borderWidth: 0}]},
+    backgroundColor: ['#1f1e1c','#7d7a73','#3a3835','#9d9a92','#52504b','#b3b0a8','#6b6862','#c6c3bb','#848179'], borderWidth: 0}]},
     options: {maintainAspectRatio: false, cutout: '62%', plugins: {legend: {position: 'bottom'}}}});
 };
 /* ---- PDF statement import ---- */
@@ -924,15 +928,15 @@ function drawBurnChart(rows, budget, month){
   const isCur = todayStr().slice(0,7) === month;
   const lastDay = isCur ? +todayStr().slice(8,10) : dim;
   const datasets = [{label: 'Spent so far', data: cum.map((v,i) => i < lastDay ? v : null),
-    borderColor: '#3a4132', backgroundColor: 'rgba(58,65,50,.12)', fill: true, tension: .25, pointRadius: 0, borderWidth: 2}];
+    borderColor: '#23221f', backgroundColor: 'rgba(35,34,31,.09)', fill: true, tension: .25, pointRadius: 0, borderWidth: 2}];
   if(isCur && lastDay >= 2 && lastDay < dim){
     const rate = cum[lastDay-1] / lastDay;
     datasets.push({label: 'Projected at current pace', data: Array.from({length: dim}, (_,i) => i < lastDay-1 ? null : +(cum[lastDay-1] + rate*(i-lastDay+1)).toFixed(0)),
-      borderColor: '#8f3d32', borderDash: [3,4], pointRadius: 0, borderWidth: 1.5, fill: false});
+      borderColor: '#9b463a', borderDash: [3,4], pointRadius: 0, borderWidth: 1.5, fill: false});
     window._projSpend = cum[lastDay-1] + rate*(dim-lastDay);
   } else window._projSpend = null;
   if(budget > 0) datasets.push({label: 'Ideal pace to budget', data: Array.from({length: dim}, (_,i) => +(budget*(i+1)/dim).toFixed(0)),
-    borderColor: '#8a7a56', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false});
+    borderColor: '#8a6b22', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false});
   mkChart('burnChart', {type: 'line', data: {labels: Array.from({length: dim}, (_,i) => i+1), datasets},
     options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
       plugins: {legend: {labels: {boxWidth: 18}}}, scales: {y: {beginAtZero: true}}}});
@@ -1380,7 +1384,7 @@ function drawMeterCharts(){
     if(s.length < 2) return;
     mkChart(M.chart, {
       type: 'bar',
-      data: {labels: s.map(r => fmtDate(r.read_on)), datasets: [{label: M.unit, data: s.map(r => r.used), backgroundColor: '#55604a', borderRadius: 5}]},
+      data: {labels: s.map(r => fmtDate(r.read_on)), datasets: [{label: M.unit, data: s.map(r => r.used), backgroundColor: '#4a4741', borderRadius: 5}]},
       options: {maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {callbacks: {
         label: c => `${fmtNum(c.parsed.y)} ${M.unit} over ${s[c.dataIndex].days}d · ${fmtNum(s[c.dataIndex].perDay)}/day`}}},
         scales: {y: {beginAtZero: true}}}
