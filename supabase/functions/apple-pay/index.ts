@@ -58,14 +58,29 @@ function parseAmount(v: unknown): number | null {
   return isFinite(n) ? n : null;
 }
 
+// Calendar date in Israel for an instant — DST-aware, so a 23:30 tap in January is
+// still today (a fixed +3h put it on tomorrow for half the year).
+const israelDate = (d: Date) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+
 // Accept an ISO date, a plain YYYY-MM-DD, or nothing (then: today in Israel).
 function parseDate(v: unknown): string {
-  const israelToday = () => new Date(Date.now() + 3 * 3600_000).toISOString().slice(0, 10);
-  if (typeof v !== "string" || !v.trim()) return israelToday();
-  const m = v.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  const d = new Date(v);
-  return isNaN(+d) ? israelToday() : d.toISOString().slice(0, 10);
+  if (typeof v !== "string" || !v.trim()) return israelDate(new Date());
+  // a bare date, or a local timestamp with no zone, is already in Benji's calendar
+  const m = v.match(/^\s*(\d{4})-(\d{2})-(\d{2})(?![T\d])|^\s*(\d{4})-(\d{2})-(\d{2})T[\d:.]+\s*$/);
+  if (m) return m[1] ? `${m[1]}-${m[2]}-${m[3]}` : `${m[4]}-${m[5]}-${m[6]}`;
+  const d = new Date(v);                       // anything with a zone (…Z, +02:00) is an instant
+  return isNaN(+d) ? israelDate(new Date()) : israelDate(d);
+}
+
+// Shortcuts may hand over the symbol or a local code rather than ISO 4217.
+function normCurrency(v: unknown): string {
+  const c = clip(v, 8).toUpperCase().replace(/\s+/g, "");
+  if (!c || c === "₪" || c === "NIS" || c === "ILS" || c === "שח" || c === 'ש"ח' || c === "IL") return "ILS";
+  if (c === "$" || c === "US$") return "USD";
+  if (c === "€") return "EUR";
+  if (c === "£") return "GBP";
+  return c;
 }
 
 const clip = (v: unknown, n: number) => String(v ?? "").trim().slice(0, n);
@@ -127,9 +142,23 @@ Deno.serve(async (req) => {
 
   const rawMerchant = clip(body.merchant, MAX_MERCHANT);
   const key = merchantKey(rawMerchant);
-  const currency = clip(body.currency, 8).toUpperCase() || "ILS";
+  const currency = normCurrency(body.currency);
   const spent_at = parseDate(body.date);
   const card = clip(body.card, 80);
+
+  // The Transaction automation is known to fire twice for one tap on some cards. The same
+  // merchant and amount within two minutes is the same tap — acknowledge it, insert nothing.
+  {
+    const since = new Date(Date.now() - 2 * 60_000).toISOString();
+    let q = sb.from("expenses").select("id").eq("user_id", tok.user_id).eq("source", "applepay")
+      .eq("amount", amount).gte("created_at", since).limit(1);
+    q = key ? q.eq("merchant_key", key) : q.is("merchant_key", null);
+    const { data: dup } = await q;
+    if (dup && dup.length) {
+      return json({ ok: true, id: dup[0].id, duplicate: true, amount, currency,
+        message: `Already logged: ${rawMerchant || "Apple Pay"} · ${amount}` });
+    }
+  }
 
   // What did Benji last call this merchant?
   let category = "Other";

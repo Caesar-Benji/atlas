@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas — Your life, organized</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2323221f'/%3E%3Cstop offset='1' stop-color='%234a4741'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Atlas">
+<meta name="theme-color" content="#f3f2ef">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4"></script>
@@ -43,6 +50,8 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 .btn-ghost:hover{color:var(--text);border-color:var(--accent)}
 .auth-switch{margin-top:18px;font-size:13px;color:var(--muted)}
 .auth-switch a{color:var(--accent2);cursor:pointer;text-decoration:none;font-weight:600}
+.linkish{background:none;border:none;padding:0;font:inherit;color:var(--accent2);font-weight:600;cursor:pointer}
+.linkish:hover{text-decoration:underline}
 .auth-msg{font-size:13px;margin-top:12px;min-height:18px}
 .auth-msg.err{color:var(--red)}.auth-msg.ok{color:var(--green)}
 
@@ -70,7 +79,7 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 /* ---------- Layout ---------- */
 #app{min-height:100vh;position:relative;z-index:1}
 main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
-.page-head img{filter:grayscale(1) contrast(1.06) brightness(1.02)}
+.page-head img{height:110px;filter:grayscale(1) contrast(1.06) brightness(1.02)}
 .auth-card>img{filter:grayscale(1) contrast(1.06)}
 .page-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:22px;gap:18px;flex-wrap:wrap}
 
@@ -127,8 +136,10 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 
 /* ---------- Cards / grids ---------- */
 .grid{display:grid;gap:16px}
-.grid.cols3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
-.grid.cols2{grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+/* min(...,100%) so a column never exceeds the container on a narrow phone (the old 13px overflow) */
+.grid.cols3{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}
+.grid.cols4{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
+.grid.cols2{grid-template-columns:repeat(auto-fit,minmax(min(310px,100%),1fr))}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
 .card h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
 .stat{font-size:28px;font-weight:700;letter-spacing:-.02em}
@@ -146,8 +157,8 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .pill.red{background:rgba(155,70,58,.12);color:var(--red)}
 .pill.amber{background:rgba(138,107,34,.13);color:var(--amber)}
 .pill.green{background:rgba(74,106,68,.12);color:var(--green)}
-.pill.indigo{background:rgba(35,34,31,.08);color:var(--accent)}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.pill.grey{background:rgba(35,34,31,.08);color:var(--accent)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:10px;margin-bottom:12px}
 .empty{color:var(--muted);font-size:13.5px;padding:18px;text-align:center;border:1px dashed var(--border);border-radius:11px}
 .progress-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .progress-fill{height:100%;background:var(--grad);border-radius:99px;transition:width .3s}
@@ -212,6 +223,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
   .row .grow{flex:1 1 140px}
   .btn-ghost{padding:7px 11px}
   .icon-btn{padding:13px;margin:-7px}
+  .wo-acts,.row.ex{gap:14px}
   .checkbox::after{content:'';position:absolute;inset:-11px}
   .card{padding:16px}
   .chart-box{height:200px}
@@ -235,6 +247,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .ex-name{font-weight:600;font-size:14.5px;line-height:1.2}
 .ex-last{font-size:11.5px;color:var(--muted);margin-top:3px}
 .ex-steps{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ex-steps.cardio{grid-template-columns:1fr 1fr}
 .stepper{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 5px 5px;text-align:center}
 .stepper .lbl{margin-bottom:3px;font-size:10px}
 .stepper .ctl{display:flex;align-items:center;gap:1px}
@@ -243,6 +256,9 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .stepper button:active{transform:scale(.9)}
 .stepper input{border:none;background:transparent;text-align:center;font-size:16px;font-weight:700;padding:4px 0;width:100%;border-radius:0}
 .stepper input:focus{border:none;box-shadow:inset 0 -2px 0 var(--accent)}
+/* Chromium reserves room for the number spinner even when hidden, clipping 2-digit values on phones */
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.stepper input{-moz-appearance:textfield;appearance:textfield}
 .ex-vol{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
 
 .rest{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600;color:var(--muted)}
@@ -301,10 +317,11 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
   .sheet-bg{padding:0;align-items:flex-end}
   .sheet{max-width:none;border-radius:18px 18px 0 0;max-height:92vh}
   /* three steppers share ~320px: sets/reps are 1-2 digits, kg can be "102.5" — give kg the room */
-  .ex-steps{gap:6px;grid-template-columns:.85fr .85fr 1.3fr}
+  .ex-steps{gap:6px;grid-template-columns:1fr 1fr 1.25fr}
+  .ex-steps.cardio{grid-template-columns:1fr 1fr}
   .stepper{padding:5px 2px 4px}
   .stepper .ctl{gap:0}
-  .stepper button{width:28px;height:42px;font-size:20px;border-radius:8px}
+  .stepper button{width:26px;height:42px;font-size:20px;border-radius:8px}
   .stepper input{font-size:15px;padding:2px 0;min-width:0}
   .wo-row{grid-template-columns:auto minmax(0,1fr)}
   .wo-acts{grid-column:1/-1;justify-content:flex-end}
@@ -319,7 +336,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 /* below ~345px three steppers can't share a row without clipping — kg drops to its own */
 @media(max-width:345px){
   .ex-steps{grid-template-columns:1fr 1fr}
-  .ex-steps .stepper:last-child{grid-column:1/-1}
+  .ex-steps:not(.cardio) .stepper:last-child{grid-column:1/-1}
 }
 
 /* ================= MONEY ================= */
@@ -329,12 +346,13 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .scope-pick input{width:auto;padding:6px 10px;font-size:12.5px}
 .scope-pick input:disabled{opacity:.45}
 
-.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
-.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
-.stat .lbl{margin-bottom:6px}
-.stat .v{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
-.stat .s{font-size:12px;color:var(--muted);margin-top:5px;min-height:16px}
-.stat .s.warn{color:var(--red)}.stat .s.good{color:var(--green)}
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;margin-bottom:16px}
+/* .mstat, not .stat: .stat is the bare big number used on Dashboard/Rent and must stay unboxed */
+.mstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.mstat .lbl{margin-bottom:6px}
+.mstat .v{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.mstat .s{font-size:12px;color:var(--muted);margin-top:5px;min-height:16px}
+.mstat .s.warn{color:var(--red)}.mstat .s.good{color:var(--green)}
 
 .insight{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;padding:12px 0}
 .insight+.insight{border-top:1px solid var(--border)}
@@ -363,7 +381,7 @@ bdi{unicode-bidi:isolate}
 
 @media(max-width:560px){
   .stat-row{grid-template-columns:1fr 1fr;gap:10px}
-  .stat{padding:12px}.stat .v{font-size:19px}
+  .mstat{padding:12px}.mstat .v{font-size:19px}
   .scope-pick{width:100%}.scope-pick input{flex:1}
   .mer-ico{width:34px;height:34px}.mer-ico svg{width:20px;height:20px}
   .row.oth{flex-wrap:wrap}.row.oth select{max-width:none;width:100%}
@@ -398,9 +416,14 @@ bdi{unicode-bidi:isolate}
       <input type="password" id="authPassword" placeholder="Password" required minlength="6" autocomplete="current-password">
       <button class="btn" type="submit" id="authSubmit">Sign in</button>
     </form>
+    <form id="recoverForm" class="hidden">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:2px">Choose a new password for your account.</div>
+      <input type="password" id="newPassword" placeholder="New password" required minlength="6" autocomplete="new-password">
+      <button class="btn" type="submit">Set password</button>
+    </form>
     <div class="auth-msg" id="authMsg"></div>
-    <div class="auth-switch" id="authSwitch">No account? <a onclick="toggleAuthMode()">Sign up</a></div>
-    <div class="auth-switch" style="margin-top:8px"><a onclick="forgotPassword()">Forgot password?</a></div>
+    <div class="auth-switch" id="authSwitch">No account? <button class="linkish" type="button" onclick="toggleAuthMode()">Sign up</button></div>
+    <div class="auth-switch" id="authForgot" style="margin-top:8px"><button class="linkish" type="button" onclick="forgotPassword()">Forgot password?</button></div>
   </div>
 </div>
 
@@ -439,7 +462,7 @@ bdi{unicode-bidi:isolate}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v29</span></div>
+    <div class="hub-foot"><span id="ver">v30</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -471,10 +494,24 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const NIS = n => '₪' + Number(n).toLocaleString('en-IL', {maximumFractionDigits: 2});
 const esc = s => (s ?? '').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const todayStr = () => new Date().toLocaleDateString('en-CA');
-const fmtDate = d => new Date(d + 'T00:00').toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+// the year is shown only when it isn't the current one — 13 months of history made "21 Sep" ambiguous
+const fmtDate = d => { const x = new Date(d + 'T00:00');
+  return x.toLocaleDateString('en-GB', x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
 const fmtDT = d => new Date(d).toLocaleString('en-GB', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
 let charts = {};
-function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); const el = document.getElementById(id); if(!el) return; charts[id] = new Chart(el, cfg); }
+function mkChart(id, cfg){ if(!window.Chart) return; if(charts[id]) charts[id].destroy(); const el = document.getElementById(id); if(!el) return; charts[id] = new Chart(el, cfg); }
+/* PostgREST returns at most 1000 rows per request. Tables that are read whole (expenses,
+   workout_sets) page through in 1000s so nothing silently drops off the end. */
+async function fetchAll(mkQuery){
+  const PAGE = 1000; let from = 0, rows = [];
+  while(true){
+    const {data, error} = await mkQuery().range(from, from + PAGE - 1);
+    if(error) return {data: null, error};
+    rows = rows.concat(data || []);
+    if(!data || data.length < PAGE) return {data: rows, error: null};
+    from += PAGE;
+  }
+}
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
 function err(e){ console.error(e); toast(e && e.message || 'Something went wrong'); }
 // safety net: surface any uncaught error/rejection via the toast instead of vanishing silently
@@ -491,7 +528,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v29');
+console.log('Atlas v30');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -513,18 +550,21 @@ function heroFallback(){
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
-Chart.defaults.color = '#78756e';
-Chart.defaults.borderColor = '#e3e0da';
-Chart.defaults.font.family = 'Space Grotesk';
+if(window.Chart){
+  Chart.defaults.color = '#78756e';
+  Chart.defaults.borderColor = '#e3e0da';
+  Chart.defaults.font.family = 'Space Grotesk';
+} else console.warn('Chart.js failed to load — charts are skipped');
 
 /* ================= AUTH ================= */
 let signupMode = false;
 function toggleAuthMode(){
   signupMode = !signupMode;
   document.getElementById('authSubmit').textContent = signupMode ? 'Create account' : 'Sign in';
+  document.getElementById('authPassword').autocomplete = signupMode ? 'new-password' : 'current-password';
   document.getElementById('authSwitch').innerHTML = signupMode
-    ? 'Have an account? <a onclick="toggleAuthMode()">Sign in</a>'
-    : 'No account? <a onclick="toggleAuthMode()">Sign up</a>';
+    ? 'Have an account? <button class="linkish" type="button" onclick="toggleAuthMode()">Sign in</button>'
+    : 'No account? <button class="linkish" type="button" onclick="toggleAuthMode()">Sign up</button>';
 }
 document.getElementById('authForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -545,7 +585,31 @@ async function forgotPassword(){
   error ? err(error) : toast('Password reset email sent to ' + email);
 }
 
+/* password reset: the email link lands here with a recovery session and PASSWORD_RECOVERY fires.
+   Stay on the auth card and ask for the new password instead of dropping into the app. */
+document.getElementById('recoverForm').addEventListener('submit', e => submitGuard(e, async () => {
+  const {error} = await sb.auth.updateUser({password: document.getElementById('newPassword').value});
+  if(error) return err(error);
+  window._recovering = false;
+  ['authForm','authSwitch','authForgot'].forEach(id => document.getElementById(id).classList.remove('hidden'));
+  document.getElementById('recoverForm').classList.add('hidden');
+  toast('Password updated');
+  const {data: {session}} = await sb.auth.getSession();
+  if(session){
+    document.getElementById('authScreen').classList.add('hidden'); document.getElementById('app').classList.remove('hidden');
+    if(!window._booted){ window._booted = true; go('home'); }
+  }
+}));
 sb.auth.onAuthStateChange((ev, session) => {
+  if(ev === 'PASSWORD_RECOVERY'){
+    window._recovering = true;
+    ['authForm','authSwitch','authForgot'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.getElementById('recoverForm').classList.remove('hidden');
+    document.getElementById('authScreen').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+    return;
+  }
+  if(window._recovering) return;
   document.getElementById('authScreen').classList.toggle('hidden', !!session);
   document.getElementById('app').classList.toggle('hidden', !session);
   // only route on real sign-in — TOKEN_REFRESHED fires hourly and must not wipe forms mid-typing
@@ -595,7 +659,7 @@ function tickClock(){
   const el = document.getElementById('hubClock');
   if(el) el.textContent = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
 }
-setInterval(tickClock, 20000);
+setInterval(tickClock, 1000);
 
 /* ================= DASHBOARD ================= */
 views.dashboard = async function(){
@@ -603,8 +667,8 @@ views.dashboard = async function(){
   const main = document.getElementById('main');
   main.innerHTML = `<div class="page-head"><div><h2>Dashboard</h2>
     <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div>
-    <img src="hero-dashboard.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="grid cols3" id="dashStats"></div>
+    <img src="hero-dashboard.png" alt="" onerror="this.remove()"></div>
+    <div class="grid cols4" id="dashStats"></div>
     <div class="grid cols2" style="margin-top:16px">
       <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
       <div class="card"><h3>Chores due</h3><div class="list" id="dashChores"><div class="empty">Loading…</div></div></div>
@@ -626,7 +690,7 @@ views.dashboard = async function(){
   if(stale(seq)) return;
   const bad = [ev, ex, go_, ch, wo, wc, st].find(r => r.error);
   if(bad){
-    const retry = `<div class="empty" style="grid-column:1/-1">Couldn't load your data — ${esc(bad.error.message)}.<br>The backend may be waking up. <a style="cursor:pointer;color:var(--accent2);font-weight:600" onclick="views.dashboard()">Retry</a></div>`;
+    const retry = `<div class="empty" style="grid-column:1/-1">Couldn't load your data — ${esc(bad.error.message)}.<br>The backend may be waking up. <button class="linkish" type="button" onclick="views.dashboard()">Retry</button></div>`;
     document.getElementById('dashStats').innerHTML = retry;
     document.getElementById('dashEvents').innerHTML = document.getElementById('dashChores').innerHTML = '<div class="empty">—</div>';
     return;
@@ -662,7 +726,7 @@ views.schedule = async function(){
   const ed = window._editEv;
   const edD = ed ? new Date(ed.starts_at) : null;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Schedule</h2><img src="hero-schedule.png" alt="" style="height:110px" onerror="this.remove()"></div>
+    <div class="page-head"><h2>Schedule</h2><img src="hero-schedule.png" alt="" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit event' : 'Add event'}</h3>
       <form onsubmit="submitGuard(event, addEvent)">
       <div class="form-grid">
@@ -701,13 +765,13 @@ function renderCalendar(){
     const d = new Date(start); d.setDate(start.getDate() + i);
     const ds = d.toLocaleDateString('en-CA');
     const cls = ['cal-day', d.getMonth() !== M-1 ? 'other' : '', ds === todayStr() ? 'today' : '', ds === window._selDate ? 'selected' : ''].join(' ');
-    cells += `<div class="${cls}" title="${byDate[ds] ? byDate[ds].length + ' event(s)' : 'No events — click to plan this day'}" onclick="calPick('${ds}')">${d.getDate()}${byDate[ds] ? '<span class="cal-dot"></span>' : ''}</div>`;
+    cells += `<div class="${cls}" role="button" tabindex="0" title="${byDate[ds] ? byDate[ds].length + ' event(s)' : 'No events — click to plan this day'}" onclick="calPick('${ds}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calPick('${ds}')}">${d.getDate()}${byDate[ds] ? '<span class="cal-dot"></span>' : ''}</div>`;
   }
   document.getElementById('calCard').innerHTML = `
     <div class="cal-head">
-      <button class="btn-ghost" title="Previous month" onclick="calShift(-1)">‹</button>
+      <button class="btn-ghost" type="button" title="Previous month" aria-label="Previous month" onclick="calShift(-1)">${ICO.chevL}</button>
       <h3>${first.toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</h3>
-      <button class="btn-ghost" title="Next month" onclick="calShift(1)">›</button>
+      <button class="btn-ghost" type="button" title="Next month" aria-label="Next month" onclick="calShift(1)">${ICO.chevR}</button>
     </div>
     <div class="cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>`;
 }
@@ -729,13 +793,13 @@ function renderEvList(){
     return sel ? ds === sel : new Date(e.starts_at) >= new Date(Date.now() - 864e5);
   });
   document.getElementById('evListTitle').innerHTML = sel
-    ? `${fmtDate(sel)} <a style="cursor:pointer;color:var(--accent2);font-size:11px;margin-left:8px" onclick="calPick('${sel}')">show all upcoming</a>` : 'Upcoming';
+    ? `${fmtDate(sel)} <button class="linkish" type="button" style="font-size:11px;margin-left:8px" onclick="calPick('${sel}')">show all upcoming</button>` : 'Upcoming';
   document.getElementById('evList').innerHTML = evs.length ? evs.map(e => `
     <div class="row ${e.done?'done':''}">
-      <button class="checkbox ${e.done?'checked':''}" title="Mark done" onclick="toggleEvent('${e.id}',${!e.done})">${e.done?'✓':''}</button>
+      <button class="checkbox ${e.done?'checked':''}" title="Mark done" onclick="toggleEvent('${e.id}',${!e.done})">${e.done ? ICO.tickSm : ''}</button>
       <div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div>
-      <button class="icon-btn" title="Edit event" onclick="editEvent('${e.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
-      <button class="icon-btn danger" title="Delete event" onclick="delRow('events','${e.id}','schedule')">✕</button>
+      <button class="icon-btn" title="Edit event" onclick="editEvent('${e.id}')">${ICO.edit}</button>
+      <button class="icon-btn danger" title="Delete event" onclick="delRow('events','${e.id}','schedule')">${ICO.x}</button>
     </div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`;
 }
 async function addEvent(){
@@ -765,7 +829,8 @@ async function toggleEvent(id, done){
 async function delRow(table, id, view){
   if(!confirm('Delete this ' + table.replace(/s$/, '') + '? This cannot be undone.')) return;
   const {error} = await sb.from(table).delete().eq('id', id);
-  error ? err(error) : views[view]();
+  if(error) return err(error);
+  window._moneyKeep = true; views[view]();
 }
 
 /* ================= GYM ================= */
@@ -844,6 +909,15 @@ function exCanon(name){
   if(hit) return hit[0];
   return EX_ALIAS[n.toLowerCase()] || n;
 }
+const isCardio = name => (EX_BY_NAME[exCanon(name)] || [])[1] === 'Cardio';
+/* one-line summary of a logged row: "3×8 @ 60kg" or, for cardio, "30 min · 5 km" */
+function setLabel(s){
+  if(isCardio(s.exercise || s.ex)){
+    const min = +(s.reps ?? 0), km = +(s.weight_kg ?? s.kg ?? 0);
+    return (min ? min + ' min' : '') + (min && km ? ' · ' : '') + (km ? gnum(km) + ' km' : '') || '—';
+  }
+  return `${s.sets || 1}×${s.reps ?? 0}${+(s.weight_kg ?? s.kg) ? ' @ ' + gnum(s.weight_kg ?? s.kg) + 'kg' : ''}`;
+}
 function exIcon(name, cls){
   const e = EX_BY_NAME[exCanon(name)];
   return `<svg class="${cls||''}" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"
@@ -857,17 +931,21 @@ let gymDraft, _gymTick = null, _rest = null, _pickG = 'All', _pickQ = '';
 function draftLoad(){ try{ const d = JSON.parse(localStorage.getItem(GYM_KEY) || 'null'); return (d && Array.isArray(d.items)) ? d : null; }catch(e){ return null; } }
 function draftSave(){ try{ gymDraft ? localStorage.setItem(GYM_KEY, JSON.stringify(gymDraft)) : localStorage.removeItem(GYM_KEY); }catch(e){} }
 const ICO = {
+  x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  chevL:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  chevR:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
+  tickSm:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 7"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   tick:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
   edit:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg>',
   redo:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg>',
   play:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4l13 8-13 8z"/></svg>',
   tap:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M9 11V6a2 2 0 014 0v7M13 9a2 2 0 014 0v5a6 6 0 01-6 6h-1a6 6 0 01-6-6v-1a2 2 0 014 0"/></svg>',
-  forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M10 11v6M14 11v6M5 6l1 14h12l1-14"/></svg>',
+  forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1M4 4l16 16"/></svg>',
   pause:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>',
 };
 const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 1});
-function exSum(it){ return (+it.sets || 0) * (+it.reps || 0) * (+it.kg || 0); }
+function exSum(it){ return isCardio(it.ex) ? 0 : (+it.sets || 0) * (+it.reps || 0) * (+it.kg || 0); }
 function draftVol(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + exSum(it), 0); }
 function draftSets(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + (+it.sets || 0), 0); }
 
@@ -896,7 +974,7 @@ views.gym = async function(){
   const seq = renderStart();
   if(gymDraft === undefined) gymDraft = draftLoad();
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" style="height:110px" onerror="this.remove()"></div>
+    <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px" id="sessCard"><div class="empty">Loading…</div></div>
     <div class="card" style="margin-bottom:16px"><h3>This week — <span id="weekCount" style="color:var(--text)"></span></h3><div id="weekStrip"></div></div>
     <div class="grid cols2" style="margin-bottom:16px">
@@ -911,8 +989,8 @@ views.gym = async function(){
   renderSession();
   const [wos, sets, allWos] = await Promise.all([
     sb.from('workouts').select('*').order('workout_date', {ascending: false}).limit(20),
-    sb.from('workout_sets').select('*').order('created_at'),
-    sb.from('workouts').select('id,workout_date'),
+    fetchAll(() => sb.from('workout_sets').select('*').order('created_at')),
+    fetchAll(() => sb.from('workouts').select('id,workout_date').order('workout_date')),
   ]);
   if(stale(seq)) return;
   const bad = [wos, sets, allWos].find(r => r.error);
@@ -980,10 +1058,12 @@ function renderExList(){
     return `<div class="ex-card">
       <div class="ex-ico">${exIcon(it.ex)}</div>
       <div class="ex-body"><div class="ex-name">${esc(it.ex)}</div>
-        <div class="ex-last">${l ? 'Last ' + fmtDate(l.date) + ': ' + l.sets + '×' + l.reps + (l.kg ? ' @ ' + gnum(l.kg) + 'kg' : '') : 'First time logging this'}</div></div>
-      <button class="icon-btn danger" type="button" title="Remove ${esc(it.ex)}" onclick="exDel(${i})">✕</button>
-      <div class="ex-steps">
-        ${stepper(i, 'sets', 'Sets')}${stepper(i, 'reps', 'Reps')}${stepper(i, 'kg', 'Kg')}
+        <div class="ex-last">${l ? 'Last ' + fmtDate(l.date) + ': ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this'}</div></div>
+      <button class="icon-btn danger" type="button" title="Remove ${esc(it.ex)}" onclick="exDel(${i})">${ICO.x}</button>
+      <div class="ex-steps${isCardio(it.ex) ? ' cardio' : ''}">
+        ${isCardio(it.ex)
+          ? stepper(i, 'reps', 'Minutes') + stepper(i, 'kg', 'Km')
+          : stepper(i, 'sets', 'Sets') + stepper(i, 'reps', 'Reps') + stepper(i, 'kg', 'Kg')}
       </div></div>`;
   }).join('');
 }
@@ -1000,7 +1080,8 @@ function stepper(i, k, label){
 }
 function exStep(i, k, dir){
   const it = gymDraft.items[i]; if(!it) return;
-  const step = k === 'kg' ? 2.5 : 1, floor = k === 'sets' ? 1 : 0;
+  const cardio = isCardio(it.ex);
+  const step = cardio ? (k === 'kg' ? 0.5 : 5) : (k === 'kg' ? 2.5 : 1), floor = k === 'sets' ? 1 : 0;
   it[k] = Math.max(floor, Math.round(((+it[k] || 0) + dir * step) * 100) / 100);
   draftSave();
   const el = document.getElementById('g' + k + i); if(el) el.value = it[k];
@@ -1031,10 +1112,23 @@ function paintTick(){
 }
 
 /* ---------- rest timer ---------- */
+/* the timer stores an end timestamp, not a countdown: iOS suspends intervals while the
+   phone is locked, and a tick-based counter would come back frozen where it was */
+const restLeft = () => _rest ? Math.max(0, Math.ceil((_rest.end - Date.now()) / 1000)) : 90;
+function restStart(sec){ _rest = {end: Date.now() + sec * 1000, h: setInterval(restTick, 500)}; }
+function restDing(){
+  try{ navigator.vibrate && navigator.vibrate([200, 100, 200]); }catch(e){}
+  try{
+    const ac = window._ac || (window._ac = new (window.AudioContext || window.webkitAudioContext)());
+    [0, .25].forEach(t => { const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 880; g.gain.value = .15; o.connect(g); g.connect(ac.destination);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .18); });
+  }catch(e){}
+}
 function restPaint(){
   const c = document.getElementById('restChip');
   if(!c){ if(_rest){ clearInterval(_rest.h); _rest = null; } return; }
-  const left = _rest ? _rest.left : 90;
+  const left = restLeft();
   c.className = 'rest' + (_rest ? ' run' : '');
   c.innerHTML = `<span class="t">${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}</span>
     <button class="icon-btn" type="button" title="${_rest ? 'Stop' : 'Start'} rest timer" onclick="restToggle()">${_rest ? ICO.pause : ICO.play}</button>
@@ -1042,17 +1136,17 @@ function restPaint(){
 }
 function restToggle(){
   if(_rest){ clearInterval(_rest.h); _rest = null; }
-  else _rest = {left: 90, h: setInterval(restTick, 1000)};
+  else { restStart(90); try{ window._ac && window._ac.resume(); }catch(e){} }
   restPaint();
 }
-function restPlus(){ if(_rest) _rest.left += 30; else _rest = {left: 120, h: setInterval(restTick, 1000)}; restPaint(); }
+function restPlus(){ if(_rest) _rest.end += 30000; else restStart(120); restPaint(); }
 function restTick(){
   if(!document.getElementById('restChip')){ clearInterval(_rest.h); _rest = null; return; }
-  if(--_rest.left <= 0){
+  if(restLeft() <= 0){
     clearInterval(_rest.h); _rest = null; restPaint();
     const c = document.getElementById('restChip');
     if(c){ c.classList.add('ding'); setTimeout(() => c.classList.remove('ding'), 1600); }
-    toast('Rest over — next set');
+    restDing(); toast('Rest over — next set');
     return;
   }
   restPaint();
@@ -1066,7 +1160,9 @@ function startSession(){
 function addEx(name){
   if(!gymDraft) gymDraft = {date: todayStr(), notes: '', items: [], started: Date.now()};
   const l = lastFor(name);
-  gymDraft.items.push({ex: name, sets: l ? l.sets : 3, reps: l ? l.reps : 10, kg: l ? l.kg : 0});
+  const cardio = isCardio(name);
+  gymDraft.items.push(l ? {ex: name, sets: l.sets, reps: l.reps, kg: l.kg}
+    : cardio ? {ex: name, sets: 1, reps: 30, kg: 0} : {ex: name, sets: 3, reps: 10, kg: 0});
   draftSave();
 }
 function discardSession(){
@@ -1124,8 +1220,16 @@ async function finishSession(){
     return views.gym();
   } finally { if(btn) btn.disabled = false; }
 }
+/* an in-progress session is never replaced silently */
+function draftBusy(){
+  return gymDraft && gymDraft.items.length && !confirm(gymDraft.id
+    ? 'You are editing another workout — drop those changes?'
+    : 'A session is in progress — replace it? Its exercises will be lost.');
+}
 function editWorkout(id){
   const w = (window._gymWos || []).find(w => w.id === id); if(!w) return;
+  if(gymDraft && gymDraft.id === id) return window.scrollTo({top: 0, behavior: 'smooth'});
+  if(draftBusy()) return;
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   gymDraft = {id, origDate: w.workout_date, date: w.workout_date, notes: w.notes || '',
     oldSetIds: ss.map(s => s.id),
@@ -1135,6 +1239,7 @@ function editWorkout(id){
 function repeatWorkout(id){
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   if(!ss.length) return toast('That session had no exercises');
+  if(draftBusy()) return;
   gymDraft = {date: todayStr(), notes: '', started: Date.now(),
     items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0}))};
   draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
@@ -1159,7 +1264,7 @@ function openPicker(){
       <div class="sheet" role="dialog" aria-label="Add exercise">
         <div class="sheet-head">
           <div class="top"><h3>Add exercise</h3>
-            <button class="icon-btn" type="button" title="Done" onclick="closePicker()">✕</button></div>
+            <button class="icon-btn" type="button" title="Done" onclick="closePicker()">${ICO.x}</button></div>
           <input id="pickQ" placeholder="Search exercises…" autocomplete="off" enterkeyhint="search" oninput="_pickQ=this.value;paintPicker()">
           <div class="seg" id="pickSeg"></div>
         </div>
@@ -1222,12 +1327,13 @@ function renderWeek(){
   const el = document.getElementById('weekStrip'); if(!el) return;
   const dates = new Set(Object.values(window._woDates || {}));
   const today = todayStr(), t = new Date(today + 'T00:00');
-  const mon = new Date(t); mon.setDate(t.getDate() - ((t.getDay() + 6) % 7));
+  // the week starts on Sunday, like the Schedule calendar (and the Israeli working week)
+  const sun = new Date(t); sun.setDate(t.getDate() - t.getDay());
   let n = 0, h = '';
   for(let i = 0; i < 7; i++){
-    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const d = new Date(sun); d.setDate(sun.getDate() + i);
     const s = d.toLocaleDateString('en-CA'), on = dates.has(s); if(on) n++;
-    h += `<div><div class="d">${'MTWTFSS'[i]}</div>
+    h += `<div><div class="d">${['Su','Mo','Tu','We','Th','Fr','Sa'][i]}</div>
       <div class="dot${on ? ' on' : ''}${s === today ? ' today' : ''}" title="${s}">${on ? ICO.tick : d.getDate()}</div></div>`;
   }
   el.innerHTML = `<div class="week">${h}</div>`;
@@ -1240,7 +1346,7 @@ function renderHistory(){
   (window._allSets || []).forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
   el.innerHTML = (window._gymWos || []).length ? window._gymWos.map(w => {
     const ss = byWo[w.id] || [];
-    const summary = ss.map(s => `${esc(exCanon(s.exercise))} ${s.sets || 1}×${s.reps}${+s.weight_kg ? ' @' + gnum(s.weight_kg) + 'kg' : ''}`).join(' · ') || 'no exercises';
+    const summary = ss.map(s => `${esc(exCanon(s.exercise))} ${setLabel(s)}`).join(' · ') || 'no exercises';
     const icos = ss.slice(0, 4).map(s => exIcon(exCanon(s.exercise))).join('');
     return `<div class="wo-row">
       ${icos ? `<div class="wo-icos">${icos}</div>` : ''}
@@ -1249,7 +1355,7 @@ function renderHistory(){
       <div class="wo-acts">
         <button class="icon-btn" type="button" title="Repeat this session today" onclick="repeatWorkout('${w.id}')">${ICO.redo}</button>
         <button class="icon-btn" type="button" title="Edit workout" onclick="editWorkout('${w.id}')">${ICO.edit}</button>
-        <button class="icon-btn danger" type="button" title="Delete workout" onclick="delWorkout('${w.id}')">✕</button>
+        <button class="icon-btn danger" type="button" title="Delete workout" onclick="delWorkout('${w.id}')">${ICO.x}</button>
       </div></div>`;
   }).join('') : '<div class="empty">No workouts yet — start your first session above</div>';
 }
@@ -1259,6 +1365,7 @@ function renderPRs(){
   (window._allSets || []).forEach(s => {
     const d = dateOf[s.workout_id]; if(!d) return;
     const n = exCanon(s.exercise);
+    if(isCardio(n) || !(+s.weight_kg > 0)) return;   // records are about load: no cardio, no bodyweight-only rows
     if(!best[n] || +s.weight_kg > +best[n].weight_kg ||
       (+s.weight_kg === +best[n].weight_kg && d < best[n].date))
       best[n] = {weight_kg: s.weight_kg, reps: s.reps, date: d};
@@ -1274,16 +1381,21 @@ function renderPRs(){
 function drawGymChart(){
   const selEl = document.getElementById('exSelect'); if(!selEl) return;
   const ex = selEl.value, metric = (document.getElementById('exMetric') || {}).value || 'max';
+  const cardio = isCardio(ex);
+  const mEl = document.getElementById('exMetric');
+  if(mEl){ mEl.options[0].text = cardio ? 'minutes' : 'top weight'; mEl.options[1].text = cardio ? 'distance' : 'volume'; }
   const dateOf = window._woDates || {}, byDate = {};
   (window._allSets || []).filter(s => exCanon(s.exercise) === ex).forEach(s => {
     const d = dateOf[s.workout_id]; if(!d) return;
-    byDate[d] = metric === 'vol'
-      ? (byDate[d] || 0) + (+s.sets || 1) * (+s.reps || 0) * (+s.weight_kg || 0)
-      : Math.max(byDate[d] || 0, +s.weight_kg);
+    byDate[d] = cardio
+      ? (byDate[d] || 0) + (metric === 'vol' ? +s.weight_kg || 0 : +s.reps || 0)
+      : metric === 'vol'
+        ? (byDate[d] || 0) + (+s.sets || 1) * (+s.reps || 0) * (+s.weight_kg || 0)
+        : Math.max(byDate[d] || 0, +s.weight_kg);
   });
   const labels = Object.keys(byDate).sort();
   mkChart('gymChart', {type: 'line',
-    data: {labels: labels.map(fmtDate), datasets: [{label: metric === 'vol' ? 'Volume (kg)' : 'Top weight (kg)',
+    data: {labels: labels.map(fmtDate), datasets: [{label: cardio ? (metric === 'vol' ? 'Distance (km)' : 'Minutes') : metric === 'vol' ? 'Volume (kg)' : 'Top weight (kg)',
       data: labels.map(d => byDate[d]), borderColor: '#23221f', backgroundColor: 'rgba(35,34,31,.09)',
       fill: true, tension: .35, pointBackgroundColor: '#4a4741'}]},
     options: {maintainAspectRatio: false, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: metric === 'vol'}}}});
@@ -1441,7 +1553,7 @@ function moneyInsights(all){
   const tot = pos.reduce((s, x) => s + +x.amount, 0);
   const byMonth = {};
   pos.forEach(x => { const m = x.spent_at.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + +x.amount; });
-  const ms = Object.keys(byMonth).sort();
+  const ms = completeMonths(Object.keys(byMonth).sort(), pos);
   const out = [];
 
   if(ms.length >= 6){
@@ -1458,7 +1570,7 @@ function moneyInsights(all){
     const per = fx.reduce((s, f) => s + f.avg, 0);
     out.push({w: 90, tone: 'neutral', ico: 'lock',
       t: `${NIS(per)} a month leaves before you buy anything`,
-      b: `${fx.length} standing commitments — ${fx.slice(0, 3).map(f => f.name).join(', ')}${fx.length > 3 ? ' and others' : ''} — or ${NIS(per * 12)} a year.`});
+      b: `${fx.length} standing commitments — ${fx.slice(0, 3).map(f => bidi(f.name)).join(', ')}${fx.length > 3 ? ' and others' : ''} — or ${NIS(per * 12)} a year.`});
   }
   const byCat = {};
   pos.forEach(x => byCat[x.category] = (byCat[x.category] || 0) + +x.amount);
@@ -1486,7 +1598,7 @@ function moneyInsights(all){
     const v = byMer[k] || (byMer[k] = {n: 0, s: 0, name: x.description}); v.n++; v.s += +x.amount; });
   const freq = Object.values(byMer).sort((a, b) => b.n - a.n)[0];
   if(freq && freq.n >= 10) out.push({w: 60, tone: 'neutral', ico: 'repeat',
-    t: `${freq.name} — ${freq.n} visits`,
+    t: `${bidi(freq.name)} — ${freq.n} visits`,
     b: `${NIS(freq.s)} in total, averaging ${NIS(freq.s / freq.n)} a time. Your most frequent merchant.`});
 
   // a single expensive week (a trip) reads very differently from steady spending
@@ -1495,14 +1607,14 @@ function moneyInsights(all){
   const days = Object.keys(byDay).sort();
   let best = null;
   for(let i = 0; i < days.length; i++){
-    const end = new Date(days[i] + 'T00:00'); end.setDate(end.getDate() + 8);
+    const end = new Date(days[i] + 'T00:00'); end.setDate(end.getDate() + 7);   // a 7-day window
     const win = days.filter(d => d >= days[i] && new Date(d + 'T00:00') < end);
     const s = win.reduce((a, d) => a + byDay[d], 0);
     if(!best || s > best.s) best = {s, from: days[i], to: win[win.length - 1]};
   }
-  const avgMonth = tot / Math.max(1, ms.length);
+  const avgMonth = ms.length ? ms.reduce((s, m) => s + byMonth[m], 0) / ms.length : tot;
   if(best && best.s > avgMonth * 0.6) out.push({w: 55, tone: 'neutral', ico: 'peak',
-    t: `Your most expensive 9 days cost ${NIS(best.s)}`,
+    t: `Your most expensive week cost ${NIS(best.s)}`,
     b: `${fmtDate(best.from)} to ${fmtDate(best.to)} — about ${Math.round(best.s / avgMonth * 100)}% of a typical month, in one stretch.`});
 
   // a recurring charge that quietly grew (usually a USD-priced subscription)
@@ -1511,7 +1623,7 @@ function moneyInsights(all){
     if(rows.length < 5) return;
     const first = +rows[0].amount, last = +rows[rows.length - 1].amount;
     if(first > 0 && last > first * 1.08) out.push({w: 50, tone: 'warn', ico: 'up',
-      t: `${f.name} crept up ${Math.round((last - first) / first * 100)}%`,
+      t: `${bidi(f.name)} crept up ${Math.round((last - first) / first * 100)}%`,
       b: `${NIS(first)} → ${NIS(last)} over the period without you doing anything. Usually a price set in dollars.`});
   });
   const refunds = all.filter(x => +x.amount < 0);
@@ -1533,12 +1645,14 @@ const INS_ICO = {
 };
 views.money = async function(){
   const seq = renderStart();
+  // actions that re-render in place (delete, categorise, save budget…) keep the scroll position
+  const keepY = window._moneyKeep ? window.scrollY : null; window._moneyKeep = false;
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
   const scope = window._moneyScope || 'month';
   const ed = window._editEx;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Money</h2><img src="hero-money.png" alt="" style="height:110px" onerror="this.remove()">
+    <div class="page-head"><h2>Money</h2><img src="hero-money.png" alt="" onerror="this.remove()">
       <div class="scope-pick">
         <button class="${scope==='month'?'on':''}" type="button" onclick="window._moneyScope='month';views.money()">Month</button>
         <button class="${scope==='year'?'on':''}" type="button" onclick="window._moneyScope='year';views.money()">All time</button>
@@ -1592,12 +1706,14 @@ views.money = async function(){
       <button class="btn-ghost" type="button" style="float:right" title="Download as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3>
       <div class="list" id="exList"><div class="empty">Loading…</div></div></div>`;
 
-  const [allq, st, subs] = await Promise.all([
-    sb.from('expenses').select('*').order('spent_at', {ascending: false}),
+  const [allq, st, subs, rules] = await Promise.all([
+    fetchAll(() => sb.from('expenses').select('*').order('spent_at', {ascending: false}).order('created_at', {ascending: false})),
     sb.from('user_settings').select('monthly_budget').maybeSingle(),
     sb.from('subscriptions').select('*').order('billing_day'),
+    sb.from('merchant_rules').select('merchant_key'),
   ]);
   if(stale(seq)) return;
+  window._ruleKeys = new Set((rules.data || []).map(r => r.merchant_key));
   const bad = [allq, st, subs].find(r => r.error);
   if(bad){ err(bad.error); document.getElementById('exList').innerHTML = `<div class="empty">Couldn't load — ${esc(bad.error.message)}</div>`; return; }
 
@@ -1607,7 +1723,8 @@ views.money = async function(){
   const shown = scope === 'year' ? all : all.filter(x => x.spent_at >= from && x.spent_at < to);
   window._monthExpenses = shown;
   const total = shown.reduce((s,x) => s + +x.amount, 0);
-  document.getElementById('moTotal').textContent = NIS(total);
+  // the donut only has positive slices, so its heading is the positive total too
+  document.getElementById('moTotal').textContent = NIS(shown.reduce((s,x) => s + Math.max(0, +x.amount), 0));
   document.getElementById('listTitle').textContent = scope === 'year'
     ? `All spending — ${shown.length} charges` : `${new Date(from+'T00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'})} — ${shown.length} charges`;
 
@@ -1620,19 +1737,29 @@ views.money = async function(){
   renderBudget(shown, +(st.data?.monthly_budget || 0), month, scope);
   drawCatChart(shown);
   drawTrendChart(all);
+  if(keepY != null) window.scrollTo(0, keepY);
 };
+/* Months that aren't fully covered by the data distort averages and trends:
+   the current month is always partial, and the first month of history usually is too. */
+function completeMonths(months, all){
+  const cur = todayStr().slice(0,7);
+  const first = months[0];
+  const firstDay = first ? Math.min(...all.filter(x => x.spent_at.startsWith(first)).map(x => +x.spent_at.slice(8,10))) : 1;
+  return months.filter(m => m !== cur && !(m === first && firstDay > 5));
+}
 
 function statTile(label, value, sub, tone){
-  return `<div class="stat"><div class="lbl">${label}</div><div class="v">${value}</div>
+  return `<div class="mstat"><div class="lbl">${label}</div><div class="v">${value}</div>
     <div class="s${tone?' '+tone:''}">${sub || ''}</div></div>`;
 }
 function renderMoStats(all, shown, scope, month){
   const el = document.getElementById('moStats'); if(!el) return;
-  const pos = all.filter(x => +x.amount > 0);
+  // net of refunds, the same basis as the month total and the budget bar
   const byMonth = {};
-  pos.forEach(x => { const m = x.spent_at.slice(0,7); byMonth[m] = (byMonth[m]||0) + +x.amount; });
+  all.forEach(x => { const m = x.spent_at.slice(0,7); byMonth[m] = (byMonth[m]||0) + +x.amount; });
   const ms = Object.keys(byMonth).sort();
-  const avg = ms.length ? ms.reduce((s,m) => s + byMonth[m], 0) / ms.length : 0;
+  const full = completeMonths(ms, all);
+  const avg = full.length ? full.reduce((s,m) => s + byMonth[m], 0) / full.length : 0;
   const cur = shown.reduce((s,x) => s + +x.amount, 0);
   const prevM = (() => { const d = new Date(month+'-01T00:00'); d.setMonth(d.getMonth()-1); return d.toLocaleDateString('en-CA').slice(0,7); })();
   const prev = byMonth[prevM] || 0;
@@ -1646,8 +1773,8 @@ function renderMoStats(all, shown, scope, month){
         : (partial ? `day ${new Date().getDate()} — month still running`
            : (d===null ? '' : `${d>0?'▲':'▼'} ${Math.abs(d)}% vs ${new Date(prevM+'-01T00:00').toLocaleDateString('en-GB',{month:'short'})}`)),
       (scope==='year'||partial||d===null) ? '' : (d>0 ? 'warn' : 'good')),
-    statTile('Average month', NIS(avg), `over ${ms.length} months`),
-    statTile('Charges', shown.length, scope==='year' ? `${Object.keys(byCat).length} categories` : 'this month'),
+    statTile('Average month', NIS(avg), full.length ? `over ${full.length} full month${full.length === 1 ? '' : 's'}` : 'no full month yet'),
+    statTile('Charges', shown.length, scope==='year' ? `${Object.keys(byCat).length} categories` : (partial ? 'this month' : 'that month')),
     statTile('Biggest slice', top ? top[0] : '—', top ? `${NIS(top[1])} · ${pct(top[1], cur)}%` : ''),
   ].join('');
 }
@@ -1698,7 +1825,7 @@ async function bulkCategorise(key, cat){
   await sb.from('merchant_rules').upsert({merchant_key: key, category: cat, updated_at: new Date().toISOString()},
     {onConflict: 'user_id,merchant_key'});
   toast('Filed as ' + cat + ' — future charges will follow');
-  views.money();
+  window._moneyKeep = true; views.money();
 }
 function renderExpenseList(shown){
   const el = document.getElementById('exList'); if(!el) return;
@@ -1710,9 +1837,9 @@ function renderExpenseList(shown){
         <span class="pill cat" style="--cc:${col}">${esc(x.category)}</span>
         ${x.source === 'applepay' ? '<span class="tap-tag" title="Captured from an Apple Pay tap">'+ICO.tap+'tap</span>' : ''}</div>
         <div class="sub">${bidi(x.description || '—')} <span class="dot">·</span> ${fmtDate(x.spent_at)}</div></div>
-      ${x.merchant_key ? `<button class="icon-btn" type="button" title="Forget the category rule for this merchant" onclick="forgetMerchant('${esc(x.merchant_key)}')">${ICO.forget}</button>` : ''}
-      <button class="icon-btn" title="Edit expense" onclick="editExpense('${x.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
-      <button class="icon-btn danger" title="Delete expense" onclick="delRow('expenses','${x.id}','money')">✕</button></div>`;
+      ${x.merchant_key && window._ruleKeys && window._ruleKeys.has(x.merchant_key) ? `<button class="icon-btn" type="button" title="Forget the learned category for this merchant" onclick="forgetMerchant('${esc(x.merchant_key)}')">${ICO.forget}</button>` : ''}
+      <button class="icon-btn" title="Edit expense" onclick="editExpense('${x.id}')">${ICO.edit}</button>
+      <button class="icon-btn danger" title="Delete expense" onclick="delRow('expenses','${x.id}','money')">${ICO.x}</button></div>`;
   }).join('') : '<div class="empty">Nothing here for this period</div>';
 }
 function renderSubs(subRows){
@@ -1723,7 +1850,7 @@ function renderSubs(subRows){
     const nc = nextCharge(s.billing_day);
     return `<div class="row">${subLogo(s)}<div class="grow"><div class="title">${bidi(s.name)}</div>
       <div class="sub">${NIS(s.amount)}/mo · renews ${nc.date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${nc.days===0?'(today)':'(in '+nc.days+'d)'}</div></div>
-      <button class="icon-btn danger" title="Remove subscription" onclick="delRow('subscriptions','${s.id}','money')">✕</button></div>`;
+      <button class="icon-btn danger" title="Remove subscription" onclick="delRow('subscriptions','${s.id}','money')">${ICO.x}</button></div>`;
   }).join('') : '<div class="empty">No subscriptions yet — add Netflix, Spotify and friends below</div>';
 }
 function renderBudget(shown, budget, month, scope){
@@ -1748,7 +1875,7 @@ function drawCatChart(shown){
   const tot = cats.reduce((s,c) => s + byCat[c], 0);
   mkChart('catChart', {type:'doughnut',
     data:{labels:cats, datasets:[{data:cats.map(c=>byCat[c]), backgroundColor:cats.map(catColor),
-      borderColor:'var(--surface)', borderWidth:2}]},
+      borderColor:'#fbfaf8', borderWidth:2}]},
     options:{maintainAspectRatio:false, cutout:'62%', plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>` ${c.label}: ${NIS(c.parsed)} (${pct(c.parsed,tot)}%)`}}}}});
   const lg = document.getElementById('catLegend');
@@ -1758,7 +1885,8 @@ function drawTrendChart(all){
   const byMonth = {};
   all.forEach(x => { if(+x.amount > 0){ const m = x.spent_at.slice(0,7); byMonth[m] = (byMonth[m]||0) + +x.amount; } });
   const ms = Object.keys(byMonth).sort().slice(-12);
-  const avg = ms.length ? ms.reduce((s,m)=>s+byMonth[m],0)/ms.length : 0;
+  const full = completeMonths(ms, all);
+  const avg = full.length ? full.reduce((s,m)=>s+byMonth[m],0)/full.length : 0;
   mkChart('trendChart', {type:'bar',
     data:{labels: ms.map(m => new Date(m+'-01T00:00').toLocaleDateString('en-GB',{month:'short'})),
       datasets:[{data: ms.map(m=>byMonth[m]), backgroundColor:'#4a4741', borderRadius:4, borderSkipped:false}]},
@@ -1844,14 +1972,22 @@ async function handleStatement(files){
     const have = {};
     (existing||[]).forEach(e => { const k = e.spent_at + '|' + (+e.amount).toFixed(2); have[k] = (have[k]||0) + 1; });
     txs.forEach(t => { const k = t.spent_at + '|' + t.amount.toFixed(2); if(have[k] > 0){ have[k]--; t.dup = true; } });
+    // imported charges get the same merchant key as taps, so learned rules apply to them too
+    const {data: rules} = await sb.from('merchant_rules').select('merchant_key,category,description');
+    const ruleBy = Object.fromEntries((rules || []).map(r => [r.merchant_key, r]));
+    txs.forEach(t => {
+      t.merchant = t.description; t.merchant_key = merchantKey(t.description) || null;
+      const r = t.merchant_key && ruleBy[t.merchant_key];
+      if(r){ t.category = r.category || t.category; if(r.description) t.description = r.description; }
+    });
     window._parsedTxs = txs;
     const news = txs.filter(t => !t.dup).length;
     pv.innerHTML = `<div style="margin:12px 0 8px;font-size:13.5px">Found <b>${txs.length}</b> charges · <b>${news}</b> new · ${txs.length - news} already logged</div>
       <div class="list" style="max-height:320px;overflow:auto">` + txs.map((t,i) => `
       <div class="row" style="${t.dup ? 'opacity:.55' : ''}">
-        ${t.dup ? '<span class="pill indigo">already logged</span>' : `<input type="checkbox" id="imp${i}" checked style="width:auto" title="Untick to skip this charge">`}
+        ${t.dup ? '<span class="pill grey">already logged</span>' : `<input type="checkbox" id="imp${i}" checked style="width:auto" title="Untick to skip this charge">`}
         <div class="grow"><div class="title">${NIS(t.amount)}
-          ${t.dup ? `<span class="pill indigo" style="margin-left:6px">${t.category}</span>`
+          ${t.dup ? `<span class="pill grey" style="margin-left:6px">${t.category}</span>`
             : `<select id="impcat${i}" title="Category — fix the guess before importing" style="width:auto;display:inline-block;padding:3px 6px;font-size:12px;margin-left:6px">${CATS.map(c => `<option${c === t.category ? ' selected' : ''}>${c}</option>`).join('')}</select>`}</div>
         <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
       </div>`).join('') + `</div>
@@ -1862,7 +1998,8 @@ async function importParsed(btn){
   if(btn){ if(btn.disabled) return; btn.disabled = true; }
   try{
     const rows = (window._parsedTxs || []).map((t,i) => (!t.dup && document.getElementById('imp'+i)?.checked)
-      ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description} : null).filter(Boolean);
+      ? {spent_at: t.spent_at, amount: t.amount, category: document.getElementById('impcat'+i)?.value || t.category, description: t.description,
+         merchant: t.merchant || null, merchant_key: t.merchant_key || null} : null).filter(Boolean);
     if(!rows.length) return toast('Nothing selected');
     const {error} = await sb.from('expenses').insert(rows.map(r => ({...r, source: 'pdf'})));
     if(error) return err(error);
@@ -1897,10 +2034,11 @@ function drawBurnChart(rows, budget, month){
       plugins: {legend: {labels: {boxWidth: 18}}}, scales: {y: {beginAtZero: true}}}});
 }
 async function addExpense(){
-  const amount = +exAmount.value; if(!(amount > 0)) return toast('Enter an amount above zero');
+  const amount = +exAmount.value; if(!amount) return toast('Enter an amount (negative for a refund)');
   if(!exDate.value) return toast('Pick a date');
   const row = {amount, category: exCat.value, description: exDesc.value.trim() || null, spent_at: exDate.value};
   const ed = window._editEx;
+  if(!ed && row.description){ row.merchant = row.description; row.merchant_key = merchantKey(row.description) || null; }
   // snapshot before the write: the learning check asks "what did he change?", so it must
   // compare against the pre-update values, not a row the update may already have touched
   const was = ed ? {category: ed.category, description: ed.description, merchant_key: ed.merchant_key} : null;
@@ -1939,7 +2077,7 @@ async function learnMerchant(key, category, description, before){
 async function forgetMerchant(key){
   if(!confirm('Forget the rule for this merchant? Future taps there will come in as Other again.')) return;
   const {error} = await sb.from('merchant_rules').delete().eq('merchant_key', key);
-  error ? err(error) : (toast('Rule forgotten'), views.money());
+  error ? err(error) : (toast('Rule forgotten'), window._moneyKeep = true, views.money());
 }
 function editExpense(id){
   const x = (window._monthExpenses || []).find(x => x.id === id); if(!x) return;
@@ -1951,7 +2089,7 @@ async function addSub(){
   if(!(amount > 0)) return toast('Enter the monthly price');
   const name = preset === 'Other' ? (subName.value.trim() || 'Subscription') : preset;
   const {error} = await sb.from('subscriptions').insert({name, domain: SUBS[preset] || null, amount, billing_day: Math.min(28, Math.max(1, +subDay.value || 1))});
-  error ? err(error) : (toast('Subscription added'), views.money());
+  error ? err(error) : (toast('Subscription added'), window._moneyKeep = true, views.money());
 }
 async function saveBudget(){
   const raw = budgetIn.value.trim();
@@ -1962,39 +2100,44 @@ async function saveBudget(){
   if(eU) return err(eU);
   if(!u?.user) return toast('Session expired — please sign in again');
   const {error} = await sb.from('user_settings').upsert({user_id: u.user.id, monthly_budget: v, updated_at: new Date().toISOString()});
-  error ? err(error) : (toast('Budget saved'), views.money());
+  error ? err(error) : (toast('Budget saved'), window._moneyKeep = true, views.money());
 }
 function exportCsv(){
   const rows = window._monthExpenses || [];
-  if(!rows.length) return toast('Nothing to export this month');
+  if(!rows.length) return toast('Nothing to export for this period');
   const csv = 'date,amount_ils,category,description\n' + rows.map(r =>
     [r.spent_at, r.amount, r.category, '"' + (r.description || '').replace(/"/g, '""') + '"'].join(',')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([String.fromCharCode(0xFEFF) + csv], {type: 'text/csv;charset=utf-8'}));
-  a.download = 'atlas-expenses-' + window._moneyMonth + '.csv';
+  a.download = 'atlas-expenses-' + (window._moneyScope === 'year' ? 'all' : window._moneyMonth) + '.csv';
   a.click(); URL.revokeObjectURL(a.href);
 }
 
 /* ================= GOALS ================= */
 views.goals = async function(){
   const seq = renderStart();
+  const ed = window._editGo;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" style="height:110px" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>New goal</h3>
+    <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" onerror="this.remove()"></div>
+    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit goal' : 'New goal'}</h3>
       <form onsubmit="submitGuard(event, addGoal)">
       <div class="form-grid">
-        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year" enterkeyhint="done"></div>
-        <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date"></div>
+        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year" enterkeyhint="done" value="${ed ? esc(ed.title) : ''}"></div>
+        <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date" value="${ed ? (ed.target_date || '') : ''}"></div>
       </div>
-      <button class="btn" type="submit">Add goal</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="submit">${ed ? 'Update goal' : 'Add goal'}</button>
+        ${ed ? '<button class="btn-ghost" type="button" onclick="window._editGo=null;views.goals()">Cancel</button>' : ''}
+      </div>
       </form>
     </div>
-    <div class="card" style="margin-bottom:16px"><h3>Timeline — progress vs time elapsed (▎= where you should be by today)</h3>
+    <div class="card" style="margin-bottom:16px"><h3>Timeline — progress vs time elapsed (the dark marker is where you should be today)</h3>
       <div class="list" id="goTimeline"></div></div>
     <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
   const {data, error} = await sb.from('goals').select('*').order('created_at');
   if(stale(seq)) return;
   if(error) return err(error);
+  window._goals = data;
   const timed = data.filter(g => g.target_date && g.status !== 'done');
   document.getElementById('goTimeline').innerHTML = timed.length ? timed.map(g => {
     const start = new Date(g.created_at), end = new Date(g.target_date + 'T23:59'), now = new Date();
@@ -2018,8 +2161,9 @@ views.goals = async function(){
         <div class="grow" style="flex:1"><div class="title" style="font-weight:600;${g.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">${esc(g.title)}</div>
         <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed' : ''}</div></div>
         <span style="font-weight:700;font-size:14px">${g.progress}%</span>
-        ${g.status !== 'done' ? `<button class="btn-ghost" onclick="setGoal('${g.id}',${Math.min(100, g.progress + 10)})">+10%</button>` : ''}
-        <button class="icon-btn danger" title="Delete goal" onclick="delRow('goals','${g.id}','goals')">✕</button>
+        ${g.status !== 'done' ? `<button class="btn-ghost" type="button" onclick="setGoal('${g.id}',${Math.min(100, g.progress + 10)})">+10%</button>` : ''}
+        <button class="icon-btn" type="button" title="Edit goal" onclick="editGoal('${g.id}')">${ICO.edit}</button>
+        <button class="icon-btn danger" type="button" title="Delete goal" onclick="delRow('goals','${g.id}','goals')">${ICO.x}</button>
       </div>
       <div title="Tap the bar to set progress" style="padding:9px 0;margin:-9px 0;cursor:pointer" onclick="barSetGoal(event,'${g.id}')">
         <div class="progress-track"><div class="progress-fill" style="width:${g.progress}%"></div></div>
@@ -2028,8 +2172,18 @@ views.goals = async function(){
 };
 async function addGoal(){
   const title = goTitle.value.trim(); if(!title) return toast('Name your goal');
-  const {error} = await sb.from('goals').insert({title, target_date: goDate.value || null});
-  error ? err(error) : (toast('Goal added'), views.goals());
+  const ed = window._editGo, patch = {title, target_date: goDate.value || null};
+  const {error} = ed
+    ? await sb.from('goals').update(patch).eq('id', ed.id)
+    : await sb.from('goals').insert(patch);
+  if(error) return err(error);
+  if(ed){ window._editGo = null; toast('Goal updated'); } else toast('Goal added');
+  views.goals();
+}
+function editGoal(id){
+  const g = (window._goals || []).find(x => x.id === id); if(!g) return;
+  window._editGo = g;
+  views.goals(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 async function setGoal(id, progress){
   const {error} = await sb.from('goals').update({progress, status: progress >= 100 ? 'done' : 'active'}).eq('id', id);
@@ -2059,7 +2213,7 @@ views.chores = async function(){
   const seq = renderStart();
   const ed = window._editCh;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" style="height:110px" onerror="this.remove()"></div>
+    <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" onerror="this.remove()"></div>
     <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit chore' : 'Add chore'}</h3>
       <form onsubmit="submitGuard(event, addChore)">
       <div class="form-grid">
@@ -2086,9 +2240,9 @@ function renderChores(){
     <div class="row"><div class="grow"><div class="title">${esc(c.name)}</div>
       <div class="sub">every ${c.frequency_days}d · last: ${c.last_done ? fmtDate(c.last_done) : 'never'}</div></div>
       ${chorePill(c)}
-      <button class="btn-ghost" onclick="doneChore('${c.id}')">Done ✓</button>
-      <button class="icon-btn" title="Edit chore" onclick="editChore('${c.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
-      <button class="icon-btn danger" title="Delete chore" onclick="delRow('chores','${c.id}','chores')">✕</button></div>`).join('') : '<div class="empty">No chores yet</div>';
+      <button class="btn-ghost" type="button" onclick="doneChore('${c.id}')">Done</button>
+      <button class="icon-btn" title="Edit chore" onclick="editChore('${c.id}')">${ICO.edit}</button>
+      <button class="icon-btn danger" title="Delete chore" onclick="delRow('chores','${c.id}','chores')">${ICO.x}</button></div>`).join('') : '<div class="empty">No chores yet</div>';
 }
 async function addChore(){
   const name = chName.value.trim(); if(!name) return toast('Name the chore');
@@ -2136,7 +2290,7 @@ function addMonths(iso, n){
 views.rent = async function(){
   const seq = renderStart();
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Rent</h2><img src="hero-rent.png" alt="" style="height:110px" onerror="this.remove()"></div>
+    <div class="page-head"><h2>Rent</h2><img src="hero-rent.png" alt="" onerror="this.remove()"></div>
     <div id="rentBody"><div class="empty">Loading…</div></div>`;
   const [ls, ms, rd] = await Promise.all([
     sb.from('rent_leases').select('*').eq('archived', false).order('created_at', {ascending: false}),
@@ -2148,7 +2302,7 @@ views.rent = async function(){
   if(bad){
     document.getElementById('rentBody').innerHTML =
       `<div class="empty">Couldn't load your rent data — ${esc(bad.error.message)}.<br>The backend may be waking up.
-       <a style="cursor:pointer;color:var(--accent2);font-weight:600" onclick="views.rent()">Retry</a></div>`;
+       <button class="linkish" type="button" onclick="views.rent()">Retry</button></div>`;
     return;
   }
   window._lease = (ls.data || [])[0] || null;
@@ -2195,9 +2349,11 @@ function renderLease(){
         <div class="progress-track" style="margin-top:10px"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${NIS(claimed.reduce((s,m)=>s+Number(m.amount),0))} collected</div></div>
       <div class="card"><h3>Not yet cashed</h3>
-        <div class="stat" style="${owing.length ? 'color:var(--red)' : ''}">${NIS(owed)}</div>
+        <div class="stat" style="${owing.some(m => m.month < cur) ? 'color:var(--red)' : ''}">${NIS(owed)}</div>
         <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${owing.length
-          ? `${owing.length} check${owing.length > 1 ? 's' : ''} due · oldest ${monthLabel(owing[0].month)}`
+          ? (owing.some(m => m.month < cur)
+              ? `${owing.filter(m => m.month < cur).length} overdue · oldest ${monthLabel(owing[0].month)}`
+              : 'only this month\'s check is still open')
           : 'All due checks are cashed'}</div></div>
       <div class="card"><h3>Lease</h3>
         <div class="stat" style="font-size:19px">${span}</div>
@@ -2221,7 +2377,7 @@ function rentPill(m){
   if(m.claimed) return `<span class="pill green">Cashed${m.claimed_on ? ' ' + fmtDate(m.claimed_on) : ''}</span>`;
   if(m.month < cur) return `<span class="pill red">Not cashed</span>`;
   if(m.month === cur) return `<span class="pill amber">This month</span>`;
-  return `<span class="pill indigo">Upcoming</span>`;
+  return `<span class="pill grey">Upcoming</span>`;
 }
 function rentRow(m){
   if(window._editRM === m.id) return `
@@ -2239,11 +2395,11 @@ function rentRow(m){
   return `
     <div class="row">
       <button class="checkbox ${m.claimed ? 'checked' : ''}" title="${m.claimed ? 'Mark as not cashed' : 'Mark as cashed'}" onclick="toggleClaim('${m.id}')">${
-        m.claimed ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 12.5l5.5 5.5L20 7"/></svg>' : ''}</button>
+        m.claimed ? ICO.tickSm : ''}</button>
       <div class="grow"><div class="title">${monthLabel(m.month)}</div>
         <div class="sub">${NIS(m.amount)}${m.check_no ? ' · check ' + esc(m.check_no) : ''}</div></div>
       ${rentPill(m)}
-      <button class="icon-btn" title="Edit month" onclick="window._editRM='${m.id}';renderLease()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1L20 7l-3-3L4 17l-1 4zM14 5l3 3"/></svg></button>
+      <button class="icon-btn" title="Edit month" onclick="window._editRM='${m.id}';renderLease()">${ICO.edit}</button>
     </div>`;
 }
 async function addLease(){
@@ -2346,7 +2502,7 @@ function meterCard(kind){
     <div class="list" style="margin-top:14px">${recent.length ? recent.map(r => `
       <div class="row"><div class="grow"><div class="title">${fmtNum(r.reading)} ${M.unit}</div>
         <div class="sub">${fmtDate(r.read_on)}${r.used == null ? '' : r.used < 0 ? ' · reading dropped' : ` · +${fmtNum(r.used)} in ${r.days}d`}</div></div>
-        <button class="icon-btn danger" title="Delete reading" onclick="delReading('${r.id}')">✕</button></div>`).join('')
+        <button class="icon-btn danger" title="Delete reading" onclick="delReading('${r.id}')">${ICO.x}</button></div>`).join('')
       : '<div class="empty">Log the meter count to start tracking usage</div>'}</div>
   </div>`;
 }
