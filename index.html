@@ -242,7 +242,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .ex-card{display:grid;grid-template-columns:54px 1fr auto;gap:11px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:11px 12px}
 .ex-card+.ex-card{margin-top:9px}
 .ex-ico{width:54px;height:54px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent)}
-.ex-ico svg{width:38px;height:38px}
+.ex-ico img{width:42px;height:42px;object-fit:contain}
 .ex-body{min-width:0}
 .ex-name{font-weight:600;font-size:14.5px;line-height:1.2}
 .ex-last{font-size:11.5px;color:var(--muted);margin-top:3px}
@@ -291,7 +291,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .pick{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:11px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;position:relative;transition:transform .1s,border-color .15s;color:var(--text)}
 .pick:hover{border-color:var(--accent)}
 .pick:active{transform:scale(.95)}
-.pick svg{width:40px;height:40px;color:var(--accent)}
+.pick img{width:44px;height:44px;object-fit:contain}
 .pick b{font-size:11.5px;font-weight:600;line-height:1.25}
 .pick.added{border-color:var(--accent);background:var(--surface)}
 .pick .tick{position:absolute;top:5px;right:5px;width:17px;height:17px;border-radius:50%;background:var(--accent);color:var(--on-ink);display:none;align-items:center;justify-content:center}
@@ -304,15 +304,15 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .wo-row .grow{min-width:0}
 .wo-row .sub{overflow-wrap:anywhere}
 .wo-icos{display:flex;flex:none}
-.wo-icos svg{width:26px;height:26px;color:var(--accent2);background:var(--surface2);border-radius:50%}
-.wo-icos svg+svg{margin-left:-7px}
+.wo-icos img{width:28px;height:28px;object-fit:contain;background:var(--surface);border:1px solid var(--border);border-radius:50%;padding:3px}
+.wo-icos img+img{margin-left:-7px}
 .wo-acts{display:flex;gap:2px;flex:none}
-.pr-ico{width:34px;height:34px;flex:none;color:var(--accent2)}
+.pr-ico{width:34px;height:34px;flex:none;object-fit:contain}
 .tap-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px 1px 5px;margin-left:6px;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px}
 
 @media(max-width:560px){
   .ex-card{grid-template-columns:46px 1fr auto;gap:9px;padding:10px}
-  .ex-ico{width:46px;height:46px}.ex-ico svg{width:32px;height:32px}
+  .ex-ico{width:46px;height:46px}.ex-ico img{width:36px;height:36px}
   .pick-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
   .sheet-bg{padding:0;align-items:flex-end}
   .sheet{max-width:none;border-radius:18px 18px 0 0;max-height:92vh}
@@ -329,7 +329,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 }
 @media(max-width:380px){
   .ex-card{grid-template-columns:42px 1fr auto;gap:8px;padding:9px}
-  .ex-ico{width:42px;height:42px}.ex-ico svg{width:29px;height:29px}
+  .ex-ico{width:42px;height:42px}.ex-ico img{width:33px;height:33px}
   .stepper button{width:25px;font-size:18px}
   .stepper input{font-size:14px}
 }
@@ -462,7 +462,7 @@ bdi{unicode-bidi:isolate}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v30</span></div>
+    <div class="hub-foot"><span id="ver">v31</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -528,7 +528,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v30');
+console.log('Atlas v31');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -834,66 +834,65 @@ async function delRow(table, id, view){
 }
 
 /* ================= GYM ================= */
-/* Exercise catalogue. Each entry: [name, muscle group, svg inner markup].
-   Figures share one grammar: 64x64 box, round-cap 3px ink strokes, filled r4.2 head,
-   5px strokes for plates/stacks, 2.5px for cables. */
+/* Exercise catalogue. Each entry: [name, muscle group]. Icons are PNG pictograms in ex/,
+   named by slug (ex/bench-press.png); ex/_fallback.png (a dumbbell) covers custom names. */
 const EX_CAT = [
 // ---- Chest ----
-['Bench Press','Chest','<circle cx="15" cy="35" r="4.2" fill="currentColor" stroke="none"/><path d="M20 38h18l5 4v8"/><path d="M26 37V26M34 37V26"/><path d="M12 24h40"/><path d="M18 19v10M46 19v10" stroke-width="5"/><path d="M10 43h30M15 43v9M36 43v9"/>'],
-['Incline Bench Press','Chest','<path d="M8 50L36 32M13 51v5M32 39v9"/><circle cx="14" cy="41" r="4.2" fill="currentColor" stroke="none"/><path d="M19 39l15-8 7 3 2 10"/><path d="M25 35V24M33 31V21"/><path d="M12 20h40"/><path d="M18 15v10M46 15v10" stroke-width="5"/>'],
-['Dumbbell Press','Chest','<circle cx="15" cy="35" r="4.2" fill="currentColor" stroke="none"/><path d="M20 38h18l5 4v8"/><path d="M24 37V27M38 37V27"/><path d="M20 26h8M34 26h8"/><path d="M20 22v8M28 22v8M34 22v8M42 22v8" stroke-width="4.5"/><path d="M10 43h30M15 43v9M36 43v9"/>'],
-['Seated Chest Press','Chest','<path d="M12 18v28h16"/><circle cx="22" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M22 19v23h14l2 11"/><path d="M23 26h19"/><path d="M46 16v21" stroke-width="5"/>'],
-['Cable Fly','Chest','<circle cx="32" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M32 17v18M32 35l-6 11v8M32 35l6 11v8"/><path d="M30 22L18 26 10 20M34 22l12 4 8-6"/><path d="M8 8v14M56 8v14" stroke-width="5"/>'],
-['Push-Up','Chest','<circle cx="50" cy="20" r="4.2" fill="currentColor" stroke="none"/><path d="M46 24L26 34 12 44"/><path d="M45 26l-3 10 4 8M30 32v12"/><path d="M6 46h52"/>'],
-['Dips','Chest','<path d="M4 24h18M42 24h18"/><circle cx="32" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M32 19v18"/><path d="M18 24l10 6M46 24l-10 6"/><path d="M32 37l-9 7 1 8M32 37l9 7-1 8"/>'],
-['Weighted Dips','Chest','<path d="M4 22h16M40 22h16"/><circle cx="30" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M30 19v16"/><path d="M18 22l9 6M42 22l-9 6"/><path d="M30 35l-12 7 2 8M30 35l-6 10"/><path d="M34 35l3 5"/><circle cx="39" cy="48" r="5"/>'],
+['Bench Press','Chest'],
+['Incline Bench Press','Chest'],
+['Dumbbell Press','Chest'],
+['Seated Chest Press','Chest'],
+['Cable Fly','Chest'],
+['Push-Up','Chest'],
+['Dips','Chest'],
+['Weighted Dips','Chest'],
 // ---- Back ----
-['Lat Pulldown','Back','<path d="M32 3v7M12 10h40"/><circle cx="32" cy="22" r="4.2" fill="currentColor" stroke="none"/><path d="M32 27v13"/><path d="M29 29L18 11M35 29l11-18"/><path d="M32 40l-7 7v6M32 40l7 7v6"/>'],
-['Seated Cable Row','Back','<path d="M7 13v27" stroke-width="5"/><circle cx="42" cy="15" r="4.2" fill="currentColor" stroke="none"/><path d="M42 20v17"/><path d="M41 26L24 30"/><path d="M24 30H13" stroke-width="2.5"/><path d="M42 37l-16 5-8-8"/><path d="M37 44h15"/>'],
-['Barbell Row','Back','<circle cx="13" cy="21" r="4.2" fill="currentColor" stroke="none"/><path d="M18 24l21 6 2 11 1 13"/><path d="M27 28v9"/><path d="M13 37h28"/><path d="M19 31v12M35 31v12" stroke-width="5"/><path d="M6 55h52"/>'],
-['Dumbbell Row','Back','<path d="M6 45h26M11 45v9M29 45v9"/><circle cx="12" cy="19" r="4.2" fill="currentColor" stroke="none"/><path d="M17 22l21 4 4 15 1 13"/><path d="M20 24v20"/><path d="M27 26l2 8"/><path d="M24 38h10"/><path d="M24 34v8M34 34v8" stroke-width="4.5"/>'],
-['Pull-Up','Back','<path d="M8 9h48"/><circle cx="32" cy="20" r="4.2" fill="currentColor" stroke="none"/><path d="M22 10l8 12M42 10l-8 12"/><path d="M32 25v15"/><path d="M32 40l-8 6 1 8M32 40l8 6-1 8"/>'],
-['Deadlift','Back','<circle cx="15" cy="16" r="4.2" fill="currentColor" stroke="none"/><path d="M20 19l17 6 3 14v14"/><path d="M26 22v17"/><circle cx="26" cy="46" r="9"/><path d="M6 56h52"/>'],
-['Face Pull','Back','<path d="M56 8v16" stroke-width="5"/><circle cx="26" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M26 17v18M26 35l-6 11v8M26 35l6 11v8"/><path d="M26 20l8-4 8-2M26 23l8 2 8-4"/><path d="M42 16h10" stroke-width="2.5"/>'],
+['Lat Pulldown','Back'],
+['Seated Cable Row','Back'],
+['Barbell Row','Back'],
+['Dumbbell Row','Back'],
+['Pull-Up','Back'],
+['Deadlift','Back'],
+['Face Pull','Back'],
 // ---- Legs ----
-['Squat','Legs','<circle cx="32" cy="13" r="4.2" fill="currentColor" stroke="none"/><path d="M10 20h44"/><path d="M16 14v13M48 14v13" stroke-width="5"/><path d="M32 20v14"/><path d="M32 34l-9 6 1 12M32 34l9 6-1 12"/><path d="M8 54h48"/>'],
-['Front Squat','Legs','<circle cx="32" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M32 17v17"/><path d="M10 25h44"/><path d="M16 19v12M48 19v12" stroke-width="5"/><path d="M32 34l-9 7 1 11M32 34l9 7-1 11"/><path d="M8 54h48"/>'],
-['Leg Press','Legs','<path d="M6 22l2 24h15"/><circle cx="14" cy="30" r="4.2" fill="currentColor" stroke="none"/><path d="M19 33h13l10-8 5-8"/><path d="M36 9L54 29" stroke-width="5"/><path d="M30 5L58 35" stroke-width="2.5"/>'],
-['Leg Extension','Legs','<path d="M11 20v26h16"/><circle cx="21" cy="16" r="4.2" fill="currentColor" stroke="none"/><path d="M21 21v21h14l10-12"/><path d="M43 20v14" stroke-width="5"/><path d="M15 51h16"/>'],
-['Leg Curl','Legs','<path d="M10 40h32M15 44v9M37 44v9"/><circle cx="13" cy="33" r="4.2" fill="currentColor" stroke="none"/><path d="M18 36h20l8-10"/><path d="M44 21v11" stroke-width="5"/>'],
-['Lunge','Legs','<circle cx="26" cy="11" r="4.2" fill="currentColor" stroke="none"/><path d="M26 16v17"/><path d="M26 33l14 7v12"/><path d="M26 33l-8 13-6 3"/><path d="M26 19l-7 5v9M26 19l7 5v9"/><path d="M6 55h52"/>'],
-['Romanian Deadlift','Legs','<circle cx="16" cy="17" r="4.2" fill="currentColor" stroke="none"/><path d="M21 20l17 5 1 28"/><path d="M28 23v18"/><path d="M13 41h29"/><path d="M19 35v12M37 35v12" stroke-width="5"/><path d="M6 55h52"/>'],
-['Calf Raise','Legs','<circle cx="32" cy="10" r="4.2" fill="currentColor" stroke="none"/><path d="M32 15v18"/><path d="M32 33l-6 11M32 33l6 11"/><path d="M26 44l-5 6M38 44l5 6"/><path d="M12 44h40"/><path d="M32 18l-8 6v9M32 18l8 6v9"/>'],
-['Hip Thrust','Legs','<path d="M6 30h16M8 30v14M20 30v14"/><circle cx="12" cy="24" r="4.2" fill="currentColor" stroke="none"/><path d="M17 27l20 1 8 9v14"/><path d="M28 21h20"/><path d="M33 16v11M45 16v11" stroke-width="5"/><path d="M6 55h52"/>'],
+['Squat','Legs'],
+['Front Squat','Legs'],
+['Leg Press','Legs'],
+['Leg Extension','Legs'],
+['Leg Curl','Legs'],
+['Lunge','Legs'],
+['Romanian Deadlift','Legs'],
+['Calf Raise','Legs'],
+['Hip Thrust','Legs'],
 // ---- Shoulders ----
-['Overhead Press','Shoulders','<circle cx="32" cy="22" r="4.2" fill="currentColor" stroke="none"/><path d="M32 27v13"/><path d="M32 40l-6 8v6M32 40l6 8v6"/><path d="M29 26l-5-11M35 26l5-11"/><path d="M10 14h44"/><path d="M16 8v12M48 8v12" stroke-width="5"/>'],
-['Dumbbell Shoulder Press','Shoulders','<circle cx="32" cy="24" r="4.2" fill="currentColor" stroke="none"/><path d="M32 29v12M32 41l-6 7v6M32 41l6 7v6"/><path d="M29 28l-7-8M35 28l7-8"/><path d="M14 17h12M38 17h12"/><path d="M14 13v8M26 13v8M38 13v8M50 13v8" stroke-width="4.5"/>'],
-['Lateral Raise','Shoulders','<circle cx="32" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M32 19v16M32 35l-6 10v8M32 35l6 10v8"/><path d="M32 22H18M32 22h14"/><path d="M12 22h8M44 22h8"/><path d="M12 18v8M20 18v8M44 18v8M52 18v8" stroke-width="4.5"/>'],
-['Front Raise','Shoulders','<circle cx="22" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M22 19v16M22 35l-5 10v8M22 35l5 10v8"/><path d="M22 22h16"/><path d="M38 22h10"/><path d="M38 18v8M48 18v8" stroke-width="4.5"/>'],
-['Rear Delt Fly','Shoulders','<circle cx="13" cy="22" r="4.2" fill="currentColor" stroke="none"/><path d="M18 25l20 4 2 12v13"/><path d="M26 27L12 19M26 27l11-9"/><path d="M8 13v10M39 11v10" stroke-width="5"/><path d="M6 55h52"/>'],
-['Shrug','Shoulders','<circle cx="32" cy="15" r="4.2" fill="currentColor" stroke="none"/><path d="M32 20v15M32 35l-6 11v8M32 35l6 11v8"/><path d="M22 22v16M42 22v16"/><path d="M17 38h10M37 38h10"/><path d="M17 34v8M27 34v8M37 34v8M47 34v8" stroke-width="4.5"/><path d="M18 18l4-5 4 5M38 18l4-5 4 5" stroke-width="2.5"/>'],
-['Cable Lateral Raise','Shoulders','<path d="M54 33v21" stroke-width="5"/><circle cx="24" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M24 17v18M24 35l-6 11v8M24 35l6 11v8"/><path d="M24 21h16"/><path d="M40 21l10 24" stroke-width="2.5"/><path d="M24 21l-6 5v9"/>'],
+['Overhead Press','Shoulders'],
+['Dumbbell Shoulder Press','Shoulders'],
+['Lateral Raise','Shoulders'],
+['Front Raise','Shoulders'],
+['Rear Delt Fly','Shoulders'],
+['Shrug','Shoulders'],
+['Cable Lateral Raise','Shoulders'],
 // ---- Arms ----
-['Barbell Curl','Arms','<circle cx="32" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M32 17v17M32 34l-6 10v9M32 34l6 10v9"/><path d="M26 20l-3 8 5 3M38 20l3 8-5 3"/><path d="M14 31h36"/><path d="M20 26v10M44 26v10" stroke-width="5"/>'],
-['Dumbbell Curl','Arms','<circle cx="32" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M32 17v17M32 34l-6 10v9M32 34l6 10v9"/><path d="M26 20l-4 8 2 4M38 20l4 8-2 4"/><path d="M19 32h10M35 32h10"/><path d="M19 28v8M29 28v8M35 28v8M45 28v8" stroke-width="4.5"/>'],
-['Cable Curl','Arms','<path d="M56 30v24" stroke-width="5"/><circle cx="26" cy="11" r="4.2" fill="currentColor" stroke="none"/><path d="M26 16v18M26 34l-6 11v9M26 34l6 11v9"/><path d="M21 19l-3 10 6 4M31 19l3 10-6 4"/><path d="M28 33l24 10" stroke-width="2.5"/>'],
-['Hammer Curl','Arms','<circle cx="32" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M32 17v17M32 34l-6 10v9M32 34l6 10v9"/><path d="M26 20l-4 8 2 5M38 20l4 8-2 5"/><path d="M24 24v14M40 24v14"/><path d="M20 26h8M20 36h8M36 26h8M36 36h8" stroke-width="4.5"/>'],
-['Triceps Pushdown','Arms','<path d="M54 4v15" stroke-width="5"/><circle cx="24" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M24 17v18M24 35l-6 11v8M24 35l6 11v8"/><path d="M24 20l7 6-2 8"/><path d="M22 34h14"/><path d="M31 26l21-8" stroke-width="2.5"/>'],
-['Skull Crusher','Arms','<path d="M8 40h34M13 40v11M37 40v11"/><circle cx="16" cy="33" r="4.2" fill="currentColor" stroke="none"/><path d="M21 36h17l5 4v8"/><path d="M27 35l5-7-7-6"/><path d="M12 18h26"/><path d="M18 13v10M34 13v10" stroke-width="5"/>'],
+['Barbell Curl','Arms'],
+['Dumbbell Curl','Arms'],
+['Cable Curl','Arms'],
+['Hammer Curl','Arms'],
+['Triceps Pushdown','Arms'],
+['Skull Crusher','Arms'],
 // ---- Core ----
-['Plank','Core','<circle cx="12" cy="28" r="4.2" fill="currentColor" stroke="none"/><path d="M17 31h27l8 13"/><path d="M17 32l-4 12h11"/><path d="M6 46h52"/>'],
-['Crunch','Core','<path d="M6 48h52"/><circle cx="16" cy="28" r="4.2" fill="currentColor" stroke="none"/><path d="M20 31l16 14"/><path d="M36 45l9-14 7 15"/><path d="M19 33l6 6"/>'],
-['Hanging Leg Raise','Core','<path d="M6 8h52"/><circle cx="24" cy="18" r="4.2" fill="currentColor" stroke="none"/><path d="M17 9l6 10M31 9l-5 10"/><path d="M24 23v15"/><path d="M24 38h16l8-6"/>'],
-['Cable Crunch','Core','<path d="M54 4v16" stroke-width="5"/><circle cx="20" cy="20" r="4.2" fill="currentColor" stroke="none"/><path d="M21 25l7 14h13l-3 9"/><path d="M22 22l9-4"/><path d="M31 18l19-2" stroke-width="2.5"/><path d="M6 50h52"/>'],
-['Russian Twist','Core','<path d="M6 52h52"/><circle cx="20" cy="18" r="4.2" fill="currentColor" stroke="none"/><path d="M23 22l12 18"/><path d="M35 40l11-12 5 16"/><path d="M27 30L14 34"/><circle cx="10" cy="36" r="4"/>'],
+['Plank','Core'],
+['Crunch','Core'],
+['Hanging Leg Raise','Core'],
+['Cable Crunch','Core'],
+['Russian Twist','Core'],
 // ---- Cardio ----
-['Treadmill','Cardio','<path d="M6 52h30l10-26M40 26h14"/><circle cx="18" cy="16" r="4.2" fill="currentColor" stroke="none"/><path d="M18 21v13"/><path d="M18 34l-7 7 1 9M18 34l9 5 1 11"/><path d="M18 24l-8 5M18 24l9-3"/>'],
-['Cycling','Cardio','<circle cx="14" cy="46" r="8"/><circle cx="48" cy="46" r="8"/><path d="M14 46l10-14h12l12 14M24 32l8 14"/><circle cx="39" cy="13" r="4.2" fill="currentColor" stroke="none"/><path d="M38 18l-6 13"/><path d="M32 31l-6 11"/><path d="M37 20l9 7"/>'],
-['Rowing','Cardio','<path d="M6 52h40"/><circle cx="51" cy="28" r="9"/><circle cx="14" cy="16" r="4.2" fill="currentColor" stroke="none"/><path d="M14 21v15"/><path d="M14 36l15 5 6 10"/><path d="M15 26l19 6"/><path d="M34 32l8 2" stroke-width="2.5"/>'],
-['Jump Rope','Cardio','<circle cx="32" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M32 19v14M32 33l-4 9 1 7M32 33l4 9-1 7"/><path d="M28 24l-5 4M36 24l5 4"/><path d="M23 28C5 35 8 57 32 57s27-22 9-29" stroke-width="2.5"/>'],
-['Stair Climber','Cardio','<path d="M6 52h10v-8h11v-8h11v-8h12"/><circle cx="24" cy="14" r="4.2" fill="currentColor" stroke="none"/><path d="M24 19v12"/><path d="M24 31l-6 8-2 5M24 31l9 1v4"/><path d="M24 22l-7 6M24 22l8 4"/>'],
+['Treadmill','Cardio'],
+['Cycling','Cardio'],
+['Rowing','Cardio'],
+['Jump Rope','Cardio'],
+['Stair Climber','Cardio'],
 ];
-const EX_FALLBACK = '<path d="M20 32h24"/><path d="M14 22v20M22 18v28M42 18v28M50 22v20" stroke-width="4.5"/>';
+const exSlug = n => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const EX_GROUPS = ['Chest','Back','Legs','Shoulders','Arms','Core','Cardio'];
 const EX_BY_NAME = Object.fromEntries(EX_CAT.map(e => [e[0], e]));
 // legacy free-text names typed before the catalogue existed
@@ -920,8 +919,8 @@ function setLabel(s){
 }
 function exIcon(name, cls){
   const e = EX_BY_NAME[exCanon(name)];
-  return `<svg class="${cls||''}" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"
-    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${e ? e[2] : EX_FALLBACK}</svg>`;
+  return `<img class="exi ${cls||''}" src="ex/${e ? exSlug(e[0]) : '_fallback'}.png" alt="" draggable="false"
+    onerror="this.onerror=null;this.src='ex/_fallback.png'">`;
 }
 /* ---------- live session draft ----------
    Logging happens at the gym, so the in-progress session lives in localStorage and is
