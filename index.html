@@ -111,7 +111,6 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-col.left .tile:nth-child(1){animation-delay:.04s}
 .hub-col.left .tile:nth-child(2){animation-delay:.09s}
 .hub-col.left .tile:nth-child(3){animation-delay:.14s}
-.hub-col.left .tile:nth-child(4){animation-delay:.19s}
 .hub-col.right .tile:nth-child(1){animation-delay:.07s}
 .hub-col.right .tile:nth-child(2){animation-delay:.12s}
 .hub-col.right .tile:nth-child(3){animation-delay:.17s}
@@ -138,7 +137,6 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .grid{display:grid;gap:16px}
 /* min(...,100%) so a column never exceeds the container on a narrow phone (the old 13px overflow) */
 .grid.cols3{grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr))}
-.grid.cols4{grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr))}
 .grid.cols2{grid-template-columns:repeat(auto-fit,minmax(min(310px,100%),1fr))}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
 .card h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
@@ -229,7 +227,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
   .chart-box{height:200px}
   .page-head input[type=month]{max-width:150px}
 }
-/* seven tabs have to fit across a narrow phone */
+/* six tabs have to fit across a narrow phone */
 @media(max-width:420px){ .tab{padding:8px 8px;font-size:12.5px} .hub-col{gap:14px 16px} .tile .ic{width:52px;height:52px;border-radius:16px} .tile svg{width:21px;height:21px} .tile b{font-size:11.5px} }
 
 /* ================= GYM ================= */
@@ -347,7 +345,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .scope-pick input:disabled{opacity:.45}
 
 .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;margin-bottom:16px}
-/* .mstat, not .stat: .stat is the bare big number used on Dashboard/Rent and must stay unboxed */
+/* .mstat, not .stat: .stat is the bare big number used on Rent and must stay unboxed */
 .mstat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
 .mstat .lbl{margin-bottom:6px}
 .mstat .v{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
@@ -445,15 +443,14 @@ bdi{unicode-bidi:isolate}
      <div class="hub-orbit">
       <div class="hub-circle"></div>
       <div class="hub-col left">
-        <button class="tile" data-tab="dashboard" style="--tx:-0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></span><b>Dashboard</b></button>
-        <button class="tile" data-tab="schedule" style="--tx:-0.9717;--ty:-0.2363"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg></span><b>Schedule</b></button>
-        <button class="tile" data-tab="gym" style="--tx:-0.9356;--ty:0.353"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span><b>Gym</b></button>
+        <button class="tile" data-tab="schedule" style="--tx:-0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg></span><b>Schedule</b></button>
+        <button class="tile" data-tab="gym" style="--tx:-0.9981;--ty:0.061"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span><b>Gym</b></button>
         <button class="tile" data-tab="money" style="--tx:-0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg></span><b>Money</b></button>
       </div>
       <div class="hub-figure">
         <div class="hub-shadow"></div>
         <img src="hero-atlas-hub.png?v=23" alt="Atlas holding up the world"
-             onerror="this.onerror=null;this.src='hero-dashboard.png'">
+             onerror="this.remove()">
       </div>
       <div class="hub-col right">
         <button class="tile" data-tab="rent" style="--tx:0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.6L12 3l9 7.6"/><path d="M5.6 9.4V20a1 1 0 001 1h10.8a1 1 0 001-1V9.4"/><path d="M9.7 21v-6.2h4.6V21"/></svg></span><b>Rent</b></button>
@@ -462,7 +459,7 @@ bdi{unicode-bidi:isolate}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v31</span></div>
+    <div class="hub-foot"><span id="ver">v32</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -470,7 +467,6 @@ bdi{unicode-bidi:isolate}
     <header class="topbar">
       <button class="home-btn" id="homeBtn" aria-label="Back to home"><img src="atlas-logo.png" alt="" onerror="this.remove()">Atlas</button>
       <nav class="tabs">
-        <button class="tab" data-tab="dashboard">Dashboard</button>
         <button class="tab" data-tab="schedule">Schedule</button>
         <button class="tab" data-tab="gym">Gym</button>
         <button class="tab" data-tab="money">Money</button>
@@ -528,7 +524,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v31');
+console.log('Atlas v32');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -628,7 +624,7 @@ let _renderSeq = 0;
 const renderStart = () => ++_renderSeq;
 const stale = seq => seq !== _renderSeq;
 window.addEventListener('hashchange', () => { const t = location.hash.slice(1) || 'home'; if(t !== window._curTab) go(t); });
-/* 'home' is the hub — Atlas centred with the seven sections orbiting him.
+/* 'home' is the hub — Atlas centred with the six sections orbiting him.
    Every other tab hides the hub and swaps in the section shell (top bar + #main). */
 function go(tab){
   if(tab !== 'home' && !views[tab]) tab = 'home';
@@ -660,65 +656,6 @@ function tickClock(){
   if(el) el.textContent = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
 }
 setInterval(tickClock, 1000);
-
-/* ================= DASHBOARD ================= */
-views.dashboard = async function(){
-  const seq = renderStart();
-  const main = document.getElementById('main');
-  main.innerHTML = `<div class="page-head"><div><h2>Dashboard</h2>
-    <div style="color:var(--muted);font-size:13.5px;margin-top:4px">${new Date().toLocaleDateString('en-GB',{weekday:'long', day:'numeric', month:'long'})}</div></div>
-    <img src="hero-dashboard.png" alt="" onerror="this.remove()"></div>
-    <div class="grid cols4" id="dashStats"></div>
-    <div class="grid cols2" style="margin-top:16px">
-      <div class="card"><h3>Today & upcoming</h3><div class="list" id="dashEvents"><div class="empty">Loading…</div></div></div>
-      <div class="card"><h3>Chores due</h3><div class="list" id="dashChores"><div class="empty">Loading…</div></div></div>
-    </div>`;
-
-  const monthStart = todayStr().slice(0,8) + '01';
-  const monthEnd = new Date(new Date(monthStart + 'T00:00').getFullYear(), new Date(monthStart + 'T00:00').getMonth() + 1, 1).toLocaleDateString('en-CA');
-  const now = new Date(); const dayStart = new Date(now); dayStart.setHours(0,0,0,0);
-  const [ev, ex, go_, ch, wo, wc, st] = await Promise.all([
-    sb.from('events').select('*').gte('starts_at', dayStart.toISOString()).order('starts_at').limit(6),
-    sb.from('expenses').select('amount').gte('spent_at', monthStart).lt('spent_at', monthEnd),
-    sb.from('goals').select('*').eq('status','active'),
-    sb.from('chores').select('*'),
-    sb.from('workouts').select('workout_date').order('workout_date',{ascending:false}).limit(1),
-    sb.from('workouts').select('id', {count:'exact', head:true}).gte('workout_date', monthStart).lt('workout_date', monthEnd),
-    sb.from('user_settings').select('monthly_budget').maybeSingle(),
-  ]);
-
-  if(stale(seq)) return;
-  const bad = [ev, ex, go_, ch, wo, wc, st].find(r => r.error);
-  if(bad){
-    const retry = `<div class="empty" style="grid-column:1/-1">Couldn't load your data — ${esc(bad.error.message)}.<br>The backend may be waking up. <button class="linkish" type="button" onclick="views.dashboard()">Retry</button></div>`;
-    document.getElementById('dashStats').innerHTML = retry;
-    document.getElementById('dashEvents').innerHTML = document.getElementById('dashChores').innerHTML = '<div class="empty">—</div>';
-    return;
-  }
-  const spent = (ex.data||[]).reduce((s,r) => s + +r.amount, 0);
-  const budget = +(st.data?.monthly_budget || 0);
-  const dueChores = (ch.data||[]).filter(c => choreDueDays(c) <= 0);
-  const lastWo = wo.data?.[0]?.workout_date;
-  document.getElementById('dashStats').innerHTML = `
-    <div class="card"><h3>Spent this month</h3><div class="stat">${NIS(spent)}</div>${budget > 0 ? `
-      <div class="progress-track" style="margin-top:10px"><div class="progress-fill" style="width:${Math.min(100, spent/budget*100)}%${spent > budget ? ';background:var(--red)' : ''}"></div></div>
-      <div style="font-size:12px;color:var(--muted);margin-top:6px">${spent > budget ? NIS(spent-budget) + ' over' : NIS(budget-spent) + ' left of'} ${NIS(budget)} budget</div>` : ''}</div>
-    <div class="card"><h3>Workouts this month</h3><div class="stat">${wc.count ?? 0}</div></div>
-    <div class="card"><h3>Active goals</h3><div class="stat">${(go_.data||[]).length}</div></div>
-    <div class="card"><h3>Last workout</h3><div class="stat" style="font-size:20px">${lastWo ? fmtDate(lastWo) : '—'} ${lastWo ? daysAgoLabel(lastWo) : ''}</div></div>`;
-
-  document.getElementById('dashEvents').innerHTML = (ev.data||[]).length
-    ? ev.data.map(e => `<div class="row ${e.done?'done':''}"><div class="grow"><div class="title">${esc(e.title)}</div><div class="sub">${fmtDT(e.starts_at)}</div></div></div>`).join('')
-    : '<div class="empty">Nothing scheduled — enjoy the calm</div>';
-
-  document.getElementById('dashChores').innerHTML = dueChores.length
-    ? dueChores.map(c => `<div class="row"><div class="grow"><div class="title">${esc(c.name)}</div></div>${chorePill(c)}</div>`).join('')
-    : '<div class="empty">All chores done</div>';
-};
-function daysAgoLabel(d){
-  const days = Math.floor((new Date(todayStr()) - new Date(d)) / 864e5);
-  return `<small>${days === 0 ? '(today)' : days === 1 ? '(yesterday)' : '('+days+'d ago)'}</small>`;
-}
 
 /* ================= SCHEDULE ================= */
 views.schedule = async function(){
