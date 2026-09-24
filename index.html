@@ -89,10 +89,15 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
    angle, precomputed inline) and is placed at --R from the centre.
    tileIn is opacity-only on purpose: a transform keyframe would clobber that placement. */
 #hub{min-height:100vh;display:flex;flex-direction:column;padding:28px 34px 22px;max-width:1320px;margin:0 auto;width:100%}
-.hub-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
-.hub-greet{font-size:clamp(26px,3.2vw,40px);font-weight:700;letter-spacing:-.03em;line-height:1.1}
-.hub-date{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:.01em}
-.hub-meta{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;font-weight:600}
+.hub-top{display:flex;align-items:center;justify-content:space-between;gap:16px;color:var(--muted);font-size:14px;font-weight:600}
+.hub-top .hub-date{font-weight:500}
+.hub-top .hub-date::before{content:'·';margin:0 8px;opacity:.6}
+.hub-meta{display:flex;align-items:center;gap:10px}
+/* the greeting sits beside the figure, in the free upper-right of the orbit */
+.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--figh) * .30);white-space:nowrap;animation:tileIn .6s ease .1s both}
+.hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.hub-status{color:var(--muted);font-size:14px;margin-top:9px;min-height:18px;display:flex;align-items:center;gap:7px}
+.hub-status svg{width:15px;height:15px;flex:none}
 .hub-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0 16px}
 .hub-orbit{--figh:clamp(250px,min(calc(100vh - 430px),calc(96vw - 300px)),620px);--D:calc(var(--figh) * .90);--R:calc(var(--D) / 2 + 64px + var(--figh) * .07);
   position:relative;width:calc(var(--R) * 2 + 104px);height:calc(var(--R) * 2 + 104px)}
@@ -111,12 +116,13 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-col.left .tile:nth-child(1){animation-delay:.04s}
 .hub-col.left .tile:nth-child(2){animation-delay:.09s}
 .hub-col.left .tile:nth-child(3){animation-delay:.14s}
-.hub-col.right .tile:nth-child(1){animation-delay:.07s}
-.hub-col.right .tile:nth-child(2){animation-delay:.12s}
-.hub-col.right .tile:nth-child(3){animation-delay:.17s}
-.hub-figure{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(calc(var(--figh) * -.025),calc(var(--figh) * -.07));display:flex;align-items:center;justify-content:center;width:calc(var(--figh) * .66);height:var(--figh)}
-.hub-shadow{position:absolute;left:47%;bottom:calc(var(--figh) * -.025);transform:translateX(-50%);width:calc(var(--figh) * .54);height:calc(var(--figh) * .075);border-radius:50%;background:radial-gradient(ellipse at center,rgba(26,26,24,.20),rgba(26,26,24,.08) 50%,rgba(26,26,24,0) 74%)}
-.hub-figure img{position:relative;height:var(--figh);object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn .85s ease both}
+.hub-col.left .tile:nth-child(4){animation-delay:.19s}
+.hub-col.right .tile:nth-child(1){animation-delay:.12s}
+.hub-col.right .tile:nth-child(2){animation-delay:.17s}
+/* the figure is taller than the disc: head above its rim, body fading out below it */
+.hub-figure{position:absolute;left:50%;top:calc(50% - var(--figh) * .63);transform:translateX(-50%);display:flex;align-items:flex-start;justify-content:center;width:calc(var(--figh) * 1.02);height:calc(var(--figh) * 1.36)}
+.hub-figure img{position:relative;height:100%;object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn .85s ease both;
+  -webkit-mask-image:linear-gradient(to bottom,#000 84%,transparent 99%);mask-image:linear-gradient(to bottom,#000 84%,transparent 99%)}
 .hub-foot{display:flex;justify-content:center;font-size:10px;color:var(--muted)}
 @keyframes tileIn{from{opacity:0}to{opacity:1}}
 @keyframes figIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -194,17 +200,20 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
   .home-btn img{height:24px}
   .tab{padding:8px 10px;font-size:13px}
   #hub{padding:20px 16px 14px}
-  .hub-greet{font-size:25px}
-  .hub-date{font-size:13px;margin-top:5px}
+  .hub-top{font-size:13px;align-items:flex-start}
+  .hub-top .hub-date{display:block;margin-top:2px}
+  .hub-top .hub-date::before{content:none}
+  .hub-hello{position:static;white-space:normal;text-align:center;order:1;flex:0 0 100%;margin:-4px 0 4px}
+  .hub-greet{font-size:27px}
+  .hub-status{justify-content:center;font-size:13px}
   /* no room to orbit on a phone: Atlas on top with the circle behind him, tiles in two rows */
   .hub-stage{padding:6px 0 10px}
-  .hub-orbit{--figh:clamp(210px,34vh,320px);width:100%;height:auto;display:flex;flex-direction:column;align-items:center;gap:18px}
+  .hub-orbit{--figh:clamp(210px,34vh,320px);width:100%;height:auto;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:18px 0;padding-top:calc(var(--figh) * .06)}
   .hub-circle{top:calc(var(--figh) / 2);width:calc(var(--figh) * .95);height:calc(var(--figh) * .95);box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--border)}
-  .hub-col{display:flex;flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:20px 24px}
-  .tile{position:static;transform:none!important}
-  .hub-figure{position:relative;left:auto;top:auto;transform:none;order:0;width:auto;height:auto}
-  .hub-col.left{order:1}
-  .hub-col.right{order:2}
+  .hub-col{display:contents}
+  .tile{position:static;transform:none!important;flex:0 0 31%;order:2;margin-bottom:6px}
+  .hub-figure{position:relative;left:auto;top:auto;transform:none;order:0;flex:0 0 100%;width:auto;height:calc(var(--figh) * 1.2)}
+  .hub-circle{top:calc(var(--figh) * .06 + var(--figh) * .5)}
   .tile .ic{width:60px;height:60px;border-radius:18px}
   .cal-grid{gap:2px}
   .cal-day{border-radius:7px}
@@ -430,10 +439,7 @@ bdi{unicode-bidi:isolate}
   <!-- ---------- HUB (home) ---------- -->
   <section id="hub" class="hidden">
     <div class="hub-top">
-      <div>
-        <div class="hub-greet" id="hubGreet">Hello</div>
-        <div class="hub-date" id="hubDate"></div>
-      </div>
+      <div><span id="hubDay">Good morning</span><span class="hub-date" id="hubDate"></span></div>
       <div class="hub-meta">
         <span id="hubClock"></span>
         <button class="icon-btn" id="signOutHub" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
@@ -442,24 +448,27 @@ bdi{unicode-bidi:isolate}
     <div class="hub-stage">
      <div class="hub-orbit">
       <div class="hub-circle"></div>
+      <div class="hub-hello">
+        <div class="hub-greet" id="hubGreet">Hello, Benji</div>
+        <div class="hub-status" id="hubStatus"></div>
+      </div>
       <div class="hub-col left">
         <button class="tile" data-tab="schedule" style="--tx:-0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg></span><b>Schedule</b></button>
-        <button class="tile" data-tab="gym" style="--tx:-0.9981;--ty:0.061"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span><b>Gym</b></button>
-        <button class="tile" data-tab="money" style="--tx:-0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg></span><b>Money</b></button>
+        <button class="tile" data-tab="gym" style="--tx:-0.9717;--ty:-0.2363"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span><b>Gym</b></button>
+        <button class="tile" data-tab="money" style="--tx:-0.9356;--ty:0.353"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg></span><b>Money</b></button>
+        <button class="tile" data-tab="rent" style="--tx:-0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.6L12 3l9 7.6"/><path d="M5.6 9.4V20a1 1 0 001 1h10.8a1 1 0 001-1V9.4"/><path d="M9.7 21v-6.2h4.6V21"/></svg></span><b>Rent</b></button>
       </div>
       <div class="hub-figure">
-        <div class="hub-shadow"></div>
-        <img src="hero-atlas-hub.png?v=23" alt="Atlas holding up the world"
+        <img src="hero-atlas-hub.png?v=33" alt="Atlas holding up the world"
              onerror="this.remove()">
       </div>
       <div class="hub-col right">
-        <button class="tile" data-tab="rent" style="--tx:0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.6L12 3l9 7.6"/><path d="M5.6 9.4V20a1 1 0 001 1h10.8a1 1 0 001-1V9.4"/><path d="M9.7 21v-6.2h4.6V21"/></svg></span><b>Rent</b></button>
-        <button class="tile" data-tab="goals" style="--tx:0.9981;--ty:0.061"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
+        <button class="tile" data-tab="goals" style="--tx:0.9356;--ty:0.353"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
         <button class="tile" data-tab="chores" style="--tx:0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v32</span></div>
+    <div class="hub-foot"><span id="ver">v33</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -524,7 +533,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v32');
+console.log('Atlas v33');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -645,11 +654,32 @@ document.getElementById('homeBtn').addEventListener('click', () => go('home'));
 /* hub chrome: greeting, date, clock */
 function renderHub(){
   const h = new Date().getHours();
-  document.getElementById('hubGreet').textContent =
-    (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ', Benji';
+  document.getElementById('hubDay').textContent = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
   document.getElementById('hubDate').textContent =
     new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
   tickClock();
+  hubStatus();
+}
+/* one quiet line under the greeting: when you last trained, and what today holds */
+async function hubStatus(){
+  const el = document.getElementById('hubStatus'); if(!el) return;
+  const seq = renderStart();
+  const dayStart = new Date(); dayStart.setHours(0,0,0,0);
+  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+  const [wo, ev] = await Promise.all([
+    sb.from('workouts').select('workout_date').order('workout_date', {ascending:false}).limit(1),
+    sb.from('events').select('id', {count:'exact', head:true}).gte('starts_at', dayStart.toISOString()).lt('starts_at', dayEnd.toISOString()).eq('done', false),
+  ]);
+  if(stale(seq) || wo.error || ev.error) return;
+  const parts = [];
+  const last = wo.data && wo.data[0] && wo.data[0].workout_date;
+  if(last){
+    const days = Math.round((new Date(todayStr()) - new Date(last)) / 864e5);
+    parts.push(days === 0 ? 'Trained today' : days === 1 ? 'Trained yesterday' : `Last workout ${days} days ago`);
+  } else parts.push('No workouts yet');
+  const n = ev.count || 0;
+  parts.push(n ? `${n} event${n === 1 ? '' : 's'} today` : 'Nothing scheduled today');
+  el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${parts.join(' · ')}`;
 }
 function tickClock(){
   const el = document.getElementById('hubClock');
