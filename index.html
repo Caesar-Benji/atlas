@@ -249,26 +249,43 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .gym-top .sub{font-size:12.5px;color:var(--muted);margin-top:3px}
 .gym-acts{display:flex;gap:8px;flex-wrap:wrap}
 
-.ex-card{display:grid;grid-template-columns:54px 1fr auto;gap:11px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:11px 12px}
+.ex-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:11px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:11px 12px}
 .ex-card+.ex-card{margin-top:9px}
-.ex-ico{width:54px;height:54px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.ex-card.open{border-color:var(--accent)}
+/* one card is open at a time: the wheels scroll vertically, so a page full of them would swallow every swipe */
+.ex-head{display:flex;align-items:center;gap:11px;min-width:0;background:none;border:none;padding:0;color:inherit;text-align:left;font-size:inherit}
+.ex-ico{width:54px;height:54px;flex:none;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent)}
 .ex-ico img{width:42px;height:42px;object-fit:contain}
-.ex-body{min-width:0}
-.ex-name{font-weight:600;font-size:14.5px;line-height:1.2}
-.ex-last{font-size:11.5px;color:var(--muted);margin-top:3px}
-.ex-steps{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.ex-steps.cardio{grid-template-columns:1fr 1fr}
-.stepper{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 5px 5px;text-align:center}
-.stepper .lbl{margin-bottom:3px;font-size:10px}
-.stepper .ctl{display:flex;align-items:center;gap:1px}
-.stepper button{width:34px;height:34px;flex:none;border:none;background:transparent;color:var(--muted);font-size:19px;font-weight:600;border-radius:9px;line-height:1;display:flex;align-items:center;justify-content:center}
-.stepper button:hover{background:var(--surface2);color:var(--text)}
-.stepper button:active{transform:scale(.9)}
-.stepper input{border:none;background:transparent;text-align:center;font-size:16px;font-weight:700;padding:4px 0;width:100%;border-radius:0}
-.stepper input:focus{border:none;box-shadow:inset 0 -2px 0 var(--accent)}
-/* Chromium reserves room for the number spinner even when hidden, clipping 2-digit values on phones */
-.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.stepper input{-moz-appearance:textfield;appearance:textfield}
+.ex-body{display:block;flex:1;min-width:0}
+.ex-name{display:block;font-weight:600;font-size:14.5px;line-height:1.2}
+.ex-last{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.ex-last b{font-size:13px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+.ex-chev{flex:none;display:flex;color:var(--muted);transition:transform .15s}
+.ex-card.open .ex-chev{transform:rotate(90deg)}
+.ex-steps{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;max-width:440px}
+.ex-steps.cardio{grid-template-columns:1fr 1.6fr;max-width:320px}
+
+/* scroll wheel: a snap-scrolling column, the row resting in the middle band is the value */
+.wheel{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px 4px 4px;text-align:center;min-width:0}
+.wheel .lbl{margin-bottom:2px;font-size:10px}
+.wheel-win{position:relative;display:flex;height:102px}
+.wheel-win::before{content:'';position:absolute;left:2px;right:2px;top:34px;height:34px;border-radius:8px;background:var(--surface2);pointer-events:none}
+.wheel-col{position:relative;flex:1;min-width:0;height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none;touch-action:pan-y;outline:none;border-radius:8px;
+  -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.22),#000 36%,#000 64%,rgba(0,0,0,.22));mask-image:linear-gradient(to bottom,rgba(0,0,0,.22),#000 36%,#000 64%,rgba(0,0,0,.22))}
+.wheel-col::-webkit-scrollbar{display:none}
+.wheel-col:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+.wheel-pad,.wheel-row{height:34px}
+.wheel-row{scroll-snap-align:center;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;cursor:pointer;-webkit-user-select:none;user-select:none}
+.wheel-row.on{font-size:19px;font-weight:700;color:var(--text)}
+/* kg = whole + fraction side by side. In the band they close up and read as one number ("62" ".5");
+   above and below they stand apart behind a hairline, so "61" next to ".25" isn't mistaken for 61.25 */
+.wheel-col.int{flex:1.25}
+.wheel-col.int .wheel-row{justify-content:flex-end;padding-right:9px}
+.wheel-col.frac .wheel-row{justify-content:flex-start;padding-left:9px}
+.wheel-col.int .wheel-row.on{padding-right:1px}
+.wheel-col.frac .wheel-row.on{padding-left:1px}
+.wheel-win.two{background:linear-gradient(var(--border),var(--border)) 55.56% 0/1px 100% no-repeat}
+.btn.ico{display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .ex-vol{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
 
 .rest{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border);border-radius:99px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600;color:var(--muted)}
@@ -296,7 +313,10 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .seg::-webkit-scrollbar{display:none}
 .seg button{flex:none;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:99px;padding:6px 13px;font-size:12.5px;font-weight:600;white-space:nowrap}
 .seg button.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
-.sheet-body{overflow-y:auto;padding:14px 17px 18px;-webkit-overflow-scrolling:touch}
+.sheet-body{flex:1;overflow-y:auto;padding:14px 17px 18px;-webkit-overflow-scrolling:touch}
+.sheet-foot{display:flex;align-items:center;gap:12px;padding:12px 17px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border)}
+.sheet-foot .n{flex:1;font-size:13px;color:var(--muted)}
+.sheet-foot .btn{min-width:132px}
 .pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:10px}
 .pick{background:var(--surface2);border:1px solid var(--border);border-radius:13px;padding:11px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;position:relative;transition:transform .1s,border-color .15s;color:var(--text)}
 .pick:hover{border-color:var(--accent)}
@@ -321,32 +341,22 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .tap-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;color:var(--muted);border:1px solid var(--border);border-radius:99px;padding:1px 7px 1px 5px;margin-left:6px;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px}
 
 @media(max-width:560px){
-  .ex-card{grid-template-columns:46px 1fr auto;gap:9px;padding:10px}
+  .ex-card{gap:9px;padding:10px}.ex-head{gap:9px}
   .ex-ico{width:46px;height:46px}.ex-ico img{width:36px;height:36px}
   .pick-grid{grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
   .sheet-bg{padding:0;align-items:flex-end}
   .sheet{max-width:none;border-radius:18px 18px 0 0;max-height:92vh}
-  /* three steppers share ~320px: sets/reps are 1-2 digits, kg can be "102.5" — give kg the room */
-  .ex-steps{gap:6px;grid-template-columns:1fr 1fr 1.25fr}
-  .ex-steps.cardio{grid-template-columns:1fr 1fr}
-  .stepper{padding:5px 2px 4px}
-  .stepper .ctl{gap:0}
-  .stepper button{width:26px;height:42px;font-size:20px;border-radius:8px}
-  .stepper input{font-size:15px;padding:2px 0;min-width:0}
+  /* three wheels share ~320px: sets/reps are 1-2 digits, kg is two columns ("102" ".75") — give kg the room */
+  .ex-steps{gap:6px;grid-template-columns:1fr 1fr 1.7fr;max-width:none}
+  .ex-steps.cardio{grid-template-columns:1fr 1.7fr;max-width:none}
   .wo-row{grid-template-columns:auto minmax(0,1fr)}
   .wo-acts{grid-column:1/-1;justify-content:flex-end}
   .gym-acts{width:100%}.gym-acts .btn,.gym-acts .btn-ghost{flex:1}
 }
 @media(max-width:380px){
-  .ex-card{grid-template-columns:42px 1fr auto;gap:8px;padding:9px}
+  .ex-card{gap:8px;padding:9px}.ex-head{gap:8px}
   .ex-ico{width:42px;height:42px}.ex-ico img{width:33px;height:33px}
-  .stepper button{width:25px;font-size:18px}
-  .stepper input{font-size:14px}
-}
-/* below ~345px three steppers can't share a row without clipping — kg drops to its own */
-@media(max-width:345px){
-  .ex-steps{grid-template-columns:1fr 1fr}
-  .ex-steps:not(.cardio) .stepper:last-child{grid-column:1/-1}
+  .wheel-row.on{font-size:18px}
 }
 
 /* ================= MONEY ================= */
@@ -471,7 +481,7 @@ bdi{unicode-bidi:isolate}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v35</span></div>
+    <div class="hub-foot"><span id="ver">v36</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -536,7 +546,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v35');
+console.log('Atlas v36');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -896,7 +906,10 @@ function exIcon(name, cls){
    Logging happens at the gym, so the in-progress session lives in localStorage and is
    written to Supabase once, on Finish. A locked phone or dead gym wifi can't lose it. */
 const GYM_KEY = 'atlas_gym_draft';
-let gymDraft, _gymTick = null, _rest = null, _pickG = 'All', _pickQ = '';
+let gymDraft, _gymTick = null, _rest = null, _pickG = 'All', _pickQ = '', _pickN = 0, _exOpen = 0;
+/* a new workout is "pending" from the moment exercises are being picked until Start is pressed:
+   the clock, the rest timer and Finish only exist once it has actually begun */
+const draftPending = () => !!gymDraft && !gymDraft.id && !gymDraft.started;
 function draftLoad(){ try{ const d = JSON.parse(localStorage.getItem(GYM_KEY) || 'null'); return (d && Array.isArray(d.items)) ? d : null; }catch(e){ return null; } }
 function draftSave(){ try{ gymDraft ? localStorage.setItem(GYM_KEY, JSON.stringify(gymDraft)) : localStorage.removeItem(GYM_KEY); }catch(e){} }
 const ICO = {
@@ -913,7 +926,7 @@ const ICO = {
   forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1M4 4l16 16"/></svg>',
   pause:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>',
 };
-const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 1});
+const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 2});   // quarter-kilo plates: 8.75, not 8.8
 function exSum(it){ return isCardio(it.ex) ? 0 : (+it.sets || 0) * (+it.reps || 0) * (+it.kg || 0); }
 function draftVol(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + exSum(it), 0); }
 function draftSets(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + (+it.sets || 0), 0); }
@@ -997,7 +1010,8 @@ function renderSession(){
       </div>`;
     return;
   }
-  const title = d.id ? 'Editing ' + fmtDate(d.date) : 'Session in progress';
+  const wait = draftPending();
+  const title = d.id ? 'Editing ' + fmtDate(d.date) : wait ? 'New workout' : 'Session in progress';
   c.innerHTML = `<h3>${title}</h3>
     <div class="gym-top" style="margin-bottom:12px">
       <div class="grow">
@@ -1005,7 +1019,7 @@ function renderSession(){
         <input id="woDate" type="date" style="width:auto" value="${d.date}" onchange="gymDraft.date=this.value;draftSave()">
       </div>
       <div class="grow"><div class="sub" id="sessTotals"></div></div>
-      <div class="rest" id="restChip"></div>
+      ${wait ? '' : '<div class="rest" id="restChip"></div>'}
     </div>
     <div style="margin-bottom:12px"><label class="lbl" for="woNotes">Notes (optional)</label>
       <input id="woNotes" placeholder="e.g. Push day, felt strong" enterkeyhint="done"
@@ -1013,7 +1027,9 @@ function renderSession(){
     <div id="exList" style="margin-bottom:12px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap" class="gym-acts">
       <button class="btn-ghost" type="button" onclick="openPicker()">+ Add exercise</button>
-      <button class="btn" type="button" id="finishBtn" onclick="finishSession()">${d.id ? 'Save changes' : 'Finish workout'}</button>
+      ${wait
+        ? `<button class="btn ico" type="button" id="startBtn" onclick="beginSession()">${ICO.play}Start</button>`
+        : `<button class="btn" type="button" id="finishBtn" onclick="finishSession()">${d.id ? 'Save changes' : 'Finish workout'}</button>`}
       <button class="btn-ghost" type="button" onclick="discardSession()">${d.id ? 'Cancel' : 'Discard'}</button>
     </div>`;
   renderExList(); sessTotals(); restPaint(); startTick();
@@ -1022,47 +1038,104 @@ function renderExList(){
   const el = document.getElementById('exList'); if(!el) return;
   const items = gymDraft ? gymDraft.items : [];
   if(!items.length){ el.innerHTML = '<div class="empty">No exercises yet — tap <b>+ Add exercise</b> to pick from the library</div>'; return; }
+  if(_exOpen >= items.length) _exOpen = items.length - 1;
   el.innerHTML = items.map((it, i) => {
-    const l = lastFor(it.ex);
-    return `<div class="ex-card">
-      <div class="ex-ico">${exIcon(it.ex)}</div>
-      <div class="ex-body"><div class="ex-name">${esc(it.ex)}</div>
-        <div class="ex-last">${l ? 'Last ' + fmtDate(l.date) + ': ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this'}</div></div>
+    const open = i === _exOpen, cardio = isCardio(it.ex), l = open && lastFor(it.ex);
+    return `<div class="ex-card${open ? ' open' : ''}">
+      <button class="ex-head" type="button" aria-expanded="${open}" onclick="exToggle(${i})">
+        <span class="ex-ico">${exIcon(it.ex)}</span>
+        <span class="ex-body"><span class="ex-name">${esc(it.ex)}</span>
+          <span class="ex-last">${!open ? '<b>' + setLabel(it) + '</b>'
+            : l ? 'Last ' + fmtDate(l.date) + ': ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this'}</span></span>
+        <span class="ex-chev">${ICO.chevR}</span>
+      </button>
       <button class="icon-btn danger" type="button" title="Remove ${esc(it.ex)}" onclick="exDel(${i})">${ICO.x}</button>
-      <div class="ex-steps${isCardio(it.ex) ? ' cardio' : ''}">
-        ${isCardio(it.ex)
-          ? stepper(i, 'reps', 'Minutes') + stepper(i, 'kg', 'Km')
-          : stepper(i, 'sets', 'Sets') + stepper(i, 'reps', 'Reps') + stepper(i, 'kg', 'Kg')}
-      </div></div>`;
+      ${!open ? '' : `<div class="ex-steps${cardio ? ' cardio' : ''}">
+        ${cardio
+          ? wheel(i, 'reps', 'Minutes') + wheel(i, 'kg', 'Km')
+          : wheel(i, 'sets', 'Sets') + wheel(i, 'reps', 'Reps') + wheel(i, 'kg', 'Kg')}
+      </div>`}</div>`;
   }).join('');
+  wheelsInit();
 }
-function stepper(i, k, label){
-  const v = gymDraft.items[i][k];
-  return `<div class="stepper"><label class="lbl" for="g${k}${i}">${label}</label>
-    <div class="ctl">
-      <button type="button" aria-label="Less ${label}" onclick="exStep(${i},'${k}',-1)">−</button>
-      <input id="g${k}${i}" type="number" inputmode="${k === 'kg' ? 'decimal' : 'numeric'}" min="0"
-        ${k === 'kg' ? 'step="0.5"' : ''} value="${v === '' || v == null ? '' : v}"
-        onfocus="this.select()" oninput="exSet(${i},'${k}',this.value)">
-      <button type="button" aria-label="More ${label}" onclick="exStep(${i},'${k}',1)">+</button>
-    </div></div>`;
+function exToggle(i){ _exOpen = _exOpen === i ? -1 : i; renderExList(); }
+function exDel(i){
+  gymDraft.items.splice(i, 1); draftSave();
+  if(i < _exOpen) _exOpen--;
+  renderExList(); sessTotals();
 }
-function exStep(i, k, dir){
-  const it = gymDraft.items[i]; if(!it) return;
-  const cardio = isCardio(it.ex);
-  const step = cardio ? (k === 'kg' ? 0.5 : 5) : (k === 'kg' ? 2.5 : 1), floor = k === 'sets' ? 1 : 0;
-  it[k] = Math.max(floor, Math.round(((+it[k] || 0) + dir * step) * 100) / 100);
-  draftSave();
-  const el = document.getElementById('g' + k + i); if(el) el.value = it[k];
-  sessTotals();
+
+/* ---------- scroll wheels ----------
+   Each number is a snap-scrolling column; whichever row rests in the middle band is the value.
+   Kg is two columns read as one number (whole + fraction), so 8.75 or 62.5 is two short flicks
+   instead of a long scroll through every quarter-kilo. */
+const r2 = n => Math.round(n * 100) / 100;
+const wRange = (lo, hi) => Array.from({length: hi - lo + 1}, (_, n) => lo + n);
+function wheelCol(i, k, part, vals, cur, label, fmt){
+  if(!vals.includes(cur)) vals = vals.concat(cur).sort((a, b) => a - b);   // an off-grid logged value stays selectable
+  const at = vals.indexOf(cur);
+  return `<div class="wheel-col ${part}" tabindex="0" role="spinbutton" aria-label="${label}" aria-valuenow="${cur}"
+    data-i="${i}" data-k="${k}" data-p="${part}" data-at="${at}"
+    onscroll="wheelScroll(this)" onclick="wheelTap(event,this)" onkeydown="wheelKey(event,this)"><div class="wheel-pad"></div>${
+    vals.map((v, n) => `<div class="wheel-row${n === at ? ' on' : ''}" data-v="${v}">${fmt ? fmt(v) : v}</div>`).join('')
+    }<div class="wheel-pad"></div></div>`;
 }
-function exSet(i, k, v){
-  const it = gymDraft.items[i]; if(!it) return;
-  it[k] = v === '' ? '' : Math.max(0, +v || 0);
+function wheel(i, k, label){
+  const it = gymDraft.items[i], cardio = isCardio(it.ex), v = Math.max(0, +it[k] || 0);
+  let cols;
+  if(k === 'kg'){
+    const whole = Math.floor(v), frac = r2(v - whole);
+    cols = wheelCol(i, k, 'int', wRange(0, Math.max(cardio ? 99 : 300, whole)), whole, label)
+      + wheelCol(i, k, 'frac', cardio ? wRange(0, 9).map(n => n / 10) : [0, .25, .5, .75], frac, label + ' fraction',
+          n => '.' + (String(n).split('.')[1] || '0'));
+  } else {
+    const lo = k === 'sets' || !cardio ? 1 : 0, hi = k === 'sets' ? 12 : cardio ? 240 : 60;
+    cols = wheelCol(i, k, '', wRange(lo, Math.max(hi, Math.ceil(v))), k === 'sets' ? Math.max(1, v) : v, label);
+  }
+  return `<div class="wheel"><div class="lbl">${label}</div><div class="wheel-win${k === 'kg' ? ' two' : ''}">${cols}</div></div>`;
+}
+const wheelH = el => (el._rows[0] && el._rows[0].offsetHeight) || 34;
+function wheelsInit(){
+  document.querySelectorAll('#exList .wheel-col').forEach(el => {
+    el._rows = el.querySelectorAll('.wheel-row'); el._n = +el.dataset.at;
+    el.scrollTop = el._n * wheelH(el);
+    el.addEventListener('wheel', wheelNotch, {passive: false});
+  });
+}
+function wheelGo(el, n, smooth){
+  n = Math.max(0, Math.min(el._rows.length - 1, n));
+  el.scrollTo({top: n * wheelH(el), behavior: smooth ? 'smooth' : 'auto'});
+}
+function wheelScroll(el){
+  if(el._raf) return;
+  el._raf = requestAnimationFrame(() => { el._raf = 0; wheelRead(el); });
+}
+function wheelRead(el){
+  if(!el._rows || !el.isConnected) return;
+  const n = Math.max(0, Math.min(el._rows.length - 1, Math.round(el.scrollTop / wheelH(el))));
+  if(n === el._n) return;
+  if(el._rows[el._n]) el._rows[el._n].classList.remove('on');
+  el._rows[n].classList.add('on'); el._n = n;
+  const it = gymDraft && gymDraft.items[+el.dataset.i]; if(!it) return;
+  const v = +el._rows[n].dataset.v, k = el.dataset.k, p = el.dataset.p, cur = Math.max(0, +it[k] || 0);
+  it[k] = p === 'int' ? r2(v + cur - Math.floor(cur)) : p === 'frac' ? r2(Math.floor(cur) + v) : v;
+  el.setAttribute('aria-valuenow', v);
   draftSave(); sessTotals();
 }
-function exDel(i){
-  gymDraft.items.splice(i, 1); draftSave(); renderExList(); sessTotals();
+function wheelTap(e, el){
+  const row = e.target.closest('.wheel-row'); if(!row || !el._rows) return;
+  wheelGo(el, [...el._rows].indexOf(row), true);
+}
+function wheelKey(e, el){
+  const d = {ArrowUp: -1, ArrowDown: 1, PageUp: -5, PageDown: 5}[e.key];
+  if(!d || !el._rows) return;
+  e.preventDefault(); wheelGo(el, el._n + d);
+}
+/* a notched mouse wheel moves ~100px a click, which is three rows; step one row per notch instead.
+   Trackpads and touch send small deltas and are left to native snap scrolling. */
+function wheelNotch(e){
+  if(e.deltaMode === 0 && Math.abs(e.deltaY) < 50) return;
+  e.preventDefault(); wheelGo(this, this._n + Math.sign(e.deltaY));
 }
 function sessTotals(){
   const el = document.getElementById('sessTotals'); if(!el || !gymDraft) return;
@@ -1075,7 +1148,7 @@ function startTick(){ clearInterval(_gymTick); _gymTick = setInterval(paintTick,
 function paintTick(){
   const el = document.getElementById('sessElapsed');
   if(!el){ clearInterval(_gymTick); _gymTick = null; return; }
-  if(!gymDraft || !gymDraft.started || gymDraft.id){ el.textContent = ''; return; }
+  if(!gymDraft || !gymDraft.started || gymDraft.id){ el.textContent = draftPending() ? 'Not started · ' : ''; return; }
   const s = Math.max(0, Math.floor((Date.now() - gymDraft.started) / 1000));
   el.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' · ';
 }
@@ -1122,12 +1195,22 @@ function restTick(){
 }
 
 /* ---------- session lifecycle ---------- */
+/* Start workout only opens the picker; the session clock begins when Start is pressed */
 function startSession(){
-  gymDraft = {date: todayStr(), notes: '', items: [], started: Date.now()};
-  draftSave(); renderSession(); openPicker();
+  gymDraft = {date: todayStr(), notes: '', items: [], started: null};
+  _exOpen = 0; draftSave(); renderSession(); openPicker();
+}
+function beginSession(){
+  if(!gymDraft) return;
+  if(!gymDraft.items.length) return toast('Pick at least one exercise first');
+  gymDraft.started = Date.now(); _exOpen = 0; draftSave();
+  document.removeEventListener('keydown', pickEsc);
+  const bg = document.getElementById('pickBg'); if(bg) bg.remove();
+  renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
+  toast('Workout started');
 }
 function addEx(name){
-  if(!gymDraft) gymDraft = {date: todayStr(), notes: '', items: [], started: Date.now()};
+  if(!gymDraft) gymDraft = {date: todayStr(), notes: '', items: [], started: null};
   const l = lastFor(name);
   const cardio = isCardio(name);
   gymDraft.items.push(l ? {ex: name, sets: l.sets, reps: l.reps, kg: l.kg}
@@ -1203,16 +1286,16 @@ function editWorkout(id){
   gymDraft = {id, origDate: w.workout_date, date: w.workout_date, notes: w.notes || '',
     oldSetIds: ss.map(s => s.id),
     items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0}))};
-  draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
+  _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 function repeatWorkout(id){
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   if(!ss.length) return toast('That session had no exercises');
   if(draftBusy()) return;
-  gymDraft = {date: todayStr(), notes: '', started: Date.now(),
+  gymDraft = {date: todayStr(), notes: '', started: null,
     items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0}))};
-  draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
-  toast('Loaded ' + ss.length + ' exercise' + (ss.length === 1 ? '' : 's') + ' — adjust and finish');
+  _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
+  toast('Loaded ' + ss.length + ' exercise' + (ss.length === 1 ? '' : 's') + ' — press Start when you begin');
 }
 async function delWorkout(id){
   if(!confirm('Delete this workout and all its exercises? This cannot be undone.')) return;
@@ -1227,17 +1310,22 @@ async function delWorkout(id){
 /* ---------- exercise picker ---------- */
 function openPicker(){
   if(document.getElementById('pickBg')) return;
-  _pickQ = '';
+  _pickQ = ''; _pickN = gymDraft ? gymDraft.items.length : 0;
+  const wait = draftPending();
   document.body.insertAdjacentHTML('beforeend', `
     <div class="sheet-bg" id="pickBg" onclick="if(event.target===this)closePicker()">
-      <div class="sheet" role="dialog" aria-label="Add exercise">
+      <div class="sheet" role="dialog" aria-label="${wait ? 'Choose exercises' : 'Add exercise'}">
         <div class="sheet-head">
-          <div class="top"><h3>Add exercise</h3>
-            <button class="icon-btn" type="button" title="Done" onclick="closePicker()">${ICO.x}</button></div>
+          <div class="top"><h3>${wait ? 'Choose exercises' : 'Add exercise'}</h3>
+            <button class="icon-btn" type="button" title="Close" onclick="closePicker()">${ICO.x}</button></div>
           <input id="pickQ" placeholder="Search exercises…" autocomplete="off" enterkeyhint="search" oninput="_pickQ=this.value;paintPicker()">
           <div class="seg" id="pickSeg"></div>
         </div>
         <div class="sheet-body" id="pickBody"></div>
+        <div class="sheet-foot"><span class="n" id="pickCount"></span>
+          ${wait
+            ? `<button class="btn ico" type="button" id="pickGo" onclick="beginSession()">${ICO.play}Start</button>`
+            : `<button class="btn" type="button" id="pickGo" onclick="closePicker()">Done</button>`}</div>
       </div></div>`);
   document.getElementById('pickSeg').innerHTML = ['All'].concat(EX_GROUPS)
     .map(g => `<button type="button" class="${g === _pickG ? 'on' : ''}" onclick="pickGroup('${g}')">${g}</button>`).join('');
@@ -1248,6 +1336,10 @@ function pickEsc(e){ if(e.key === 'Escape') closePicker(); }
 function closePicker(){
   document.removeEventListener('keydown', pickEsc);
   const bg = document.getElementById('pickBg'); if(bg) bg.remove();
+  // backing out of a brand-new workout with nothing picked leaves no empty session behind
+  if(draftPending() && !gymDraft.items.length){ gymDraft = null; draftSave(); return renderSession(); }
+  // mid-session, open the card of the exercise that was just added
+  if(gymDraft && !draftPending() && gymDraft.items.length > _pickN) _exOpen = _pickN;
   renderExList(); sessTotals();
 }
 function pickGroup(g){
@@ -1276,6 +1368,9 @@ function paintPicker(){
   if(!html) html = `<div class="empty">Nothing matches “${esc(_pickQ)}”.<br>
     <button class="btn-ghost" type="button" style="margin-top:10px" onclick="pickCustom()">Add “${esc(_pickQ)}” as a custom exercise</button></div>`;
   body.innerHTML = html;
+  const n = gymDraft ? gymDraft.items.length : 0, cnt = document.getElementById('pickCount'), go = document.getElementById('pickGo');
+  if(cnt) cnt.textContent = n ? n + ' exercise' + (n === 1 ? '' : 's') + ' selected' : 'Tap the exercises you plan to do';
+  if(go && draftPending()) go.disabled = !n;
 }
 function pickTap(i){
   const name = EX_CAT[i][0];
