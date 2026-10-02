@@ -195,6 +195,44 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .cal-day.selected{background:var(--grad);color:var(--on-ink)}
 .cal-dot{position:absolute;bottom:4px;width:4px;height:4px;border-radius:99px;background:var(--accent)}
 .cal-day.selected .cal-dot{background:var(--on-ink)}
+/* intake program on the calendar: dashed = creatine loading week, corner dot = everything taken that day */
+.cal-day.load{border:1px dashed var(--muted)}
+.cal-day.load.today{border:1px solid var(--accent)}
+.cal-day.took::before,.cal-day.part::before{content:'';position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:99px;box-sizing:border-box}
+.cal-day.took::before{background:var(--green)}
+.cal-day.part::before{border:1.5px solid var(--amber)}
+.cal-day.selected.took::before{background:var(--on-ink)}
+.cal-day.selected.part::before{border-color:var(--on-ink)}
+.cal-key{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:11.5px;color:var(--muted)}
+.cal-key span{display:inline-flex;align-items:center;gap:6px}
+.cal-key i{display:inline-block;width:11px;height:11px;border-radius:4px;box-sizing:border-box}
+.cal-key i.k-load{border:1px dashed var(--muted)}
+.cal-key i.k-took{width:7px;height:7px;border-radius:99px;background:var(--green)}
+.cal-key i.k-part{width:7px;height:7px;border-radius:99px;border:1.5px solid var(--amber)}
+
+/* ---- creatine + protein program (Schedule) ---- */
+.intake-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px 28px;align-items:start}
+.intake-grid h4{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px}
+.intake-grid .list{margin-top:12px}
+.row.tick{cursor:pointer;flex-wrap:nowrap;-webkit-user-select:none;user-select:none}
+.row.tick .grow{flex:1 1 0}
+.row.tick:hover{border-color:var(--accent)}
+.row.tick.off{cursor:default;opacity:.6}
+.row.tick.off:hover{border-color:var(--border)}
+.row.tick .checkbox{pointer-events:none}
+.plan{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:11px;overflow:hidden;margin-bottom:10px}
+.plan-row{display:grid;grid-template-columns:92px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px;font-size:13px}
+.plan-row+.plan-row{border-top:1px solid var(--border)}
+.plan-row.now{background:var(--surface2)}
+.plan-row .when{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.plan-row b{display:block;font-weight:600}
+.plan-row .what span{color:var(--muted);font-size:12.5px}
+.week .dot.pick{cursor:pointer}
+.chk{display:flex;align-items:center;gap:9px;font-size:13.5px;margin:0 0 12px;cursor:pointer}
+.chk input{width:auto;flex:none;accent-color:var(--accent)}
+.form-grid[hidden]{display:none}
+@media(max-width:760px){ .intake-grid{grid-template-columns:minmax(0,1fr)} }
+@media(max-width:380px){ .plan-row{grid-template-columns:74px minmax(0,1fr) auto;gap:8px;padding:9px 10px} }
 
 /* mobile */
 @media(max-width:760px){
@@ -481,7 +519,7 @@ bdi{unicode-bidi:isolate}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v36</span></div>
+    <div class="hub-foot"><span id="ver">v37</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -546,7 +584,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v36');
+console.log('Atlas v37');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -707,6 +745,7 @@ views.schedule = async function(){
   const edD = ed ? new Date(ed.starts_at) : null;
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>Schedule</h2><img src="hero-schedule.png" alt="" onerror="this.remove()"></div>
+    <div class="card" style="margin-bottom:16px" id="intakeCard"><h3>Creatine and protein</h3><div class="empty">Loading…</div></div>
     <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit event' : 'Add event'}</h3>
       <form onsubmit="submitGuard(event, addEvent)">
       <div class="form-grid">
@@ -725,13 +764,188 @@ views.schedule = async function(){
       <div class="card" id="calCard"></div>
       <div class="card"><h3 id="evListTitle">Upcoming</h3><div class="list" id="evList"><div class="empty">Loading…</div></div></div>
     </div>`;
-  const {data, error} = await sb.from('events').select('*').order('starts_at');
+  window._intakeEdit = false;
+  const since = new Date(Date.now() - 400 * 864e5).toLocaleDateString('en-CA');
+  const [{data, error}, plan, logs] = await Promise.all([
+    sb.from('events').select('*').order('starts_at'),
+    sb.from('user_settings').select('intake_plan').maybeSingle(),
+    sb.from('intake_log').select('day,creatine_slots,protein_done').gte('day', since).order('day'),
+  ]);
   if(stale(seq)) return;
+  // the program card fails on its own: a problem there must not take the calendar down with it
+  window._intakeErr = plan.error || logs.error || null;
+  window._intakePlan = plan.data ? plan.data.intake_plan : null;
+  window._intakeLogs = Object.fromEntries((logs.data || []).map(r => [r.day, {creatine_slots: r.creatine_slots || [], protein_done: !!r.protein_done}]));
+  renderIntake();
   if(error) return err(error);
   window._events = data;
   renderCalendar();
   renderEvList();
 };
+
+/* ---------- creatine + protein program ----------
+   The plan (start date, loading week, dose times, protein target) is one jsonb value in
+   user_settings.intake_plan. What was actually taken is one intake_log row per day:
+   creatine_slots = which of that day's doses were ticked (0-based), protein_done = the protein tick.
+   Everything a day asks for is derived from the plan, so changing the plan never rewrites history. */
+const INTAKE_DEF = {load_days: 7, load_times: ['08:00', '12:00', '16:00', '20:00'], time: '08:00', dose: 5, protein: 140};
+function intakePlan(){ const p = window._intakePlan; return p && p.start ? {...INTAKE_DEF, ...p} : null; }
+const dsAdd = (ds, n) => { const d = new Date(ds + 'T00:00'); d.setDate(d.getDate() + n); return d.toLocaleDateString('en-CA'); };
+const dsDiff = (a, b) => Math.round((new Date(a + 'T00:00') - new Date(b + 'T00:00')) / 864e5);   // rounded: a DST night is 23 or 25 hours
+/* what the program asks for on a day; null before it starts */
+function intakeDay(ds){
+  const p = intakePlan(); if(!p) return null;
+  const n = dsDiff(ds, p.start); if(n < 0) return null;
+  const loading = n < p.load_days;
+  return {n, loading, times: loading ? p.load_times : [p.time]};
+}
+function intakeState(ds){
+  const d = intakeDay(ds); if(!d) return null;
+  const log = (window._intakeLogs || {})[ds];
+  const slots = log ? log.creatine_slots.filter(i => i < d.times.length) : [], protein = !!(log && log.protein_done);
+  const done = slots.length + (protein ? 1 : 0), total = d.times.length + 1;
+  return {...d, slots, protein, done, total, complete: done === total};
+}
+function renderIntake(){
+  const c = document.getElementById('intakeCard'); if(!c) return;
+  if(window._intakeErr){ c.innerHTML = `<h3>Creatine and protein</h3><div class="empty">Couldn't load the program — ${esc(window._intakeErr.message)}</div>`; return; }
+  const p = intakePlan();
+  if(!p || window._intakeEdit){ c.innerHTML = intakeForm(p); return; }
+  const today = todayStr(), ds = window._selDate || today, st = intakeState(ds), future = ds > today;
+  const loadEnd = dsAdd(p.start, p.load_days - 1), nowHM = new Date().toTimeString().slice(0, 5);
+  const perMeal = Math.round(p.protein / 4 / 5) * 5;
+
+  // ---- the day: phase line + tick list ----
+  let day;
+  if(!st){
+    day = `<div class="gym-top"><div class="grow"><div class="big">Program starts ${fmtDate(p.start)}</div>
+      <div class="sub">Nothing to take on ${ds === today ? 'this day' : fmtDate(ds)} yet.</div></div></div>`;
+  } else {
+    const phase = st.loading ? `Loading week · day ${st.n + 1} of ${p.load_days}`
+      : !p.load_days && st.n < 28 ? `Build-up · day ${st.n + 1} of 28` : `Daily dose · day ${st.n + 1}`;
+    const sub = st.loading ? `${p.load_times.length} × ${p.dose} g creatine a day until ${fmtDate(loadEnd)}, then ${p.dose} g once a day`
+      : p.load_days ? `Loading week finished ${fmtDate(loadEnd)}. ${p.dose} g once a day, rest days included.`
+      : `${p.dose} g once a day, rest days included. Muscles fill up over about four weeks.`;
+    const tick = (on, key, title, text, due) => `<div class="row tick${on ? ' done' : ''}${future ? ' off' : ''}" role="checkbox" aria-checked="${on}"
+        ${future ? 'aria-disabled="true"' : `tabindex="0" onclick="intakeTick('${ds}',${key})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();intakeTick('${ds}',${key})}"`}>
+        <span class="checkbox${on ? ' checked' : ''}">${on ? ICO.tickSm : ''}</span>
+        <div class="grow"><div class="title">${title}</div><div class="sub">${text}</div></div>
+        ${due ? '<span class="pill amber">Due</span>' : ''}</div>`;
+    day = `<div class="gym-top"><div class="grow"><div class="big">${phase}</div><div class="sub">${sub}</div></div>
+        <span class="pill ${st.complete ? 'green' : 'grey'}" id="intakeCount">${future ? 'Planned' : st.complete ? 'All done' : st.done + ' of ' + st.total + ' done'}</span></div>
+      ${st.loading ? `<div class="progress-track" style="margin-top:12px"><div class="progress-fill" style="width:${(st.n + 1) / p.load_days * 100}%"></div></div>` : ''}
+      <div class="list">${st.times.map((t, i) => { const on = st.slots.includes(i);
+          return tick(on, i, `Creatine ${p.dose} g`, `${esc(t)} · ${st.loading ? 'dose ' + (i + 1) + ' of ' + st.times.length : 'with a meal or a shake'}`, ds === today && !on && nowHM >= t); }).join('')}
+        ${tick(st.protein, "'p'", `Protein ${p.protein} g`, `Whole day · about ${perMeal} g at each of 4 meals`, false)}</div>`;
+  }
+
+  // ---- this week ----
+  const t0 = new Date(today + 'T00:00'), sun = dsAdd(today, -t0.getDay());
+  let week = '', full = 0;
+  for(let i = 0; i < 7; i++){
+    const s = dsAdd(sun, i), w = s <= today ? intakeState(s) : null, on = !!(w && w.complete); if(on) full++;
+    week += `<div><div class="d">${['Su','Mo','Tu','We','Th','Fr','Sa'][i]}</div>
+      <div class="dot pick${on ? ' on' : ''}${s === today ? ' today' : ''}" role="button" tabindex="0" title="${fmtDate(s)}${w ? ' — ' + w.done + ' of ' + w.total + ' taken' : ''}"
+        onclick="calPick('${s}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calPick('${s}')}">${on ? ICO.tick : w && w.done ? w.done + '/' + w.total : +s.slice(8)}</div></div>`;
+  }
+  // streak = complete days in a row, ending today (or yesterday while today is still open)
+  let streak = 0, at = today;
+  if(!(intakeState(at) || {}).complete) at = dsAdd(at, -1);
+  while((intakeState(at) || {}).complete){ streak++; at = dsAdd(at, -1); }
+
+  // ---- the plan, phase by phase ----
+  const started = today >= p.start, inLoad = started && p.load_days > 0 && today <= loadEnd;
+  const pill = (now, done) => now ? '<span class="pill grey">Now</span>' : done ? '<span class="pill green">Done</span>' : '<span></span>';
+  const plan = (p.load_days ? `<div class="plan-row${inLoad ? ' now' : ''}"><span class="when">${fmtDate(p.start)} – ${fmtDate(loadEnd)}</span>
+        <span class="what"><b>Loading week</b><span>${p.load_times.length} × ${p.dose} g creatine at ${p.load_times.map(esc).join(', ')}</span></span>${pill(inLoad, started && !inLoad)}</div>` : '')
+    + `<div class="plan-row${started && !inLoad ? ' now' : ''}"><span class="when">From ${fmtDate(dsAdd(p.start, p.load_days))}</span>
+        <span class="what"><b>Daily dose</b><span>${p.dose} g creatine at ${esc(p.time)}, every day</span></span>${pill(started && !inLoad, false)}</div>
+      <div class="plan-row"><span class="when">Every day</span>
+        <span class="what"><b>Protein</b><span>${p.protein} g, about ${perMeal} g per meal</span></span><span></span></div>`;
+
+  c.innerHTML = `<h3>Creatine and protein — ${ds === today ? 'today' : fmtDate(ds)}${ds === today ? '' :
+      ` <button class="linkish" type="button" style="font-size:11px;margin-left:8px;text-transform:none;letter-spacing:0" onclick="calPick('${ds}')">back to today</button>`}</h3>
+    <div class="intake-grid">
+      <div>${day}</div>
+      <div><h4>This week — ${full} of 7 days complete${streak > 1 ? ' · ' + streak + ' day streak' : ''}</h4>
+        <div class="week" style="margin-bottom:16px">${week}</div>
+        <h4>Program</h4><div class="plan">${plan}</div>
+        <button class="linkish" type="button" style="font-size:12.5px" onclick="window._intakeEdit=true;renderIntake()">Edit program</button></div>
+    </div>`;
+}
+function intakeForm(p){
+  const v = p || {...INTAKE_DEF, start: todayStr()}, lt = v.load_times.length === 4 ? v.load_times : INTAKE_DEF.load_times;
+  return `<h3>${p ? 'Edit program' : 'Creatine and protein'}</h3>
+    ${p ? '' : `<div class="gym-top" style="margin-bottom:14px"><div class="grow"><div class="big">Set up your daily program</div>
+      <div class="sub">A loading week of 4 × 5 g creatine a day, then 5 g once a day, plus a daily protein target. Tick each one off as you take it.</div></div></div>`}
+    <form onsubmit="submitGuard(event, intakeSavePlan)">
+      <div class="form-grid">
+        <div><label class="lbl" for="inStart">Creatine start date</label><input id="inStart" type="date" value="${esc(v.start)}"></div>
+        <div><label class="lbl" for="inTime">Daily dose time</label><input id="inTime" type="time" value="${esc(v.time)}"></div>
+        <div><label class="lbl" for="inProtein">Protein target (g a day)</label><input id="inProtein" type="number" inputmode="numeric" min="20" max="400" step="5" value="${+v.protein}"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="inLoad" ${v.load_days ? 'checked' : ''} onchange="document.getElementById('inLoadTimes').hidden=!this.checked">
+        Start with a loading week (4 × 5 g a day for 7 days)</label>
+      <div class="form-grid" id="inLoadTimes" ${v.load_days ? '' : 'hidden'}>
+        ${lt.map((t, i) => `<div><label class="lbl" for="inLt${i}">Loading dose ${i + 1}</label><input id="inLt${i}" type="time" value="${esc(t)}"></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" type="submit">${p ? 'Save program' : 'Start program'}</button>
+        ${p ? `<button class="btn-ghost" type="button" onclick="window._intakeEdit=false;renderIntake()">Cancel</button>
+          <button class="btn-ghost" type="button" onclick="intakeEnd()">End program</button>` : ''}
+      </div>
+    </form>`;
+}
+async function intakeWritePlan(plan){
+  const {data: u, error: eU} = await sb.auth.getUser();
+  if(eU){ err(eU); return false; }
+  if(!u?.user){ toast('Session expired — please sign in again'); return false; }
+  const {error} = await sb.from('user_settings').upsert({user_id: u.user.id, intake_plan: plan, updated_at: new Date().toISOString()});
+  if(error){ err(error); return false; }
+  window._intakePlan = plan; window._intakeEdit = false;
+  renderIntake(); renderCalendar();
+  return true;
+}
+async function intakeSavePlan(){
+  const val = id => document.getElementById(id).value;
+  const start = val('inStart'), time = val('inTime'), protein = Math.round(+val('inProtein'));
+  const load = document.getElementById('inLoad').checked, times = [0, 1, 2, 3].map(i => val('inLt' + i));
+  if(!start) return toast('Pick a start date');
+  if(!time) return toast('Pick a time for the daily dose');
+  if(!(protein >= 20 && protein <= 400)) return toast('Protein target should be between 20 and 400 g');
+  if(load && times.some(t => !t)) return toast('Give all four loading doses a time');
+  if(load && new Set(times).size < 4) return toast('The four loading doses need different times');
+  const had = !!intakePlan();
+  if(await intakeWritePlan({start, load_days: load ? 7 : 0, load_times: load ? times.slice().sort() : INTAKE_DEF.load_times, time, dose: 5, protein}))
+    toast(had ? 'Program saved' : 'Program started');
+}
+async function intakeEnd(){
+  if(!confirm('End the program? The days you already ticked are kept.')) return;
+  if(await intakeWritePlan(null)) toast('Program ended');
+}
+/* Ticks are optimistic, and writes for one day go out one at a time in tap order, each sending the
+   row as it stands at that moment — quick taps on a slow connection can't land out of order. */
+let _intakeQ = Promise.resolve();
+function intakeTick(ds, key){
+  if(ds > todayStr() || !intakeDay(ds)) return;
+  const logs = window._intakeLogs, old = logs[ds];
+  const row = {creatine_slots: old ? old.creatine_slots.slice() : [], protein_done: old ? old.protein_done : false};
+  if(key === 'p') row.protein_done = !row.protein_done;
+  else { const at = row.creatine_slots.indexOf(key); at >= 0 ? row.creatine_slots.splice(at, 1) : row.creatine_slots.push(key); row.creatine_slots.sort(); }
+  logs[ds] = row;
+  renderIntake(); if(document.getElementById('calCard')) renderCalendar();
+  _intakeQ = _intakeQ.then(async () => {
+    const cur = window._intakeLogs[ds]; if(!cur) return;
+    const {error} = await sb.from('intake_log').upsert({day: ds, creatine_slots: cur.creatine_slots, protein_done: cur.protein_done,
+      updated_at: new Date().toISOString()}, {onConflict: 'user_id,day'});
+    if(!error) return;
+    err(error);
+    // the screen is ahead of the database: fall back to what the server actually holds for that day
+    const {data} = await sb.from('intake_log').select('creatine_slots,protein_done').eq('day', ds).maybeSingle();
+    if(data) window._intakeLogs[ds] = {creatine_slots: data.creatine_slots || [], protein_done: !!data.protein_done}; else delete window._intakeLogs[ds];
+    renderIntake(); if(document.getElementById('calCard')) renderCalendar();
+  });
+}
 function renderCalendar(){
   const m = window._calMonth || todayStr().slice(0,7);
   window._calMonth = m;
@@ -744,8 +958,9 @@ function renderCalendar(){
   for(let i = 0; i < 42; i++){
     const d = new Date(start); d.setDate(start.getDate() + i);
     const ds = d.toLocaleDateString('en-CA');
-    const cls = ['cal-day', d.getMonth() !== M-1 ? 'other' : '', ds === todayStr() ? 'today' : '', ds === window._selDate ? 'selected' : ''].join(' ');
-    cells += `<div class="${cls}" role="button" tabindex="0" title="${byDate[ds] ? byDate[ds].length + ' event(s)' : 'No events — click to plan this day'}" onclick="calPick('${ds}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calPick('${ds}')}">${d.getDate()}${byDate[ds] ? '<span class="cal-dot"></span>' : ''}</div>`;
+    const ist = intakeState(ds), took = ist && ds <= todayStr() ? (ist.complete ? 'took' : ist.done ? 'part' : '') : '';
+    const cls = ['cal-day', d.getMonth() !== M-1 ? 'other' : '', ds === todayStr() ? 'today' : '', ds === window._selDate ? 'selected' : '', ist && ist.loading ? 'load' : '', took].join(' ');
+    cells += `<div class="${cls}" role="button" tabindex="0" title="${byDate[ds] ? byDate[ds].length + ' event(s)' : 'No events — click to plan this day'}${ist ? ' · ' + (ist.loading ? 'creatine loading week, ' : '') + ist.done + ' of ' + ist.total + ' taken' : ''}" onclick="calPick('${ds}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calPick('${ds}')}">${d.getDate()}${byDate[ds] ? '<span class="cal-dot"></span>' : ''}</div>`;
   }
   document.getElementById('calCard').innerHTML = `
     <div class="cal-head">
@@ -753,7 +968,9 @@ function renderCalendar(){
       <h3>${first.toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</h3>
       <button class="btn-ghost" type="button" title="Next month" aria-label="Next month" onclick="calShift(1)">${ICO.chevR}</button>
     </div>
-    <div class="cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>`;
+    <div class="cal-grid">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
+    ${intakePlan() ? `<div class="cal-key">${intakePlan().load_days ? '<span><i class="k-load"></i>Creatine loading week</span>' : ''}
+      <span><i class="k-took"></i>Creatine and protein taken</span><span><i class="k-part"></i>Partly taken</span></div>` : ''}`;
 }
 function calShift(n){
   const [Y, M] = window._calMonth.split('-').map(Number);
@@ -765,6 +982,7 @@ function calPick(ds){
   const di = document.getElementById('evDate');
   if(di && window._selDate) di.value = ds;
   renderCalendar(); renderEvList();
+  if(intakePlan() && !window._intakeEdit) renderIntake();   // an open setup/edit form keeps what was typed
 }
 function renderEvList(){
   const sel = window._selDate;
