@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas — Your life, organized</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2323221f'/%3E%3Cstop offset='1' stop-color='%234a4741'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="preload" as="image" href="hero-atlas-hub.png?v=34">
+<link rel="preload" as="image" href="hero-atlas-hub.png?v=38">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -95,7 +95,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-top .hub-date::before{content:'·';margin:0 8px;opacity:.6}
 .hub-meta{display:flex;align-items:center;gap:10px}
 /* the greeting sits beside the figure, in the free upper-right of the orbit */
-.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--figh) * .30);white-space:nowrap;animation:tileIn .6s ease .1s both}
+.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--figh) * .40);white-space:nowrap;animation:tileIn .6s ease .1s both}
 .hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .hub-status{color:var(--muted);font-size:14px;margin-top:9px;min-height:18px;display:flex;align-items:center;gap:7px}
 .hub-status svg{width:15px;height:15px;flex:none}
@@ -510,16 +510,16 @@ bdi{unicode-bidi:isolate}
         <button class="tile" data-tab="rent" style="--tx:-0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.6L12 3l9 7.6"/><path d="M5.6 9.4V20a1 1 0 001 1h10.8a1 1 0 001-1V9.4"/><path d="M9.7 21v-6.2h4.6V21"/></svg></span><b>Rent</b></button>
       </div>
       <div class="hub-figure">
-        <img src="hero-atlas-hub.png?v=34" fetchpriority="high" decoding="async" alt="Atlas holding up the world"
+        <img src="hero-atlas-hub.png?v=38" fetchpriority="high" decoding="async" alt="Classical statue in modern tactical gear"
              onerror="this.remove()">
       </div>
       <div class="hub-col right">
-        <button class="tile" data-tab="goals" style="--tx:0.9356;--ty:0.353"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
-        <button class="tile" data-tab="chores" style="--tx:0.5736;--ty:0.8192"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
+        <button class="tile" data-tab="goals" style="--tx:0.9962;--ty:0.0872"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
+        <button class="tile" data-tab="chores" style="--tx:0.8387;--ty:0.5446"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v37</span></div>
+    <div class="hub-foot"><span id="ver">v38</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -584,7 +584,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v37');
+console.log('Atlas v38');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
