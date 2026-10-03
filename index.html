@@ -520,6 +520,17 @@ main.wide{max-width:1500px}
   .hd-saved{flex-basis:100%;margin-left:0;order:9}
   .hd-ib{min-width:36px;height:36px;padding:0 8px}
 }
+/* v40: rendered board look */
+.hd-stage{background:#f4f3f0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+#hdSvg.render{background:#f4f3f0}
+.hd-zoom{position:absolute;right:12px;bottom:12px;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 4px 14px rgba(26,26,24,.10);overflow:hidden}
+.hd-zoom button{width:38px;height:38px;border:none;background:transparent;color:var(--accent2);display:flex;align-items:center;justify-content:center}
+.hd-zoom button+button{border-top:1px solid var(--border)}
+.hd-zoom button:hover{background:var(--surface2);color:var(--text)}
+.hd-zoom svg{width:17px;height:17px}
+.hd-lib-it .pv{background:#dcdad5;box-shadow:inset 0 1px 2px rgba(26,26,24,.08)}
+.hd-lib-it .pv svg{filter:drop-shadow(-1.5px -2px 1.5px rgba(20,20,18,.28))}
+@media(max-width:560px){ .hd-ib span{display:none} .hd-add-m span{display:inline} .hd-zoom{right:8px;bottom:8px} .hd-zoom button{width:34px;height:34px} }
 </style>
 </head>
 <body>
@@ -594,7 +605,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v39</span></div>
+    <div class="hub-foot"><span id="ver">v40</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -660,7 +671,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v39');
+console.log('Atlas v40');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -3115,6 +3126,7 @@ function hdFind(sel){
 }
 
 /* ---------- view ---------- */
+function hdRenderPref(){ try{ return localStorage.getItem('atlas_house_render') !== '0'; }catch(e){ return true; } }
 views.house = async function(){
   const seq = renderStart();
   if(HD && HD.saveT) hdFlush();   // a pending autosave must not be lost when the view rebuilds its state
@@ -3132,7 +3144,7 @@ views.house = async function(){
   const plans = (data || []).map(p => ({...p, data: hdNormalise(p.data)}));
   let last = keep; try{ last = last || localStorage.getItem('atlas_house_plan'); }catch(e){}
   HD = {plans, cur: plans.find(p => p.id === last) || plans[0] || null, sel: null, view: null, undo: [], redo: [],
-        tool: null, labels: HD ? HD.labels : false, saveT: null, status: 'Saved', libCat: HD ? HD.libCat : 'Structure'};
+        tool: null, labels: HD ? HD.labels : false, render: hdRenderPref(), saveT: null, status: 'Saved', libCat: HD ? HD.libCat : 'Structure'};
   if(!HD.cur){ hdEmpty(); return; }
   hdLayout();
 };
@@ -3263,7 +3275,211 @@ const HD_I = {
   copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   add:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
 };
+/* ---------- render mode: architectural presentation board ----------
+   Walls cast long soft shadows up-left onto a topographic ground, floors are concrete,
+   furniture sits on its own small shadow. Shadows are baked into two PNG rasters in world
+   space (not SVG filters, whose cost explodes with zoom): the GROUND layer sits under the
+   floors so only the part outside the footprint shows, the INTERIOR layer sits on the floors
+   (wall + furniture shadows, clipped to the apartment). Rasters re-bake only when geometry
+   changes, at most once per frame, and swap in after decode so nothing flickers. */
+const HD_LIGHT = [-0.71, -0.7];      // direction shadows fall: up and to the left, as in the reference board
+const HD_RINK = '#141412', HD_GROUND = '#f4f3f0';
+const HD_HGT = {wardrobe:30, fridge:28, shelf:24, dresser:14, tvunit:9, bed:10, sofa:13, lsofa:13, armchair:13, table:10, desk:10,
+  round:10, chair:12, ochair:12, stool:9, nightstand:9, counter:14, sink:14, stove:14, washer:14, toilet:9, basin:12, tub:8,
+  shower:4, plant:18, box:14, bike:8};
+let HD_TEX = null;
+function hdTextures(){
+  if(HD_TEX) return HD_TEX;
+  const mk = n => { const c = document.createElement('canvas'); c.width = c.height = n; return [c, c.getContext('2d')]; };
+  // concrete: warm grey, wrapped blotches so the tile is seamless, fine grain + speckle
+  const [c, x] = mk(256);
+  x.fillStyle = '#d5d3cf'; x.fillRect(0, 0, 256, 256);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for(let i = 0; i < 80; i++){
+    const cx = rnd()*256, cy = rnd()*256, r = 24 + rnd()*60, a = .012 + rnd()*.02, dark = rnd() < .5;
+    for(const ox of [-256, 0, 256]) for(const oy of [-256, 0, 256]){
+      const g = x.createRadialGradient(cx+ox, cy+oy, 0, cx+ox, cy+oy, r);
+      g.addColorStop(0, dark ? `rgba(80,77,70,${a})` : `rgba(255,255,255,${a*1.3})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(cx+ox-r, cy+oy-r, 2*r, 2*r);
+    }
+  }
+  const im = x.getImageData(0, 0, 256, 256), d = im.data;
+  for(let i = 0; i < d.length; i += 4){ const n = (rnd() - .5) * 9; d[i] += n; d[i+1] += n; d[i+2] += n; }
+  x.putImageData(im, 0, 0);
+  for(let i = 0; i < 220; i++){ x.fillStyle = `rgba(55,52,47,${.05 + rnd()*.09})`; x.fillRect(rnd()*256, rnd()*256, 1 + (rnd() < .15), 1); }
+
+  // topography: a periodic height field (integer frequencies wrap exactly), contoured with marching squares
+  const T = 1536, N = 208, terms = [];
+  for(let i = 0; i < 9; i++){ const kx = Math.round(rnd()*4) - 2, ky = 1 + Math.round(rnd()*2), amp = 1 / (1 + Math.hypot(kx, ky)); terms.push([kx, ky, amp, rnd()*6.283]); }
+  for(let i = 0; i < 6; i++) terms.push([Math.round(rnd()*10) - 5, Math.round(rnd()*10) - 5, .09 + rnd()*.06, rnd()*6.283]);
+  const f = new Float32Array(N*N); let lo = 1e9, hi = -1e9;
+  for(let j = 0; j < N; j++) for(let i = 0; i < N; i++){
+    let v = 0; const u = i/N, w = j/N;
+    for(const [kx, ky, a, ph] of terms) v += a * Math.sin(6.2832 * (kx*u + ky*w) + ph);
+    f[j*N + i] = v; lo = Math.min(lo, v); hi = Math.max(hi, v);
+  }
+  const [tc, tx] = mk(T);
+  tx.strokeStyle = '#d4d2cc'; tx.lineWidth = 1.2; tx.lineCap = 'round';
+  const cs = T / N, levels = 40, F = (i, j) => f[((j % N + N) % N)*N + ((i % N + N) % N)];
+  tx.beginPath();
+  for(let l = 1; l < levels; l++){
+    const L = lo + (hi - lo) * l / levels;
+    for(let j = 0; j < N; j++) for(let i = 0; i < N; i++){
+      const a = F(i, j), b = F(i+1, j), cc = F(i+1, j+1), dd = F(i, j+1), pts = [];
+      const e = (p, q, x1, y1, x2, y2) => { if((p < L) !== (q < L)){ const t = (L - p) / (q - p); pts.push([(x1 + (x2 - x1)*t)*cs, (y1 + (y2 - y1)*t)*cs]); } };
+      e(a, b, i, j, i+1, j); e(b, cc, i+1, j, i+1, j+1); e(dd, cc, i, j+1, i+1, j+1); e(a, dd, i, j, i, j+1);
+      for(let p = 0; p + 1 < pts.length; p += 2){ tx.moveTo(pts[p][0], pts[p][1]); tx.lineTo(pts[p+1][0], pts[p+1][1]); }
+    }
+  }
+  tx.stroke();
+  // live view uses blob URLs (encoded off the main path, nothing huge in the DOM); the export swaps in data URLs
+  HD_TEX = {canvas: {concrete: c, topo: tc}, url: {}};
+  Object.entries(HD_TEX.canvas).forEach(([k, cv]) => cv.toBlob(b => { if(b){ HD_TEX.url[k] = URL.createObjectURL(b); hdApplyTex(); } }));
+  return HD_TEX;
+}
+const HD_TEX_IMG = {concrete: 'hdConcImg', topo: 'hdTopoImg'};
+function hdApplyTex(dataUrls){
+  if(!HD_TEX) return;
+  Object.entries(HD_TEX_IMG).forEach(([k, id]) => {
+    const el = document.getElementById(id); if(!el) return;
+    const href = dataUrls ? HD_TEX.canvas[k].toDataURL('image/png') : HD_TEX.url[k];
+    if(href) el.setAttribute('href', href);
+  });
+}
+function hdStaticDefs(){
+  return `<pattern id="hdTopo" width="3000" height="3000" patternUnits="userSpaceOnUse"><image id="hdTopoImg" width="3000" height="3000" preserveAspectRatio="none"/></pattern>
+    <pattern id="hdConc" width="170" height="170" patternUnits="userSpaceOnUse"><rect width="170" height="170" fill="#d5d3cf"/><image id="hdConcImg" width="170" height="170" preserveAspectRatio="none"/></pattern>`;
+}
+/* separable box blur on the alpha channel, tinting every pixel the shadow colour */
+function hdBlurAlpha(img, r, passes, rgb){
+  const {width: w, height: h, data: d} = img, a = new Float32Array(w*h), tmp = new Float32Array(Math.max(w, h));
+  for(let i = 0; i < w*h; i++) a[i] = d[i*4 + 3];
+  r = Math.max(0, Math.round(r));
+  for(let p = 0; p < passes && r > 0; p++){
+    const n = 2*r + 1;
+    for(let y = 0; y < h; y++){
+      const row = y*w; let s = 0;
+      for(let x = -r; x <= r; x++) s += a[row + Math.min(w-1, Math.max(0, x))];
+      for(let x = 0; x < w; x++){ tmp[x] = s / n; s += a[row + Math.min(w-1, x + r + 1)] - a[row + Math.max(0, x - r)]; }
+      a.set(tmp.subarray(0, w), row);
+    }
+    for(let x = 0; x < w; x++){
+      let s = 0;
+      for(let y = -r; y <= r; y++) s += a[Math.min(h-1, Math.max(0, y))*w + x];
+      for(let y = 0; y < h; y++){ tmp[y] = s / n; s += a[Math.min(h-1, y + r + 1)*w + x] - a[Math.max(0, y - r)*w + x]; }
+      for(let y = 0; y < h; y++) a[y*w + x] = tmp[y];
+    }
+  }
+  for(let i = 0; i < w*h; i++){ d[i*4] = rgb[0]; d[i*4+1] = rgb[1]; d[i*4+2] = rgb[2]; d[i*4+3] = a[i]; }
+}
+/* walls as solid ink on a canvas, door/window gaps punched out so light falls through them */
+function hdWallInk(ctx, P, outerOnly){
+  ctx.strokeStyle = '#000'; ctx.lineJoin = 'miter';
+  if(!outerOnly){ ctx.lineWidth = HD_WALL; P.rooms.forEach(r => { if(r.kind !== 'balcony') ctx.strokeRect(r.x, r.y, r.w, r.h); }); }
+  ctx.lineWidth = HD_OUTER; ctx.strokeRect(0, 0, P.W, P.H);
+  ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000';
+  P.opens.forEach(o => { ctx.save(); ctx.translate(o.x, o.y); ctx.rotate((o.rot || 0) * Math.PI/180); const th = (o.th || HD_WALL) + 4; ctx.fillRect(-o.len/2, -th/2, o.len, th); ctx.restore(); });
+  ctx.restore();
+}
+function hdShadowKeys(P){
+  const g = JSON.stringify([P.W, P.H, P.rooms.map(r => [r.kind === 'balcony', r.x, r.y, r.w, r.h]), P.opens.map(o => [o.x, o.y, o.len, o.rot, o.th])]);
+  return [g, g + JSON.stringify(P.items.map(i => [i.type, i.x, i.y, i.w, i.d, i.rot]))];
+}
+function hdShadowSync(P){
+  if(!HD.render) return;
+  const [g, i] = hdShadowKeys(P);
+  HD.shQ = HD.shQ || {};
+  if(g !== HD.gKey){ HD.gKey = g; HD.shQ.g = 1; }
+  if(i !== HD.iKey){ HD.iKey = i; HD.shQ.i = 1; }
+  if(!(HD.shQ.g || HD.shQ.i) || HD.shT) return;
+  const run = () => {
+    HD.shT = 0; const P2 = hdP();
+    if(!P2 || !document.getElementById('hdSvg')) { HD.shQ = {}; return; }
+    if(HD.shQ.i){ HD.shQ.i = 0; hdBakeInterior(P2); }
+    if(HD.shQ.g && !HD.dragging){ HD.shQ.g = 0; hdBakeGround(P2); }   // the long ground shadow re-bakes on drop
+  };
+  if(HD.dragging) HD.shT = setTimeout(run, 110); else { HD.shT = -1; requestAnimationFrame(run); }
+}
+function hdSwapImage(layerId, url, x, y, w, h){
+  const layer = document.getElementById(layerId); if(!layer) return;
+  const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+  img.setAttribute('x', x); img.setAttribute('y', y); img.setAttribute('width', w); img.setAttribute('height', h);
+  img.setAttribute('preserveAspectRatio', 'none'); img.setAttribute('pointer-events', 'none');
+  const seq = (layer._seq = (layer._seq || 0) + 1);
+  const done = () => { if(layer._seq !== seq) { img.remove(); return; } [...layer.children].forEach(c => c !== img && c.remove()); img.style.opacity = ''; };
+  img.style.opacity = '0';
+  img.addEventListener('load', done, {once: true}); img.addEventListener('error', done, {once: true});
+  img.setAttribute('href', url);
+  layer.appendChild(img);
+}
+function hdBakeGround(P){
+  const pad = 300, res = Math.max(3, (P.W + 2*pad) / 520, (P.H + 2*pad) / 520);
+  const cw = Math.ceil((P.W + 2*pad) / res), ch = Math.ceil((P.H + 2*pad) / res);
+  const mk = () => { const c = document.createElement('canvas'); c.width = cw; c.height = ch; const x = c.getContext('2d'); x.setTransform(1/res, 0, 0, 1/res, pad/res, pad/res); return [c, x]; };
+  const [A, ax] = mk(); hdWallInk(ax, P, false);
+  const [S, sx] = mk(); sx.setTransform(1, 0, 0, 1, 0, 0);
+  const L = 240, step = res * 1.1;
+  for(let t = L; t >= 0; t -= step){                    // far to near: the near end ends up darkest
+    sx.globalAlpha = .09 * Math.pow(1 - t / L, 1.45);
+    sx.drawImage(A, HD_LIGHT[0] * t / res, HD_LIGHT[1] * t / res);
+  }
+  const im = sx.getImageData(0, 0, cw, ch);
+  hdBlurAlpha(im, 16 / res, 3, [24, 23, 20]);
+  sx.putImageData(im, 0, 0);
+  hdSwapImage('hdGroundL', S.toDataURL('image/png'), -pad, -pad, cw*res, ch*res);
+}
+function hdBakeInterior(P){
+  const res = Math.max(2, P.W / 560, P.H / 560), cw = Math.ceil(P.W / res), ch = Math.ceil(P.H / res);
+  const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+  const x = c.getContext('2d'); x.setTransform(1/res, 0, 0, 1/res, 0, 0);
+  // walls standing ~2.6 m tall throw a short shadow across the floor next to them
+  const [A, ax] = (() => { const a = document.createElement('canvas'); a.width = cw; a.height = ch; const q = a.getContext('2d'); q.setTransform(1/res, 0, 0, 1/res, 0, 0); return [a, q]; })();
+  hdWallInk(ax, P, false);
+  x.save(); x.setTransform(1, 0, 0, 1, 0, 0);
+  const L = 48;
+  for(let t = L; t >= 0; t -= Math.max(1.2, res * .8)){ x.globalAlpha = .07 * Math.pow(1 - t / L, 1.6); x.drawImage(A, HD_LIGHT[0] * t / res, HD_LIGHT[1] * t / res); }
+  x.restore();
+  // furniture: extrude the footprint along the light direction by the piece's height
+  P.items.forEach(it => {
+    if(it.type === 'rug') return;
+    const h = HD_HGT[it.type] || 12, round = ['round', 'stool', 'plant', 'ochair'].includes(it.type);
+    for(let t = h; t >= 0; t -= Math.max(1, res * .7)){
+      x.save(); x.globalAlpha = .2 * (1 - t / (h * 1.15));
+      x.translate(it.x + HD_LIGHT[0] * t, it.y + HD_LIGHT[1] * t); x.rotate((it.rot || 0) * Math.PI/180);
+      x.fillStyle = '#000'; x.beginPath();
+      if(round) x.ellipse(0, 0, it.w/2, it.d/2, 0, 0, 6.2832); else x.rect(-it.w/2, -it.d/2, it.w, it.d);
+      x.fill(); x.restore();
+    }
+  });
+  const im = x.getImageData(0, 0, cw, ch);
+  hdBlurAlpha(im, 3.2 / res, 3, [22, 21, 18]);
+  x.putImageData(im, 0, 0);
+  hdSwapImage('hdIntL', c.toDataURL('image/png'), 0, 0, cw*res, ch*res);
+}
+function hdRenderToggle(){
+  HD.render = !HD.render;
+  try{ localStorage.setItem('atlas_house_render', HD.render ? '1' : '0'); }catch(e){}
+  HD.gKey = HD.iKey = null;
+  ['hdGroundL', 'hdIntL'].forEach(id => { const l = document.getElementById(id); if(l) l.innerHTML = ''; });
+  hdBarState(); hdPaint();
+}
+
+/* axis lines: every distinct wall line, lettered across the top and numbered down the side */
+function hdAxes(P){
+  const uniq = vals => { const s = [...vals].sort((a, b) => a - b), out = []; s.forEach(v => { if(!out.length || v - out[out.length-1] > 14) out.push(v); }); return out; };
+  const xs = uniq([0, P.W, ...P.rooms.flatMap(r => [r.x, r.x + r.w])].filter(v => v >= 0 && v <= P.W));
+  const ys = uniq([0, P.H, ...P.rooms.flatMap(r => [r.y, r.y + r.h])].filter(v => v >= 0 && v <= P.H));
+  return {xs, ys};
+}
+const hdLetter = i => i < 26 ? String.fromCharCode(65 + i) : String.fromCharCode(64 + Math.floor(i / 26)) + String.fromCharCode(65 + i % 26);
+const hdAxesOn = Wpx => Wpx >= 520 || (HD.textScale || 1) > 1;
+function hdPads(Wpx){ const ts = HD.textScale || 1, small = !hdAxesOn(Wpx);
+  const n = hdP() ? hdP().rooms.length : 0;
+  return {l: (small ? 16 : 84) * ts, t: (small ? 16 : 84) * ts, r: 26 * ts, b: (n ? 66 + Math.ceil(n / hdCols(Wpx)) * 21 : 52) * ts + 14}; }
+const hdCols = Wpx => Wpx < 520 ? 1 : 2;
+
 function hdLayout(){
   const body = document.getElementById('hdBody'); if(!body) return;
   body.innerHTML = `
@@ -3276,47 +3492,62 @@ function hdLayout(){
       <button class="hd-ib" id="hdRedo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" onclick="hdUndo(true)">${HD_I.redo}</button>
       <button class="hd-ib" id="hdMeasure" type="button" title="Measure (M)" aria-label="Measure" onclick="hdTool('measure')">${HD_I.ruler}</button>
       <button class="hd-ib" id="hdLabels" type="button" title="Furniture names" aria-label="Furniture names" onclick="HD.labels=!HD.labels;hdPaint();hdBarState()">${HD_I.tag}</button>
-      <span class="hd-sep"></span>
-      <button class="hd-ib" type="button" title="Zoom out" aria-label="Zoom out" onclick="hdZoomBy(1/1.25)">${HD_I.minus}</button>
-      <button class="hd-ib" type="button" title="Fit to screen (F)" aria-label="Fit to screen" onclick="hdFit();hdPaint()">${HD_I.fit}</button>
-      <button class="hd-ib" type="button" title="Zoom in" aria-label="Zoom in" onclick="hdZoomBy(1.25)">${HD_I.plus}</button>
+      <button class="hd-ib" id="hdRender" type="button" title="Rendered view (V)" aria-label="Rendered view" onclick="hdRenderToggle()">${HD_I.cube}<span>Render</span></button>
       <button class="hd-ib" type="button" title="Download as image" aria-label="Download as image" onclick="hdExport()">${HD_I.dl}</button>
       <span class="hd-saved" id="hdSaved">${esc(HD.status)}</span>
     </div>
     <div class="hd-wrap">
       <aside class="card hd-lib hd-side">${hdLibHTML()}</aside>
       <div class="hd-stage">
-        <svg id="hdSvg" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk, system-ui, sans-serif"><g id="hdScene"></g></svg>
+        <svg id="hdSvg" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk, system-ui, sans-serif">
+          <defs id="hdDefs">${hdStaticDefs()}</defs>
+          <g id="hdBack"></g><g id="hdGroundL"></g><g id="hdFloor"></g><g id="hdIntL"></g><g id="hdScene"></g>
+        </svg>
+        <div class="hd-zoom">
+          <button type="button" title="Zoom in" aria-label="Zoom in" onclick="hdZoomBy(1.25)">${HD_I.plus}</button>
+          <button type="button" title="Fit to screen (F)" aria-label="Fit to screen" onclick="hdFit();hdPaint()">${HD_I.fit}</button>
+          <button type="button" title="Zoom out" aria-label="Zoom out" onclick="hdZoomBy(1/1.25)">${HD_I.minus}</button>
+        </div>
         <div class="hd-tip" id="hdTip"></div>
       </div>
       <aside class="card hd-insp" id="hdInsp"></aside>
     </div>`;
   const svg = document.getElementById('hdSvg');
-  if(window.innerWidth < 900){   // phones: size the canvas to the plan's shape instead of a fixed 62vh slab
-    const P = hdP(), stage = svg.parentElement, w = stage.clientWidth;
-    stage.style.height = Math.round(Math.max(300, Math.min(window.innerHeight * .66, w * (P.H + 140) / (P.W + 100)))) + 'px';
+  HD.gKey = HD.iKey = null;
+  if(window.innerWidth < 900){   // phones: size the canvas to the plan's shape instead of a fixed slab
+    const P = hdP(), stage = svg.parentElement, w = stage.clientWidth, pd = hdPads(w);
+    const s = (w - pd.l - pd.r) / (P.W + HD_OUTER);
+    stage.style.height = Math.round(Math.max(320, Math.min(window.innerHeight * .72, (P.H + HD_OUTER) * s + pd.t + pd.b))) + 'px';
   }
   hdBind(svg);
+  if(HD_TEX) hdApplyTex(); else setTimeout(hdTextures, 30);   // build the textures after the first paint, not before it
   new ResizeObserver(() => { if(!document.body.contains(svg)) return; const first = !HD.view; if(first) hdFit(); hdPaint(); if(first) hdInspect(); }).observe(svg);
   hdUndoBtns(); hdBarState(); hdInspect();
 }
 function hdBarState(){
   document.getElementById('hdMeasure')?.classList.toggle('on', HD.tool === 'measure');
   document.getElementById('hdLabels')?.classList.toggle('on', !!HD.labels);
+  document.getElementById('hdRender')?.classList.toggle('on', !!HD.render);
   const tip = document.getElementById('hdTip');
   if(tip){ tip.textContent = HD.tool === 'measure' ? 'Drag to measure · Esc to stop' : ''; tip.classList.toggle('show', HD.tool === 'measure'); }
-  const svg = document.getElementById('hdSvg'); if(svg) svg.classList.toggle('measuring', HD.tool === 'measure');
+  const svg = document.getElementById('hdSvg'); if(svg){ svg.classList.toggle('measuring', HD.tool === 'measure'); svg.classList.toggle('render', !!HD.render); }
 }
 function hdTool(t){ HD.tool = HD.tool === t ? null : t; if(!HD.tool) HD.measure = null; hdBarState(); hdPaint(); }
 
 /* ---------- camera ---------- */
 function hdSize(){ const s = document.getElementById('hdSvg'); return s ? [s.clientWidth || 1, s.clientHeight || 1] : [1, 1]; }
+function hdBounds(P){
+  let x1 = -HD_OUTER/2, y1 = -HD_OUTER/2, x2 = P.W + HD_OUTER/2, y2 = P.H + HD_OUTER/2;
+  P.items.forEach(it => { const b = hdAABB(it); x1 = Math.min(x1, b.x1); y1 = Math.min(y1, b.y1); x2 = Math.max(x2, b.x2); y2 = Math.max(y2, b.y2); });
+  return {x1, y1, x2, y2};
+}
+/* fit leaves room in screen pixels for the axis bubbles (top/left) and the legend (bottom) */
 function hdFit(){
   const P = hdP(); if(!P) return;
-  let x1 = -60, y1 = -60, x2 = P.W + 30, y2 = P.H + 30;
-  P.items.forEach(it => { const b = hdAABB(it); x1 = Math.min(x1, b.x1 - 30); y1 = Math.min(y1, b.y1 - 30); x2 = Math.max(x2, b.x2 + 30); y2 = Math.max(y2, b.y2 + 30); });
-  const [W, H] = hdSize(), s = Math.min(W / (x2 - x1), H / (y2 - y1));
-  HD.view = {s, x: (x1 + x2)/2 - W/2/s, y: (y1 + y2)/2 - H/2/s};
+  const [W, H] = hdSize(), pd = hdPads(W), b = hdBounds(P), bw = b.x2 - b.x1, bh = b.y2 - b.y1;
+  const s = Math.max(0.05, Math.min((W - pd.l - pd.r) / bw, (H - pd.t - pd.b) / bh));
+  const fx = (W - pd.l - pd.r - bw*s) / 2, fy = (H - pd.t - pd.b - bh*s) / 2;
+  HD.view = {s, x: b.x1 - (pd.l + fx) / s, y: b.y1 - (pd.t + fy) / s};
 }
 function hdZoomAt(f, px, py){
   const v = HD.view, s2 = Math.min(12, Math.max(0.05, v.s * f)), wx = v.x + px / v.s, wy = v.y + py / v.s;
@@ -3328,77 +3559,138 @@ function hdPt(e){ const svg = document.getElementById('hdSvg'), b = svg.getBound
 
 /* ---------- paint ---------- */
 function hdPaint(){
-  const svg = document.getElementById('hdSvg'), g = document.getElementById('hdScene'), P = hdP();
-  if(!svg || !g || !P) return;
+  const svg = document.getElementById('hdSvg'), P = hdP();
+  if(!svg || !P || !document.getElementById('hdScene')) return;
   if(!HD.view) hdFit();
-  const [W, H] = hdSize(), v = HD.view, k = 1 / v.s;   // k = cm per screen pixel
+  const [W, H] = hdSize(), v = HD.view, k = 1 / v.s, ts = HD.textScale || 1, u = k * ts;   // k = cm per screen px, u = cm per "annotation px"
+  const R = !!HD.render, INK = R ? HD_RINK : HD_INK, HALO = R ? HD_GROUND : '#f3f2ef';
   svg.setAttribute('viewBox', `${v.x} ${v.y} ${W * k} ${H * k}`);
+  svg.classList.toggle('render', R);
   const conf = hdConflicts(P); HD.conf = conf;
-  const NS = 'vector-effect="non-scaling-stroke"', fs = n => (n * k * (HD.textScale || 1)).toFixed(2);
-  const o = [];
-  // patterns + page grid (50 cm minor, 1 m major)
-  o.push(`<defs>
+  const NS = 'vector-effect="non-scaling-stroke"', fs = n => (n * u).toFixed(2);
+
+  // --- back: page (topography or drafting grid) + per-zoom patterns
+  document.getElementById('hdBack').innerHTML = `<defs>
     <pattern id="hdGrid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M100 0H0V100" fill="none" stroke="#dcd9d3" stroke-width="${k}"/><path d="M50 0V100M0 50H100" fill="none" stroke="#e7e5e0" stroke-width="${k}"/></pattern>
     <pattern id="hdTile" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${HD_FLOOR}"/><path d="M30 0H0V30" fill="none" stroke="#e2dfd9" stroke-width="${k}"/></pattern>
     <pattern id="hdDeck" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#f4f3ef"/><path d="M0 0H14" stroke="#e0ddd6" stroke-width="${k}"/></pattern>
-  </defs>`);
-  o.push(`<rect x="${v.x}" y="${v.y}" width="${W*k}" height="${H*k}" fill="url(#hdGrid)"/>`);
-  o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="#f7f6f3"/>`);
-  // room floors, then furniture, then walls on top so nothing hides a wall
-  P.rooms.forEach(r => o.push(`<rect data-t="room" data-id="${r.id}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${(HD_KINDS[r.kind] || HD_KINDS.living).fill}"/>`));
+    <pattern id="hdTileL" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="${Math.max(.6, 1.1*k)}"/><path d="M30 1H1V30" fill="none" stroke="rgba(60,58,52,.10)" stroke-width="${Math.max(.4, .8*k)}"/></pattern>
+    <pattern id="hdDeckL" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M0 .5H14" stroke="#dedbd4" stroke-width="${Math.max(.5, k)}"/></pattern>
+  </defs><rect x="${v.x}" y="${v.y}" width="${W*k}" height="${H*k}" fill="${R ? 'url(#hdTopo)' : 'url(#hdGrid)'}"/>`;
+  ['hdGroundL', 'hdIntL'].forEach(id => document.getElementById(id).style.display = R ? '' : 'none');
+
+  // --- floors (+ rugs, which lie flat and take the furniture shadows on top of them)
+  const f = [];
+  f.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="${R ? 'url(#hdConc)' : '#f7f6f3'}"/>`);
+  if(R) f.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="rgba(255,255,255,.18)"/>`);   // un-roomed space reads a touch lighter
+  P.rooms.forEach(r => {
+    const fill = R ? (r.kind === 'balcony' ? '#f7f6f3' : 'url(#hdConc)') : (HD_KINDS[r.kind] || HD_KINDS.living).fill;
+    f.push(`<rect data-t="room" data-id="${r.id}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${fill}"/>`);
+    if(!R) return;
+    const ov = r.kind === 'kitchen' || r.kind === 'bath' ? 'url(#hdTileL)' : r.kind === 'balcony' ? 'url(#hdDeckL)' : r.kind === 'storage' ? 'rgba(40,38,34,.05)' : '';
+    if(ov) f.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${ov}" pointer-events="none"/>`);
+  });
   const itemSvg = it => {
     const c = conf[it.id], sel = HD.sel && HD.sel.id === it.id;
     const hl = c ? `<rect x="${-it.w/2}" y="${-it.d/2}" width="${it.w}" height="${it.d}" fill="${c.lvl === 'red' ? 'rgba(155,70,58,.16)' : 'rgba(138,107,34,.14)'}" stroke="${c.lvl === 'red' ? HD_RED : HD_AMBER}" stroke-width="1.6" ${NS} stroke-dasharray="${c.lvl === 'red' ? '' : '5 3'}"/>` : '';
     return `<g data-t="item" data-id="${it.id}" class="hd-it${sel ? ' sel' : ''}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0})">
       <rect x="${-it.w/2}" y="${-it.d/2}" width="${it.w}" height="${it.d}" fill="transparent"/>${hdSym(it.type, it.w, it.d)}${hl}</g>`;
   };
-  P.items.filter(i => i.type === 'rug').forEach(it => o.push(itemSvg(it)));
+  P.items.filter(i => i.type === 'rug').forEach(it => f.push(itemSvg(it)));
+  document.getElementById('hdFloor').innerHTML = f.join('');
+
+  // --- scene: furniture, walls, openings, annotation
+  const o = [];
   P.items.filter(i => i.type !== 'rug').forEach(it => o.push(itemSvg(it)));
-  P.rooms.forEach(r => o.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${HD_INK}" stroke-width="${HD_WALL}" ${r.kind === 'balcony' ? `stroke-dasharray="${HD_WALL*2} ${HD_WALL}"` : ''} pointer-events="none"/>`));
-  o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="none" stroke="${HD_INK}" stroke-width="${HD_OUTER}" pointer-events="none"/>`);
-  // openings: punch the wall with a floor-coloured patch, then draw the symbol
+  P.rooms.forEach(r => {
+    if(r.kind === 'balcony') o.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${INK}" stroke-width="${R ? 4 : HD_WALL}" ${R ? '' : `stroke-dasharray="${HD_WALL*2} ${HD_WALL}"`} pointer-events="none"/>`);
+    else o.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${INK}" stroke-width="${HD_WALL}" pointer-events="none"/>`);
+  });
+  o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="none" stroke="${INK}" stroke-width="${HD_OUTER}" pointer-events="none"/>`);
   P.opens.forEach(op => {
     const th = op.th || HD_WALL, L = op.len, hx = op.flip ? L/2 : -L/2, sel = HD.sel && HD.sel.id === op.id;
-    let s = `<rect x="${-L/2}" y="${-th/2 - 1}" width="${L}" height="${th + 2}" fill="${HD_FLOOR}"/>` +
-      `<path d="M${-L/2} ${-th/2}V${th/2}M${L/2} ${-th/2}V${th/2}" stroke="${HD_INK}" stroke-width="1.6" ${NS}/>`;
-    if(op.kind === 'door') s += `<path d="M${hx} ${th/2}V${th/2 + L}" stroke="${HD_INK}" stroke-width="2.2" ${NS}/>` +
-      `<path d="M${hx} ${th/2 + L}A${L} ${L} 0 0 ${op.flip ? 1 : 0} ${-hx} ${th/2}" fill="none" stroke="${HD_MUTED}" stroke-width="1" stroke-dasharray="4 3" ${NS}/>`;
-    else if(op.kind === 'window') s += `<rect x="${-L/2}" y="${-th/2}" width="${L}" height="${th}" fill="none" stroke="${HD_INK}" stroke-width="1.1" ${NS}/><path d="M${-L/2} 0H${L/2}" stroke="${HD_INK}" stroke-width="1.1" ${NS}/>`;
-    else s += `<path d="M${-L/2} ${-th/6}H${L*.1}M${-L*.1} ${th/6}H${L/2}" stroke="${HD_INK}" stroke-width="2.4" ${NS}/>`;
+    const patch = R ? (op.kind === 'door' ? 'url(#hdConc)' : '#fbfbfa') : HD_FLOOR;
+    let s = `<rect x="${-L/2}" y="${-th/2 - 1}" width="${L}" height="${th + 2}" fill="${patch}"/>` +
+      `<path d="M${-L/2} ${-th/2}V${th/2}M${L/2} ${-th/2}V${th/2}" stroke="${INK}" stroke-width="1.6" ${NS}/>`;
+    if(op.kind === 'door'){
+      s += R ? `<rect x="${op.flip ? hx - 4 : hx}" y="${th/2}" width="4" height="${L}" fill="#fff" stroke="${INK}" stroke-width="1" ${NS}/>` +
+               `<path d="M${hx} ${th/2 + L}A${L} ${L} 0 0 ${op.flip ? 1 : 0} ${-hx} ${th/2}" fill="none" stroke="#6d6a63" stroke-width="1" ${NS}/>`
+             : `<path d="M${hx} ${th/2}V${th/2 + L}" stroke="${INK}" stroke-width="2.2" ${NS}/>` +
+               `<path d="M${hx} ${th/2 + L}A${L} ${L} 0 0 ${op.flip ? 1 : 0} ${-hx} ${th/2}" fill="none" stroke="${HD_MUTED}" stroke-width="1" stroke-dasharray="4 3" ${NS}/>`;
+    } else if(op.kind === 'window'){
+      s += R ? `<path d="M${-L/2} ${-th*.18}H${L/2}M${-L/2} ${th*.18}H${L/2}" stroke="${INK}" stroke-width=".9" ${NS}/><path d="M${-L/2} ${-th/2}H${L/2}M${-L/2} ${th/2}H${L/2}" stroke="${INK}" stroke-width="1.2" ${NS}/>`
+             : `<rect x="${-L/2}" y="${-th/2}" width="${L}" height="${th}" fill="none" stroke="${HD_INK}" stroke-width="1.1" ${NS}/><path d="M${-L/2} 0H${L/2}" stroke="${HD_INK}" stroke-width="1.1" ${NS}/>`;
+    } else s += `<path d="M${-L/2} ${-th/6}H${L*.1}M${-L*.1} ${th/6}H${L/2}" stroke="${INK}" stroke-width="2.4" ${NS}/>` +
+      (R ? `<path d="M${-L/2} ${-th/2}H${L/2}M${-L/2} ${th/2}H${L/2}" stroke="${INK}" stroke-width=".8" ${NS}/>` : '');
     o.push(`<g data-t="open" data-id="${op.id}" class="hd-op${sel ? ' sel' : ''}" transform="translate(${op.x} ${op.y}) rotate(${op.rot || 0})">
       <rect x="${-L/2}" y="${-th/2 - 8}" width="${L}" height="${th + 16}" fill="transparent"/>${s}</g>`);
   });
-  // labels
-  P.rooms.forEach(r => {
-    if(r.w * v.s < 36 || r.h * v.s < 26) return;
-    const cx = r.x + r.w/2, cy = r.y + r.h/2;
-    o.push(`<text x="${cx}" y="${cy - 2*k}" text-anchor="middle" font-size="${fs(12.5)}" font-weight="600" fill="${HD_INK}" pointer-events="none">${esc(r.name)}</text>
-      <text x="${cx}" y="${cy + 13*k}" text-anchor="middle" font-size="${fs(11)}" fill="${HD_MUTED}" pointer-events="none">${hdArea(r.w, r.h)} m²</text>`);
+  // room tags: numbered disc (keyed to the legend), name, area
+  P.rooms.forEach((r, i) => {
+    if(r.w * v.s < 24 || r.h * v.s < 24) return;
+    const cx = r.x + r.w/2, cy = r.y + r.h/2, nameFits = r.w * v.s > (r.name.length * 7.4 + 14) * ts, roomy = nameFits && r.h * v.s > 74 * ts;
+    if(!nameFits){ o.push(`<g pointer-events="none"><circle cx="${cx}" cy="${cy}" r="${9*u}" fill="#fff" stroke="${INK}" stroke-width="1" ${NS}/>
+      <text x="${cx}" y="${cy}" dy=".36em" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}">${i + 1}</text></g>`); return; }
+    if(roomy) o.push(`<g pointer-events="none"><circle cx="${cx}" cy="${cy - 17*u}" r="${9*u}" fill="#fff" stroke="${INK}" stroke-width="1" ${NS}/>
+      <text x="${cx}" y="${cy - 17*u}" dy=".36em" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}">${i + 1}</text></g>`);
+    o.push(`<text x="${cx}" y="${cy + (roomy ? 7 : 0)*u}" text-anchor="middle" font-size="${fs(10.5)}" font-weight="700" letter-spacing="${(.6*u).toFixed(2)}" fill="${INK}" stroke="rgba(240,239,236,.9)" stroke-width="${3*u}" paint-order="stroke" pointer-events="none">${esc(r.name.toUpperCase())}</text>
+      <text x="${cx}" y="${cy + (roomy ? 21 : 14)*u}" text-anchor="middle" font-size="${fs(10)}" fill="${R ? '#55534d' : HD_MUTED}" stroke="rgba(240,239,236,.9)" stroke-width="${3*u}" paint-order="stroke" pointer-events="none">${hdArea(r.w, r.h)} m²</text>`);
   });
   if(HD.labels || P.items.some(i => i.type === 'box')) P.items.forEach(it => {
     if(!HD.labels && it.type !== 'box') return;
     if(Math.max(it.w, it.d) * v.s < 34) return;
-    o.push(`<text x="${it.x}" y="${it.y + 4*k}" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${HD_INK}" stroke="${HD_FLOOR}" stroke-width="${3*k}" paint-order="stroke" pointer-events="none">${esc(it.name)}</text>`);
+    o.push(`<text x="${it.x}" y="${it.y + 4*u}" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}" stroke="${HD_FLOOR}" stroke-width="${3*u}" paint-order="stroke" pointer-events="none">${esc(it.name)}</text>`);
   });
-  // outer dimensions
-  o.push(hdDim(0, -HD_OUTER/2 - 26*k, P.W, -HD_OUTER/2 - 26*k, k, P.W));
-  o.push(hdDim(-HD_OUTER/2 - 26*k, 0, -HD_OUTER/2 - 26*k, P.H, k, P.H));
-  // selection overlay
+  o.push(hdAnnot(P, W, u, k, v.s, INK, HALO));
   o.push(hdSelOverlay(k));
-  // measure line
   if(HD.measure){
     const m = HD.measure, dist = Math.hypot(m.x2 - m.x1, m.y2 - m.y1);
     o.push(`<g pointer-events="none"><line x1="${m.x1}" y1="${m.y1}" x2="${m.x2}" y2="${m.y2}" stroke="${HD_RED}" stroke-width="1.8" ${NS}/>
       <circle cx="${m.x1}" cy="${m.y1}" r="${3.5*k}" fill="${HD_RED}"/><circle cx="${m.x2}" cy="${m.y2}" r="${3.5*k}" fill="${HD_RED}"/>
-      <text x="${(m.x1 + m.x2)/2}" y="${(m.y1 + m.y2)/2 - 8*k}" text-anchor="middle" font-size="${fs(13)}" font-weight="700" fill="${HD_RED}" stroke="${HD_FLOOR}" stroke-width="${4*k}" paint-order="stroke">${hdM(dist)} m</text></g>`);
+      <text x="${(m.x1 + m.x2)/2}" y="${(m.y1 + m.y2)/2 - 8*k}" text-anchor="middle" font-size="${(13*k).toFixed(2)}" font-weight="700" fill="${HD_RED}" stroke="${HD_FLOOR}" stroke-width="${4*k}" paint-order="stroke">${hdM(dist)} m</text></g>`);
   }
-  g.innerHTML = o.join('');
+  document.getElementById('hdScene').innerHTML = o.join('');
+  hdShadowSync(P);
 }
+/* drawing-board annotation: lettered/numbered axis bubbles with dimension chains, and the legend block */
+function hdAnnot(P, Wpx, u, k, s, INK, HALO){
+  const NS = 'vector-effect="non-scaling-stroke"', fs = n => (n * u).toFixed(2), out = ['<g pointer-events="none">'];
+  let {xs, ys} = hdAxes(P);
+  if(!hdAxesOn(Wpx)) xs = ys = [];
+  const o0 = -HD_OUTER/2, ch = o0 - 30*u, bb = o0 - 60*u, br = 9.5*u, tk = 4*u, ln = `stroke="${INK}" stroke-width=".9" ${NS}`;
+  const bubble = (x, y, t) => `<circle cx="${x}" cy="${y}" r="${br}" fill="#fff" ${ln}/><text x="${x}" y="${y}" dy=".36em" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}">${t}</text>`;
+  const dimTxt = (x, y, val, rot) => `<text x="${x}" y="${y}" ${rot ? `transform="rotate(-90 ${x} ${y})"` : ''} dy="${-4*u}" text-anchor="middle" font-size="${fs(10)}" fill="${INK}" stroke="${HALO}" stroke-width="${3*u}" paint-order="stroke">${hdM(val)}</text>`;
+  // top
+  if(xs.length) out.push(`<path d="M${xs[0]} ${ch}H${xs[xs.length-1]}" ${ln}/>`);
+  xs.forEach((x, i) => {
+    out.push(`<path d="M${x - tk} ${ch + tk}L${x + tk} ${ch - tk}M${x} ${bb + br}V${ch + 6*u}" ${ln}/>`, bubble(x, bb, hdLetter(i)));
+    if(i && (x - xs[i-1]) * s > 30 * (HD.textScale || 1)) out.push(dimTxt((x + xs[i-1]) / 2, ch, x - xs[i-1]));
+  });
+  // left
+  if(ys.length) out.push(`<path d="M${ch} ${ys[0]}V${ys[ys.length-1]}" ${ln}/>`);
+  ys.forEach((y, i) => {
+    out.push(`<path d="M${ch - tk} ${y + tk}L${ch + tk} ${y - tk}M${bb + br} ${y}H${ch + 6*u}" ${ln}/>`, bubble(bb, y, i + 1));
+    if(i && (y - ys[i-1]) * s > 30 * (HD.textScale || 1)) out.push(dimTxt(ch, (y + ys[i-1]) / 2, y - ys[i-1], true));
+  });
+  // legend
+  const ly = P.H + HD_OUTER/2 + 40*u, cols = hdCols(Wpx), rows = Math.ceil(P.rooms.length / cols) || 0;
+  out.push(`<circle cx="${7*u}" cy="${ly - 5*u}" r="${7*u}" fill="${INK}"/><path d="M${7*u} ${ly - 12*u}V${ly + 2*u}" stroke="#fff" stroke-width="1.4" ${NS}/>
+    <text x="${22*u}" y="${ly}" font-size="${fs(15)}" font-weight="700" letter-spacing="${(.4*u).toFixed(2)}" fill="${INK}">${esc((HD.cur.name || 'Plan').toUpperCase())} · FLOOR PLAN</text>
+    <text x="${22*u}" y="${ly + 19*u}" font-size="${fs(11)}" fill="${R_MUTED(INK)}">${hdM(P.W)} × ${hdM(P.H)} m · ${hdArea(P.W, P.H)} m²</text>`);
+  P.rooms.forEach((r, i) => {
+    const col = Math.floor(i / rows), row = i % rows, x = col * 200*u, y = ly + 46*u + row * 21*u;
+    out.push(`<circle cx="${x + 8*u}" cy="${y}" r="${8*u}" fill="#fff" ${ln}/><text x="${x + 8*u}" y="${y}" dy=".36em" text-anchor="middle" font-size="${fs(9.5)}" fill="${INK}">${i + 1}</text>
+      <text x="${x + 24*u}" y="${y}" dy=".36em" font-size="${fs(11.5)}" fill="${INK}">${esc(r.name)}</text>`);
+  });
+  out.push('</g>');
+  return out.join('');
+}
+const R_MUTED = ink => ink === HD_RINK ? '#55534d' : HD_MUTED;
 function hdDim(x1, y1, x2, y2, k, val){
   const vert = x1 === x2, tx = (x1 + x2)/2, ty = (y1 + y2)/2, t = 4*k, NS = 'vector-effect="non-scaling-stroke"';
   const ticks = vert ? `M${x1 - t} ${y1}H${x1 + t}M${x2 - t} ${y2}H${x2 + t}` : `M${x1} ${y1 - t}V${y1 + t}M${x2} ${y2 - t}V${y2 + t}`;
   return `<g pointer-events="none"><path d="M${x1} ${y1}L${x2} ${y2}${ticks}" stroke="${HD_MUTED}" stroke-width="1" ${NS}/>
-    <text x="${tx}" y="${ty}" ${vert ? `transform="rotate(-90 ${tx} ${ty})"` : ''} dy="${-5*k}" text-anchor="middle" font-size="${(11*k*(HD.textScale || 1)).toFixed(2)}" fill="${HD_MUTED}" stroke="#f3f2ef" stroke-width="${3*k}" paint-order="stroke">${hdM(val)} m</text></g>`;
+    <text x="${tx}" y="${ty}" ${vert ? `transform="rotate(-90 ${tx} ${ty})"` : ''} dy="${-5*k}" text-anchor="middle" font-size="${(11*k).toFixed(2)}" fill="${HD_INK}" stroke="#fff" stroke-width="${3*k}" paint-order="stroke">${hdM(val)} m</text></g>`;
 }
 function hdSelOverlay(k){
   const o = hdFind(HD.sel); if(!o) return '';
@@ -3505,7 +3797,7 @@ function hdBind(svg){
     }
     const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
     if(!drag.moved && Math.hypot(dx, dy) < 4) return;
-    if(!drag.moved){ drag.moved = true; if(drag.mode === 'move' || drag.mode === 'handle') hdPush(); }
+    if(!drag.moved){ drag.moved = true; if(drag.mode === 'move' || drag.mode === 'handle'){ hdPush(); HD.dragging = true; } }
     const p = hdPt(e), P = hdP(), k = 1 / HD.view.s, thr = 10 * k;
     if(drag.mode === 'pan'){ HD.view.x = drag.v0.x - dx / HD.view.s; HD.view.y = drag.v0.y - dy / HD.view.s; hdPaint(); return; }
     if(drag.mode === 'measure'){
@@ -3566,7 +3858,7 @@ function hdBind(svg){
     if(!drag.moved){
       if(drag.mode === 'pan'){ HD.sel = drag.tapSel; hdPaint(); hdInspect(); }
       if(drag.mode === 'measure'){ HD.measure = null; hdPaint(); }
-    } else if(drag.mode === 'move' || drag.mode === 'handle'){ hdInspect(); hdSave(); }
+    } else if(drag.mode === 'move' || drag.mode === 'handle'){ HD.dragging = false; hdPaint(); hdInspect(); hdSave(); }
     drag = null;
   };
   svg.addEventListener('pointerup', up);
@@ -3591,6 +3883,7 @@ document.addEventListener('keydown', e => {
   if(key === 'escape'){ if(HD.tool){ hdTool(HD.tool); } else { HD.sel = null; hdPaint(); hdInspect(); } return; }
   if(key === 'm'){ hdTool('measure'); return; }
   if(key === 'f'){ hdFit(); hdPaint(); return; }
+  if(key === 'v'){ hdRenderToggle(); return; }
   if(!HD.sel) return;
   const o = hdFind(HD.sel); if(!o) return;
   if(key === 'delete' || key === 'backspace'){ e.preventDefault(); hdDel(); return; }
@@ -3738,24 +4031,26 @@ function hdInspectLive(){
   else set('hdOL', o.len);
 }
 
-/* ---------- export: the whole plan, fitted, as a PNG ---------- */
+/* ---------- export: the whole board (plan, axes, legend), fitted, as a PNG ---------- */
 function hdExport(){
   const svg = document.getElementById('hdSvg'); if(!svg) return;
-  const keepV = HD.view, keepS = HD.sel, keepM = HD.measure;
-  HD.sel = null; HD.measure = null;
-  const W = 1800, P = hdP();
-  const bw = P.W + 160, bh = P.H + 160, H = Math.round(W * bh / bw);
+  const keepV = HD.view, keepS = HD.sel, keepM = HD.measure, P = hdP();
+  HD.sel = null; HD.measure = null; HD.textScale = 1.7;
+  const W = 2000, pd = hdPads(W), b = hdBounds(P), s = (W - pd.l - pd.r) / (b.x2 - b.x1);
+  const H = Math.round((b.y2 - b.y1) * s + pd.t + pd.b);
   svg.style.width = W + 'px'; svg.style.height = H + 'px';
-  HD.view = {s: W / bw, x: -100, y: -100}; HD.textScale = 1.8;
-  hdPaint(); HD.textScale = 1;
+  HD.view = {s, x: b.x1 - pd.l / s, y: b.y1 - pd.t / s};
+  hdPaint();
+  hdApplyTex(true);
   const xml = new XMLSerializer().serializeToString(svg).replace('<svg', `<svg width="${W}" height="${H}"`);
+  hdApplyTex();
   svg.style.width = ''; svg.style.height = '';
-  HD.view = keepV; HD.sel = keepS; HD.measure = keepM; hdPaint();
+  HD.textScale = 1; HD.view = keepV; HD.sel = keepS; HD.measure = keepM; hdPaint();
   const img = new Image();
   img.onload = () => {
     const c = document.createElement('canvas'); c.width = W; c.height = H;
-    const ctx = c.getContext('2d'); ctx.fillStyle = '#f3f2ef'; ctx.fillRect(0, 0, W, H); ctx.drawImage(img, 0, 0);
-    c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    const ctx = c.getContext('2d'); ctx.fillStyle = HD.render ? HD_GROUND : '#f3f2ef'; ctx.fillRect(0, 0, W, H); ctx.drawImage(img, 0, 0);
+    c.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl);
       a.download = (HD.cur.name || 'plan').replace(/[^\w\- ]+/g, '').trim() + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); });
   };
   img.onerror = () => toast('Could not render the image');
