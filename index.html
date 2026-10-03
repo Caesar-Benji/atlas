@@ -462,7 +462,7 @@ main.wide{max-width:1500px}
 .hd-saved{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
 .hd-saved.bad{color:var(--red);font-weight:600}
 .hd-wrap{display:grid;grid-template-columns:236px minmax(0,1fr) 270px;gap:14px;align-items:start}
-.hd-side{padding:12px;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow-y:auto}
+.hd-side{padding:12px;position:sticky;top:70px;height:max(460px,calc(100vh - 230px));overflow-y:auto;overscroll-behavior:contain}
 .hd-cats{flex-wrap:wrap;margin-bottom:10px}
 .hd-cats button{padding:5px 10px;font-size:12px}
 .hd-lib-list{display:flex;flex-direction:column;gap:4px}
@@ -481,7 +481,7 @@ main.wide{max-width:1500px}
 #hdSvg [data-t=room]{cursor:pointer}
 .hd-tip{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--accent);color:var(--on-ink);font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .15s}
 .hd-tip.show{opacity:1}
-.hd-insp{padding:16px}
+.hd-insp{padding:16px;position:sticky;top:70px;max-height:max(460px,calc(100vh - 230px));overflow-y:auto;overscroll-behavior:contain}
 .hd-form{display:flex;flex-direction:column;gap:10px}
 .hd-form input,.hd-form select{padding:8px 10px}
 .hd-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -506,7 +506,7 @@ main.wide{max-width:1500px}
 .hd-start p{margin:-4px 0 14px}
 @media(max-width:1180px){
   .hd-wrap{grid-template-columns:210px minmax(0,1fr)}
-  .hd-insp{grid-column:1 / -1}
+  .hd-insp{grid-column:1 / -1;position:static;max-height:none}
 }
 @media(max-width:900px){
   .hd-wrap{grid-template-columns:minmax(0,1fr)}
@@ -531,6 +531,30 @@ main.wide{max-width:1500px}
 .hd-lib-it .pv{background:#dcdad5;box-shadow:inset 0 1px 2px rgba(26,26,24,.08)}
 .hd-lib-it .pv svg{filter:drop-shadow(-1.5px -2px 1.5px rgba(20,20,18,.28))}
 @media(max-width:560px){ .hd-ib span{display:none} .hd-add-m span{display:inline} .hd-zoom{right:8px;bottom:8px} .hd-zoom button{width:34px;height:34px} }
+/* v42: live 3D view */
+#hd3Canvas{display:none;width:100%;height:100%;touch-action:none;cursor:grab}
+#hd3Canvas:active{cursor:grabbing}
+.hd-stage.is3d{background:#e7e2da}
+.hd-stage.is3d #hdSvg{display:none}
+.hd-stage.is3d #hd3Canvas{display:block}
+.hd3-labels,.hd3-ui{display:none}
+.hd-stage.is3d .hd3-labels{display:block;position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hd3-labels span{position:absolute;transform:translate(-50%,-50%);font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#2a2927;text-align:center;white-space:nowrap;text-shadow:0 0 3px rgba(255,255,255,.95),0 0 8px rgba(255,255,255,.7)}
+.hd3-labels small{display:block;font-size:10px;font-weight:500;letter-spacing:0;text-transform:none;color:#55524c}
+.hd-stage.is3d .hd3-ui{display:flex;position:absolute;left:12px;top:12px;right:12px;justify-content:space-between;align-items:flex-start;gap:8px;pointer-events:none}
+.hd3-ui>*{pointer-events:auto}
+.hd3-walls{background:rgba(251,250,248,.92);border:1px solid var(--border);border-radius:99px;padding:3px;box-shadow:0 4px 14px rgba(26,26,24,.08)}
+.hd3-walls button{border:none;padding:5px 11px}
+.hd3-turn{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(26,26,24,.10)}
+.hd3-turn button{width:38px;height:36px;border:none;background:transparent;color:var(--accent2);display:flex;align-items:center;justify-content:center}
+.hd3-turn button+button{border-left:1px solid var(--border)}
+.hd3-turn button:hover{background:var(--surface2);color:var(--text)}
+.hd3-turn svg{width:17px;height:17px}
+.hd-stage.is3d .hd-tip{display:none}
+.hd-bar.is3d .hd-2d{display:none}
+#hd3Sun{padding:0;height:auto;background:transparent;border:none;accent-color:var(--accent)}
+.hd-acts .btn-ghost.on{border-color:var(--accent);color:var(--text)}
+@media(max-width:560px){ .hd3-walls button{padding:5px 8px;font-size:11.5px} .hd3-turn button{width:34px;height:34px} }
 </style>
 </head>
 <body>
@@ -605,7 +629,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v40</span></div>
+    <div class="hub-foot"><span id="ver">v42</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -671,7 +695,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v40');
+console.log('Atlas v42');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -2946,7 +2970,7 @@ const hdR = n => Math.round(n / HD_SNAP) * HD_SNAP;
 const hdM = cm => (cm / 100).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const hdArea = (w, h) => (w * h / 1e4).toLocaleString('en-GB', {maximumFractionDigits: 1});
 const hdNum = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
-let HD = null;   // {plans, cur, sel:{t,id}, view:{x,y,s}, undo, redo, tool, labels, saveT, status}
+let HD = null;   // {plans, cur, sel:{t,id}, view:{x,y,s}, undo, redo, tool, measure, labels, render, status, conf}
 
 /* ---------- item symbols: local coords, centred, front = +y. Returned markup is ink line art. ---------- */
 function hdSym(type, w, d){
@@ -3080,7 +3104,45 @@ function hdConflicts(P){
     const s = hdSwingQuad(o);
     Q.forEach(({it, q}) => { if(!soft(it.type) && !res[it.id] && hdOverlap(q, s, 2)) res[it.id] = {lvl:'amber', why:'Blocks a door swing'}; });
   });
+  // rooms: must sit inside the outline; overlapping another room is almost always a slip
+  P.rooms.forEach((r, i) => {
+    if(r.x < -.5 || r.y < -.5 || r.x + r.w > P.W + .5 || r.y + r.h > P.H + .5){ res[r.id] = {lvl:'red', why:'Outside the apartment'}; return; }
+    const hit = P.rooms.find((b, j) => j !== i && Math.min(r.x + r.w, b.x + b.w) - Math.max(r.x, b.x) > HD_WALL/2 && Math.min(r.y + r.h, b.y + b.h) - Math.max(r.y, b.y) > HD_WALL/2);
+    if(hit) res[r.id] = {lvl:'amber', why:'Overlaps ' + hit.name};
+  });
+  // doors and windows must sit on a wall
+  P.opens.forEach(o => { if(!hdOnWall(P, o)) res[o.id] = {lvl:'red', why:'Not on a wall'}; });
   return res;
+}
+/* the wall segment an opening currently sits on (axis matches, on the line, fully inside the segment) */
+function hdOnWall(P, o){
+  const horiz = ((o.rot || 0) % 180) === 0;
+  return hdWalls(P).find(s => !!s.h === horiz && Math.abs((s.h ? o.y : o.x) - s.c) < 1 &&
+    (s.h ? o.x : o.y) - o.len/2 >= s.a - 1 && (s.h ? o.x : o.y) + o.len/2 <= s.b + 1) || null;
+}
+/* openings riding on a room's edges (not the outer wall) move with the room when it moves or resizes */
+function hdAttached(P, r){
+  const out = [];
+  P.opens.forEach(o => {
+    const horiz = ((o.rot || 0) % 180) === 0;
+    if(horiz){
+      if(Math.abs(o.y) < 1 || Math.abs(o.y - P.H) < 1 || o.x < r.x - 1 || o.x > r.x + r.w + 1) return;
+      if(Math.abs(o.y - r.y) < 1) out.push({o, e: 'n', off: o.x - r.x});
+      else if(Math.abs(o.y - (r.y + r.h)) < 1) out.push({o, e: 's', off: o.x - r.x});
+    } else {
+      if(Math.abs(o.x) < 1 || Math.abs(o.x - P.W) < 1 || o.y < r.y - 1 || o.y > r.y + r.h + 1) return;
+      if(Math.abs(o.x - r.x) < 1) out.push({o, e: 'w', off: o.y - r.y});
+      else if(Math.abs(o.x - (r.x + r.w)) < 1) out.push({o, e: 'e', off: o.y - r.y});
+    }
+  });
+  return out;
+}
+function hdCarry(att, r){
+  const cl = (v, a, b) => Math.min(Math.max(v, a), Math.max(a, b));
+  att.forEach(({o, e, off}) => {
+    if(e === 'n' || e === 's'){ o.y = e === 'n' ? r.y : r.y + r.h; o.x = Math.round(cl(r.x + off, r.x + o.len/2, r.x + r.w - o.len/2)); }
+    else { o.x = e === 'w' ? r.x : r.x + r.w; o.y = Math.round(cl(r.y + off, r.y + o.len/2, r.y + r.h - o.len/2)); }
+  });
 }
 
 /* ---------- state, undo, save ---------- */
@@ -3102,22 +3164,45 @@ function hdUndoBtns(){
   const u = document.getElementById('hdUndo'), r = document.getElementById('hdRedo');
   if(u) u.disabled = !HD.undo.length; if(r) r.disabled = !HD.redo.length;
 }
-function hdStatus(s){ HD.status = s; const el = document.getElementById('hdSaved'); if(el){ el.textContent = s; el.classList.toggle('bad', /not/i.test(s)); } }
+function hdStatus(s){ if(HD) HD.status = s; const el = document.getElementById('hdSaved'); if(el){ el.textContent = s; el.classList.toggle('bad', /not/i.test(s)); } }
+/* autosave: every edited plan object is queued in HDS.dirty and written in order (one chain, so two
+   updates never land out of order). A failed write stays queued and retries with back-off; the queue
+   lives outside HD so re-entering the view, or switching plans, never drops or misdirects a save. */
+const HDS = {dirty: new Set(), t: null, chain: Promise.resolve(), fails: 0};
+const hdPending = () => !!(HDS.t || HDS.dirty.size);
 function hdSave(){
   if(!HD || !HD.cur) return;
+  HDS.dirty.add(HD.cur);
   hdStatus('Saving…');
-  clearTimeout(HD.saveT);
-  HD.saveT = setTimeout(hdFlush, 700);
+  clearTimeout(HDS.t);
+  HDS.t = setTimeout(hdFlush, 700);
 }
-async function hdFlush(){
-  if(!HD || !HD.cur || !HD.saveT) return;
-  clearTimeout(HD.saveT); HD.saveT = null;
-  const plan = HD.cur;
-  const {error} = await sb.from('floor_plans').update({name: plan.name, data: plan.data, updated_at: new Date().toISOString()}).eq('id', plan.id);
-  if(error){ hdStatus('Not saved'); err(error); HD.saveT = setTimeout(hdFlush, 5000); return; }
-  hdStatus('Saved');
+function hdFlush(){
+  clearTimeout(HDS.t); HDS.t = null;
+  HDS.chain = HDS.chain.then(async () => {
+    const plans = [...HDS.dirty]; HDS.dirty.clear();
+    let failed = null;
+    for(const plan of plans){
+      let res;
+      try{ res = await sb.from('floor_plans').update({name: plan.name, data: plan.data, updated_at: new Date().toISOString()}).eq('id', plan.id).select('id'); }
+      catch(ex){ res = {error: ex}; }
+      if(res.error){ HDS.dirty.add(plan); failed = res.error; continue; }
+      if(!res.data || !res.data.length) toast(`"${plan.name}" no longer exists, so it wasn't saved`);
+    }
+    if(failed){
+      HDS.fails++;
+      if(HDS.fails === 1) err(failed);          // one toast, not one every retry
+      hdStatus('Not saved — retrying');
+      if(!HDS.t) HDS.t = setTimeout(hdFlush, Math.min(60000, 4000 * 2 ** (HDS.fails - 1)));
+    } else {
+      if(HDS.fails) toast('Plan saved');
+      HDS.fails = 0;
+      if(!hdPending()) hdStatus('Saved');
+    }
+  });
+  return HDS.chain;
 }
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && HD && HD.saveT) hdFlush(); });
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && hdPending()) hdFlush(); });
 
 function hdFind(sel){
   const P = hdP(); if(!P || !sel) return null;
@@ -3129,10 +3214,10 @@ function hdFind(sel){
 function hdRenderPref(){ try{ return localStorage.getItem('atlas_house_render') !== '0'; }catch(e){ return true; } }
 views.house = async function(){
   const seq = renderStart();
-  if(HD && HD.saveT) hdFlush();   // a pending autosave must not be lost when the view rebuilds its state
   document.getElementById('main').innerHTML = `
     <div class="page-head"><h2>House</h2><img src="hero-house.png" alt="" onerror="this.remove()"></div>
     <div id="hdBody"><div class="empty">Loading…</div></div>`;
+  if(hdPending()) await hdFlush();   // write pending edits first, so the reload below can't return the old row
   const {data, error} = await sb.from('floor_plans').select('*').order('created_at');
   if(stale(seq)) return;
   if(error){
@@ -3141,10 +3226,11 @@ views.house = async function(){
     return;
   }
   const keep = HD && HD.cur ? HD.cur.id : null;
-  const plans = (data || []).map(p => ({...p, data: hdNormalise(p.data)}));
+  // a plan whose save is still failing keeps its in-memory copy instead of the stale database row
+  const plans = (data || []).map(p => [...HDS.dirty].find(d => d.id === p.id) || {...p, data: hdNormalise(p.data)});
   let last = keep; try{ last = last || localStorage.getItem('atlas_house_plan'); }catch(e){}
   HD = {plans, cur: plans.find(p => p.id === last) || plans[0] || null, sel: null, view: null, undo: [], redo: [],
-        tool: null, labels: HD ? HD.labels : false, render: hdRenderPref(), saveT: null, status: 'Saved', libCat: HD ? HD.libCat : 'Structure'};
+        tool: null, labels: HD ? HD.labels : false, render: hdRenderPref(), status: hdPending() ? (HDS.fails ? 'Not saved — retrying' : 'Saving…') : 'Saved', libCat: HD ? HD.libCat : 'Structure'};
   if(!HD.cur){ hdEmpty(); return; }
   hdLayout();
 };
@@ -3196,7 +3282,6 @@ async function hdCreate(){
   const W = hdR((hdNum(document.getElementById('hdNW').value) || 10) * 100), H = hdR((hdNum(document.getElementById('hdNH').value) || 8) * 100);
   if(W < 200 || H < 200 || W > 6000 || H > 6000) return toast('Size must be between 2 and 60 m');
   const data = hdStarter(W, H, +document.getElementById('hdNT').value);
-  if(HD && HD.saveT) await hdFlush();
   const {data: row, error} = await sb.from('floor_plans').insert({name, data}).select().single();
   if(error) return err(error);
   document.querySelector('.sheet-bg')?.remove();
@@ -3204,10 +3289,10 @@ async function hdCreate(){
   hdOpen(row.id);
   toast('Plan created');
 }
-async function hdOpen(id){
-  if(HD.saveT) await hdFlush();
+function hdOpen(id){
+  if(HDS.t) hdFlush();
   HD.cur = HD.plans.find(p => p.id === id) || HD.plans[0];
-  HD.sel = null; HD.undo = []; HD.redo = []; HD.view = null; HD.tool = null;
+  HD.sel = null; HD.undo = []; HD.redo = []; HD.view = null; HD.tool = null; HD.measure = null; HD.dragging = false;
   try{ localStorage.setItem('atlas_house_plan', HD.cur.id); }catch(e){}
   hdLayout();
 }
@@ -3226,16 +3311,15 @@ async function hdPlanAction(act){
     p.name = n; hdSave(); hdLayout(); return;
   }
   if(act === 'dup'){
-    if(HD.saveT) await hdFlush();
     const {data: row, error} = await sb.from('floor_plans').insert({name: p.name + ' (copy)', data: p.data}).select().single();
     if(error) return err(error);
     HD.plans.push({...row, data: hdNormalise(row.data)}); hdOpen(row.id); toast('Plan duplicated'); return;
   }
   if(act === 'del'){
     if(!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
-    clearTimeout(HD.saveT); HD.saveT = null;
+    const wasDirty = HDS.dirty.delete(p);
     const {error} = await sb.from('floor_plans').delete().eq('id', p.id);
-    if(error) return err(error);
+    if(error){ if(wasDirty) HDS.dirty.add(p); return err(error); }
     HD.plans = HD.plans.filter(x => x.id !== p.id);
     HD.cur = null;
     if(HD.plans.length) hdOpen(HD.plans[0].id); else hdEmpty();
@@ -3275,6 +3359,7 @@ const HD_I = {
   copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   add:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  shade:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 010 16z" fill="currentColor"/></svg>',
   cube:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>',
 };
 /* ---------- render mode: architectural presentation board ----------
@@ -3475,9 +3560,15 @@ function hdAxes(P){
 }
 const hdLetter = i => i < 26 ? String.fromCharCode(65 + i) : String.fromCharCode(64 + Math.floor(i / 26)) + String.fromCharCode(65 + i % 26);
 const hdAxesOn = Wpx => Wpx >= 520 || (HD.textScale || 1) > 1;
-function hdPads(Wpx){ const ts = HD.textScale || 1, small = !hdAxesOn(Wpx);
+/* do any two axis lines sit closer than a bubble at scale s? then the bubbles need a second row */
+function hdCrowded(P, s){
+  const {xs, ys} = hdAxes(P), ts = HD.textScale || 1, near = a => a.some((v, i) => i && (v - a[i-1]) * s / ts < 2*9.5 + 4);
+  return near(xs) || near(ys);
+}
+function hdPads(Wpx, crowded){ const ts = HD.textScale || 1, small = !hdAxesOn(Wpx);
   const n = hdP() ? hdP().rooms.length : 0;
-  return {l: (small ? 16 : 84) * ts, t: (small ? 16 : 84) * ts, r: 26 * ts, b: (n ? 66 + Math.ceil(n / hdCols(Wpx)) * 21 : 52) * ts + 14}; }
+  const ax = small ? 16 : crowded ? 108 : 84;
+  return {l: ax * ts, t: ax * ts, r: 26 * ts, b: (n ? 66 + Math.ceil(n / hdCols(Wpx)) * 21 : 52) * ts + 14}; }
 const hdCols = Wpx => Wpx < 520 ? 1 : 2;
 
 function hdLayout(){
@@ -3490,10 +3581,11 @@ function hdLayout(){
       <button class="hd-ib hd-add-m" type="button" onclick="hdLibSheet()" title="Add">${HD_I.add}<span>Add</span></button>
       <button class="hd-ib" id="hdUndo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" onclick="hdUndo()">${HD_I.undo}</button>
       <button class="hd-ib" id="hdRedo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" onclick="hdUndo(true)">${HD_I.redo}</button>
-      <button class="hd-ib" id="hdMeasure" type="button" title="Measure (M)" aria-label="Measure" onclick="hdTool('measure')">${HD_I.ruler}</button>
-      <button class="hd-ib" id="hdLabels" type="button" title="Furniture names" aria-label="Furniture names" onclick="HD.labels=!HD.labels;hdPaint();hdBarState()">${HD_I.tag}</button>
-      <button class="hd-ib" id="hdRender" type="button" title="Rendered view (V)" aria-label="Rendered view" onclick="hdRenderToggle()">${HD_I.cube}<span>Render</span></button>
-      <button class="hd-ib" type="button" title="Download as image" aria-label="Download as image" onclick="hdExport()">${HD_I.dl}</button>
+      <button class="hd-ib hd-2d" id="hdMeasure" type="button" title="Measure (M)" aria-label="Measure" onclick="hdTool('measure')">${HD_I.ruler}</button>
+      <button class="hd-ib hd-2d" id="hdLabels" type="button" title="Furniture names" aria-label="Furniture names" onclick="HD.labels=!HD.labels;hdPaint();hdBarState()">${HD_I.tag}</button>
+      <button class="hd-ib hd-2d" id="hdRender" type="button" title="Shadows and textures (V)" aria-label="Rendered view" onclick="hdRenderToggle()">${HD_I.shade}<span>Render</span></button>
+      <button class="hd-ib" id="hd3Btn" type="button" title="3D view (3)" aria-label="3D view" onclick="hd3Toggle()">${HD_I.cube}<span>3D</span></button>
+      <button class="hd-ib" type="button" title="Download as image" aria-label="Download as image" onclick="HD.mode3d ? hd3Export() : hdExport()">${HD_I.dl}</button>
       <span class="hd-saved" id="hdSaved">${esc(HD.status)}</span>
     </div>
     <div class="hd-wrap">
@@ -3504,9 +3596,15 @@ function hdLayout(){
           <g id="hdBack"></g><g id="hdGroundL"></g><g id="hdFloor"></g><g id="hdIntL"></g><g id="hdScene"></g>
         </svg>
         <div class="hd-zoom">
-          <button type="button" title="Zoom in" aria-label="Zoom in" onclick="hdZoomBy(1.25)">${HD_I.plus}</button>
-          <button type="button" title="Fit to screen (F)" aria-label="Fit to screen" onclick="hdFit();hdPaint()">${HD_I.fit}</button>
-          <button type="button" title="Zoom out" aria-label="Zoom out" onclick="hdZoomBy(1/1.25)">${HD_I.minus}</button>
+          <button type="button" title="Zoom in" aria-label="Zoom in" onclick="HD.mode3d ? hd3Zoom(1.25) : hdZoomBy(1.25)">${HD_I.plus}</button>
+          <button type="button" title="Fit to screen (F)" aria-label="Fit to screen" onclick="HD.mode3d ? hd3Fit() : (hdFit(), hdPaint())">${HD_I.fit}</button>
+          <button type="button" title="Zoom out" aria-label="Zoom out" onclick="HD.mode3d ? hd3Zoom(1/1.25) : hdZoomBy(1/1.25)">${HD_I.minus}</button>
+        </div>
+        <canvas id="hd3Canvas" aria-label="3D view of the plan"></canvas>
+        <div class="hd3-labels" id="hd3Labels"></div>
+        <div class="hd3-ui">
+          <div class="seg hd3-walls" role="group" aria-label="Walls">${[['cut', 'Cutaway'], ['full', 'Full walls'], ['low', 'Low walls']].map(([k, l]) => `<button type="button" data-w="${k}" class="${(HD3 ? HD3.walls : 'cut') === k ? 'on' : ''}" onclick="hd3Set('walls','${k}')">${l}</button>`).join('')}</div>
+          <div class="hd3-turn"><button type="button" title="Turn left (Q)" aria-label="Turn left" onclick="hd3Turn(90)">${HD_I.rot}</button><button type="button" title="Turn right (E)" aria-label="Turn right" onclick="hd3Turn(-90)" style="transform:scaleX(-1)">${HD_I.rot}</button></div>
         </div>
         <div class="hd-tip" id="hdTip"></div>
       </div>
@@ -3514,17 +3612,33 @@ function hdLayout(){
     </div>`;
   const svg = document.getElementById('hdSvg');
   HD.gKey = HD.iKey = null;
-  if(window.innerWidth < 900){   // phones: size the canvas to the plan's shape instead of a fixed slab
-    const P = hdP(), stage = svg.parentElement, w = stage.clientWidth, pd = hdPads(w);
-    const s = (w - pd.l - pd.r) / (P.W + HD_OUTER);
-    stage.style.height = Math.round(Math.max(320, Math.min(window.innerHeight * .72, (P.H + HD_OUTER) * s + pd.t + pd.b))) + 'px';
-  }
+  hdStageSize();
   hdBind(svg);
   if(HD_TEX) hdApplyTex(); else setTimeout(hdTextures, 30);   // build the textures after the first paint, not before it
-  new ResizeObserver(() => { if(!document.body.contains(svg)) return; const first = !HD.view; if(first) hdFit(); hdPaint(); if(first) hdInspect(); }).observe(svg);
+  let lastW = 0;
+  new ResizeObserver(() => {
+    if(!document.body.contains(svg)) return;
+    const w = svg.clientWidth;
+    if(!w) return;                                                   // hidden while the 3D view is up
+    if(w !== lastW){ const refit = lastW && HD.view; lastW = w; hdStageSize(); if(refit) hdFit(); }
+    const first = !HD.view; if(first) hdFit(); hdPaint(); if(first) hdInspect();
+  }).observe(svg);
+  new ResizeObserver(() => { if(HD && HD.mode3d) hd3Draw(); }).observe(document.getElementById('hd3Canvas'));
   hdUndoBtns(); hdBarState(); hdInspect();
+  if(HD.mode3d) hd3Toggle(true);
+}
+/* under 900 px the canvas height follows the plan's proportions; above it, CSS sets the height */
+function hdStageSize(){
+  const svg = document.getElementById('hdSvg'), P = hdP(); if(!svg || !P) return;
+  const stage = svg.parentElement;
+  if(window.innerWidth >= 900){ stage.style.height = ''; return; }
+  const w = stage.clientWidth, pd = hdPads(w), b = hdBounds(P), s = (w - pd.l - pd.r) / (b.x2 - b.x1);
+  const h = Math.round(Math.max(320, Math.min(window.innerHeight * .72, (b.y2 - b.y1) * s + pd.t + pd.b)));
+  if(Math.abs(stage.clientHeight - h) > 2) stage.style.height = h + 'px';
 }
 function hdBarState(){
+  document.querySelector('.hd-bar')?.classList.toggle('is3d', !!HD.mode3d);
+  document.getElementById('hd3Btn')?.classList.toggle('on', !!HD.mode3d);
   document.getElementById('hdMeasure')?.classList.toggle('on', HD.tool === 'measure');
   document.getElementById('hdLabels')?.classList.toggle('on', !!HD.labels);
   document.getElementById('hdRender')?.classList.toggle('on', !!HD.render);
@@ -3539,13 +3653,20 @@ function hdSize(){ const s = document.getElementById('hdSvg'); return s ? [s.cli
 function hdBounds(P){
   let x1 = -HD_OUTER/2, y1 = -HD_OUTER/2, x2 = P.W + HD_OUTER/2, y2 = P.H + HD_OUTER/2;
   P.items.forEach(it => { const b = hdAABB(it); x1 = Math.min(x1, b.x1); y1 = Math.min(y1, b.y1); x2 = Math.max(x2, b.x2); y2 = Math.max(y2, b.y2); });
+  P.rooms.forEach(r => { x1 = Math.min(x1, r.x - HD_WALL/2); y1 = Math.min(y1, r.y - HD_WALL/2); x2 = Math.max(x2, r.x + r.w + HD_WALL/2); y2 = Math.max(y2, r.y + r.h + HD_WALL/2); });
+  P.opens.forEach(o => {   // the opening itself, plus a door's swing in case it opens outwards
+    const pts = hdCorners({x: o.x, y: o.y, w: o.len, d: o.th || HD_WALL, rot: o.rot || 0}).concat(o.kind === 'door' ? hdSwingQuad(o) : []);
+    pts.forEach(([x, y]) => { x1 = Math.min(x1, x); y1 = Math.min(y1, y); x2 = Math.max(x2, x); y2 = Math.max(y2, y); });
+  });
   return {x1, y1, x2, y2};
 }
 /* fit leaves room in screen pixels for the axis bubbles (top/left) and the legend (bottom) */
 function hdFit(){
   const P = hdP(); if(!P) return;
-  const [W, H] = hdSize(), pd = hdPads(W), b = hdBounds(P), bw = b.x2 - b.x1, bh = b.y2 - b.y1;
-  const s = Math.max(0.05, Math.min((W - pd.l - pd.r) / bw, (H - pd.t - pd.b) / bh));
+  const [W, H] = hdSize(), b = hdBounds(P), bw = b.x2 - b.x1, bh = b.y2 - b.y1;
+  const sFor = pd => Math.max(0.05, Math.min((W - pd.l - pd.r) / bw, (H - pd.t - pd.b) / bh));
+  let pd = hdPads(W), s = sFor(pd);
+  if(hdAxesOn(W) && hdCrowded(P, s)){ pd = hdPads(W, true); s = sFor(pd); }
   const fx = (W - pd.l - pd.r - bw*s) / 2, fy = (H - pd.t - pd.b - bh*s) / 2;
   HD.view = {s, x: b.x1 - (pd.l + fx) / s, y: b.y1 - (pd.t + fy) / s};
 }
@@ -3561,6 +3682,7 @@ function hdPt(e){ const svg = document.getElementById('hdSvg'), b = svg.getBound
 function hdPaint(){
   const svg = document.getElementById('hdSvg'), P = hdP();
   if(!svg || !P || !document.getElementById('hdScene')) return;
+  if(!svg.clientWidth){ HD.conf = hdConflicts(P); if(HD.mode3d) hd3Sync(); return; }   // 2D canvas hidden behind the 3D view
   if(!HD.view) hdFit();
   const [W, H] = hdSize(), v = HD.view, k = 1 / v.s, ts = HD.textScale || 1, u = k * ts;   // k = cm per screen px, u = cm per "annotation px"
   const R = !!HD.render, INK = R ? HD_RINK : HD_INK, HALO = R ? HD_GROUND : '#f3f2ef';
@@ -3607,6 +3729,7 @@ function hdPaint(){
     else o.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${INK}" stroke-width="${HD_WALL}" pointer-events="none"/>`);
   });
   o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="none" stroke="${INK}" stroke-width="${HD_OUTER}" pointer-events="none"/>`);
+  P.rooms.forEach(r => { const c = conf[r.id]; if(c) o.push(`<rect x="${r.x + HD_WALL}" y="${r.y + HD_WALL}" width="${Math.max(0, r.w - 2*HD_WALL)}" height="${Math.max(0, r.h - 2*HD_WALL)}" fill="${c.lvl === 'red' ? 'rgba(155,70,58,.10)' : 'rgba(138,107,34,.08)'}" stroke="${c.lvl === 'red' ? HD_RED : HD_AMBER}" stroke-width="1.6" stroke-dasharray="7 4" ${NS} pointer-events="none"/>`); });
   P.opens.forEach(op => {
     const th = op.th || HD_WALL, L = op.len, hx = op.flip ? L/2 : -L/2, sel = HD.sel && HD.sel.id === op.id;
     const patch = R ? (op.kind === 'door' ? 'url(#hdConc)' : '#fbfbfa') : HD_FLOOR;
@@ -3622,13 +3745,16 @@ function hdPaint(){
              : `<rect x="${-L/2}" y="${-th/2}" width="${L}" height="${th}" fill="none" stroke="${HD_INK}" stroke-width="1.1" ${NS}/><path d="M${-L/2} 0H${L/2}" stroke="${HD_INK}" stroke-width="1.1" ${NS}/>`;
     } else s += `<path d="M${-L/2} ${-th/6}H${L*.1}M${-L*.1} ${th/6}H${L/2}" stroke="${INK}" stroke-width="2.4" ${NS}/>` +
       (R ? `<path d="M${-L/2} ${-th/2}H${L/2}M${-L/2} ${th/2}H${L/2}" stroke="${INK}" stroke-width=".8" ${NS}/>` : '');
+    if(conf[op.id]) s += `<rect x="${-L/2 - 3}" y="${-th/2 - 3}" width="${L + 6}" height="${th + 6}" fill="rgba(155,70,58,.18)" stroke="${HD_RED}" stroke-width="1.6" ${NS}/>`;
     o.push(`<g data-t="open" data-id="${op.id}" class="hd-op${sel ? ' sel' : ''}" transform="translate(${op.x} ${op.y}) rotate(${op.rot || 0})">
       <rect x="${-L/2}" y="${-th/2 - 8}" width="${L}" height="${th + 16}" fill="transparent"/>${s}</g>`);
   });
   // room tags: numbered disc (keyed to the legend), name, area
   P.rooms.forEach((r, i) => {
     if(r.w * v.s < 24 || r.h * v.s < 24) return;
-    const cx = r.x + r.w/2, cy = r.y + r.h/2, nameFits = r.w * v.s > (r.name.length * 7.4 + 14) * ts, roomy = nameFits && r.h * v.s > 74 * ts;
+    const nameFits = r.w * v.s > (r.name.length * 7.4 + 14) * ts, roomy = nameFits && r.h * v.s > 74 * ts;
+    const bw = (nameFits ? Math.max(r.name.length * 7.4 + 10, 54) : 22) * u, top = (roomy ? 27 : nameFits ? 10 : 11) * u, bot = (roomy ? 26 : nameFits ? 18 : 11) * u;
+    const [cx, cy] = hdTagSpot(P, r, bw, top, bot);
     if(!nameFits){ o.push(`<g pointer-events="none"><circle cx="${cx}" cy="${cy}" r="${9*u}" fill="#fff" stroke="${INK}" stroke-width="1" ${NS}/>
       <text x="${cx}" y="${cy}" dy=".36em" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}">${i + 1}</text></g>`); return; }
     if(roomy) o.push(`<g pointer-events="none"><circle cx="${cx}" cy="${cy - 17*u}" r="${9*u}" fill="#fff" stroke="${INK}" stroke-width="1" ${NS}/>
@@ -3651,6 +3777,20 @@ function hdPaint(){
   }
   document.getElementById('hdScene').innerHTML = o.join('');
   hdShadowSync(P);
+  if(HD.mode3d) hd3Sync();
+}
+/* where a room's tag goes: the free spot (not on furniture; rugs are fine) closest to the room's centre */
+function hdTagSpot(P, r, bw, top, bot){
+  const pad = HD_WALL/2 + 4, x1 = r.x + pad + bw/2, x2 = r.x + r.w - pad - bw/2, y1 = r.y + pad + top, y2 = r.y + r.h - pad - bot;
+  const c = [r.x + r.w/2, r.y + r.h/2];
+  if(x1 > x2 || y1 > y2) return c;
+  const boxes = P.items.filter(it => it.type !== 'rug').map(hdAABB);
+  const free = (x, y) => !boxes.some(b => b.x1 < x + bw/2 && b.x2 > x - bw/2 && b.y1 < y + bot && b.y2 > y - top);
+  if(free(...c)) return c;
+  const pts = [];
+  for(let i = 0; i <= 8; i++) for(let j = 0; j <= 8; j++) pts.push([x1 + (x2 - x1) * i / 8, y1 + (y2 - y1) * j / 8]);
+  pts.sort((a, b) => Math.hypot(a[0] - c[0], a[1] - c[1]) - Math.hypot(b[0] - c[0], b[1] - c[1]));
+  return pts.find(pt => free(...pt)) || c;
 }
 /* drawing-board annotation: lettered/numbered axis bubbles with dimension chains, and the legend block */
 function hdAnnot(P, Wpx, u, k, s, INK, HALO){
@@ -3660,16 +3800,21 @@ function hdAnnot(P, Wpx, u, k, s, INK, HALO){
   const o0 = -HD_OUTER/2, ch = o0 - 30*u, bb = o0 - 60*u, br = 9.5*u, tk = 4*u, ln = `stroke="${INK}" stroke-width=".9" ${NS}`;
   const bubble = (x, y, t) => `<circle cx="${x}" cy="${y}" r="${br}" fill="#fff" ${ln}/><text x="${x}" y="${y}" dy=".36em" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${INK}">${t}</text>`;
   const dimTxt = (x, y, val, rot) => `<text x="${x}" y="${y}" ${rot ? `transform="rotate(-90 ${x} ${y})"` : ''} dy="${-4*u}" text-anchor="middle" font-size="${fs(10)}" fill="${INK}" stroke="${HALO}" stroke-width="${3*u}" paint-order="stroke">${hdM(val)}</text>`;
+  // bubbles closer than a bubble's width alternate onto a second, outer row
+  const axRows = vals => { let last = -1e9, row = 0; return vals.map(v => { row = (v - last) * s / (HD.textScale || 1) < 2*9.5 + 4 ? 1 - row : 0; last = v; return row; }); };
+  const step2 = 2*br + 5*u;
   // top
   if(xs.length) out.push(`<path d="M${xs[0]} ${ch}H${xs[xs.length-1]}" ${ln}/>`);
-  xs.forEach((x, i) => {
-    out.push(`<path d="M${x - tk} ${ch + tk}L${x + tk} ${ch - tk}M${x} ${bb + br}V${ch + 6*u}" ${ln}/>`, bubble(x, bb, hdLetter(i)));
+  axRows(xs).forEach((row, i) => {
+    const x = xs[i], by = bb - row * step2;
+    out.push(`<path d="M${x - tk} ${ch + tk}L${x + tk} ${ch - tk}M${x} ${by + br}V${ch + 6*u}" ${ln}/>`, bubble(x, by, hdLetter(i)));
     if(i && (x - xs[i-1]) * s > 30 * (HD.textScale || 1)) out.push(dimTxt((x + xs[i-1]) / 2, ch, x - xs[i-1]));
   });
   // left
   if(ys.length) out.push(`<path d="M${ch} ${ys[0]}V${ys[ys.length-1]}" ${ln}/>`);
-  ys.forEach((y, i) => {
-    out.push(`<path d="M${ch - tk} ${y + tk}L${ch + tk} ${y - tk}M${bb + br} ${y}H${ch + 6*u}" ${ln}/>`, bubble(bb, y, i + 1));
+  axRows(ys).forEach((row, i) => {
+    const y = ys[i], bx = bb - row * step2;
+    out.push(`<path d="M${ch - tk} ${y + tk}L${ch + tk} ${y - tk}M${bx + br} ${y}H${ch + 6*u}" ${ln}/>`, bubble(bx, y, i + 1));
     if(i && (y - ys[i-1]) * s > 30 * (HD.textScale || 1)) out.push(dimTxt(ch, (y + ys[i-1]) / 2, y - ys[i-1], true));
   });
   // legend
@@ -3680,17 +3825,24 @@ function hdAnnot(P, Wpx, u, k, s, INK, HALO){
   P.rooms.forEach((r, i) => {
     const col = Math.floor(i / rows), row = i % rows, x = col * 200*u, y = ly + 46*u + row * 21*u;
     out.push(`<circle cx="${x + 8*u}" cy="${y}" r="${8*u}" fill="#fff" ${ln}/><text x="${x + 8*u}" y="${y}" dy=".36em" text-anchor="middle" font-size="${fs(9.5)}" fill="${INK}">${i + 1}</text>
-      <text x="${x + 24*u}" y="${y}" dy=".36em" font-size="${fs(11.5)}" fill="${INK}">${esc(r.name)}</text>`);
+      <text x="${x + 24*u}" y="${y}" dy=".36em" font-size="${fs(11.5)}" fill="${INK}">${esc(r.name.length > 24 ? r.name.slice(0, 23) + '…' : r.name)}</text>`);
   });
   out.push('</g>');
   return out.join('');
 }
 const R_MUTED = ink => ink === HD_RINK ? '#55534d' : HD_MUTED;
 function hdDim(x1, y1, x2, y2, k, val){
-  const vert = x1 === x2, tx = (x1 + x2)/2, ty = (y1 + y2)/2, t = 4*k, NS = 'vector-effect="non-scaling-stroke"';
-  const ticks = vert ? `M${x1 - t} ${y1}H${x1 + t}M${x2 - t} ${y2}H${x2 + t}` : `M${x1} ${y1 - t}V${y1 + t}M${x2} ${y2 - t}V${y2 + t}`;
-  return `<g pointer-events="none"><path d="M${x1} ${y1}L${x2} ${y2}${ticks}" stroke="${HD_MUTED}" stroke-width="1" ${NS}/>
-    <text x="${tx}" y="${ty}" ${vert ? `transform="rotate(-90 ${tx} ${ty})"` : ''} dy="${-5*k}" text-anchor="middle" font-size="${(11*k).toFixed(2)}" fill="${HD_INK}" stroke="#fff" stroke-width="${3*k}" paint-order="stroke">${hdM(val)} m</text></g>`;
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1, nx = -dy / L * 4*k, ny = dx / L * 4*k, tx = (x1 + x2)/2, ty = (y1 + y2)/2;
+  let a = Math.atan2(dy, dx) * 180 / Math.PI; if(a >= 90) a -= 180; if(a < -90) a += 180;
+  const NS = 'vector-effect="non-scaling-stroke"';
+  return `<g pointer-events="none"><path d="M${x1} ${y1}L${x2} ${y2}M${x1 - nx} ${y1 - ny}L${x1 + nx} ${y1 + ny}M${x2 - nx} ${y2 - ny}L${x2 + nx} ${y2 + ny}" stroke="${HD_MUTED}" stroke-width="1" ${NS}/>
+    <text x="${tx}" y="${ty}" ${a ? `transform="rotate(${a.toFixed(2)} ${tx} ${ty})"` : ''} dy="${-5*k}" text-anchor="middle" font-size="${(11*k).toFixed(2)}" fill="${HD_INK}" stroke="#fff" stroke-width="${3*k}" paint-order="stroke">${hdM(val)} m</text></g>`;
+}
+/* a dimension along an object's own axes, given in its local frame */
+function hdDimLocal(o, lx1, ly1, lx2, ly2, k, val){
+  const w = (lx, ly) => { const [a, b] = hdRot(lx, ly, o.rot || 0); return [o.x + a, o.y + b]; };
+  const [x1, y1] = w(lx1, ly1), [x2, y2] = w(lx2, ly2);
+  return hdDim(x1, y1, x2, y2, k, val);
 }
 function hdSelOverlay(k){
   const o = hdFind(HD.sel); if(!o) return '';
@@ -3709,13 +3861,13 @@ function hdSelOverlay(k){
       <rect x="${-w/2}" y="${-d/2}" width="${w}" height="${d}" fill="none" stroke="${HD_INK}" stroke-width="1.4" stroke-dasharray="5 3" ${NS} pointer-events="none"/>
       <path d="M0 ${-d/2}V${-rh}" stroke="${HD_INK}" stroke-width="1.2" ${NS} pointer-events="none"/>
       <circle data-h="rot" cx="0" cy="${-rh}" r="${6*k}" fill="#fff" stroke="${HD_INK}" stroke-width="1.4" ${NS} style="cursor:grab"/>
-      ${H(-w/2, -d/2, 'nw', 'move')}${H(w/2, -d/2, 'ne', 'move')}${H(w/2, d/2, 'se', 'move')}${H(-w/2, d/2, 'sw', 'move')}
-      ${hdDim(-w/2, d/2 + 18*k, w/2, d/2 + 18*k, k, w)}${hdDim(w/2 + 18*k, -d/2, w/2 + 18*k, d/2, k, d)}</g>`;
+      ${H(-w/2, -d/2, 'nw', 'move')}${H(w/2, -d/2, 'ne', 'move')}${H(w/2, d/2, 'se', 'move')}${H(-w/2, d/2, 'sw', 'move')}</g>
+      ${hdDimLocal(o, -w/2, d/2 + 18*k, w/2, d/2 + 18*k, k, w)}${hdDimLocal(o, w/2 + 18*k, -d/2, w/2 + 18*k, d/2, k, d)}`;
   }
   const L = o.len, th = o.th || HD_WALL;
   return `<g transform="translate(${o.x} ${o.y}) rotate(${o.rot || 0})">
     <rect x="${-L/2}" y="${-th/2 - 4*k}" width="${L}" height="${th + 8*k}" fill="none" stroke="${HD_RED}" stroke-width="1.6" stroke-dasharray="5 3" ${NS} pointer-events="none"/>
-    ${H(-L/2, 0, 'l', 'ew-resize')}${H(L/2, 0, 'r', 'ew-resize')}${hdDim(-L/2, -th/2 - 16*k, L/2, -th/2 - 16*k, k, L)}</g>`;
+    ${H(-L/2, 0, 'l', 'ew-resize')}${H(L/2, 0, 'r', 'ew-resize')}</g>${hdDimLocal(o, -L/2, -th/2 - 16*k, L/2, -th/2 - 16*k, k, L)}`;
 }
 
 /* ---------- snapping ---------- */
@@ -3745,10 +3897,12 @@ function hdSnapOpening(op, x, y, thr){
     if(dist <= thr && (!best || dist < best.dist - 0.01 || (Math.abs(dist - best.dist) < .01 && s.outer))) best = {s, t, dist};
   });
   if(!best){ op.x = hdR(x); op.y = hdR(y); return; }
-  const s = best.s, t = Math.round(best.t);
+  const s = best.s, t = Math.round(best.t), P = hdP();
+  const moved = !!s.h !== ((op.rot || 0) % 180 === 0) || Math.abs((s.h ? op.y : op.x) - s.c) > .5;   // landing on a different wall line
   op.th = s.th;
   if(s.h){ op.x = t; op.y = s.c; if(op.rot % 180 !== 0) op.rot = (op.rot + 270) % 360; }
   else   { op.x = s.c; op.y = t; if(op.rot % 180 === 0) op.rot = (op.rot + 90) % 360; }
+  if(moved && s.outer) op.rot = s.h ? (Math.abs(s.c) < .5 ? 0 : 180) : (Math.abs(s.c) < .5 ? 270 : 90);
 }
 
 /* ---------- pointer interaction ---------- */
@@ -3760,7 +3914,13 @@ function hdBind(svg){
     svg.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
     if(ptrs.size === 2){   // second finger: switch to pinch, abandon whatever the first finger started
-      if(drag && drag.moved && drag.mode !== 'pan' && HD.undo.length) { HD.cur.data = JSON.parse(HD.undo.pop()); }
+      if(drag && drag.moved && (drag.mode === 'move' || drag.mode === 'handle') && HD.undo.length){
+        HD.cur.data = JSON.parse(HD.undo.pop()); hdUndoBtns();             // drop the half-finished drag
+        if(HD.sel && !hdFind(HD.sel)) HD.sel = null;
+        hdInspect();
+      }
+      if(drag && drag.mode === 'measure') HD.measure = null;
+      HD.dragging = false;
       const [a, b] = [...ptrs.values()];
       drag = {mode: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y), s0: HD.view.s, v0: {...HD.view}, m0: {x: (a.x + b.x)/2, y: (a.y + b.y)/2}};
       return;
@@ -3771,14 +3931,16 @@ function hdBind(svg){
     if(HD.tool === 'measure'){ HD.measure = {x1: p.x, y1: p.y, x2: p.x, y2: p.y}; drag = {...base, mode: 'measure'}; return; }
     if(hEl && HD.sel){
       const o = hdFind(HD.sel);
-      drag = {...base, mode: 'handle', h: hEl.dataset.h, orig: JSON.parse(JSON.stringify(o))};
+      if(!o) return;
+      drag = {...base, mode: 'handle', h: hEl.dataset.h, orig: JSON.parse(JSON.stringify(o)), att: HD.sel.t === 'room' ? hdAttached(P, o) : null};
       return;
     }
     if(oEl){
       const t = oEl.dataset.t, id = oEl.dataset.id, o = hdFind({t, id});
       if(t === 'room' && !(HD.sel && HD.sel.id === id)){ drag = {...base, mode: 'pan', v0: {...HD.view}, tapSel: {t, id}}; return; }
       if(!(HD.sel && HD.sel.id === id)){ HD.sel = {t, id}; hdPaint(); hdInspect(); }
-      drag = {...base, mode: 'move', orig: JSON.parse(JSON.stringify(o))};
+      if(!o) return;
+      drag = {...base, mode: 'move', orig: JSON.parse(JSON.stringify(o)), att: t === 'room' ? hdAttached(P, o) : null};
       return;
     }
     drag = {...base, mode: 'pan', v0: {...HD.view}, tapSel: null};
@@ -3812,7 +3974,10 @@ function hdBind(svg){
         let nx = hdR(O.x + mx), ny = hdR(O.y + my);
         const L = hdLines(P, o.id), sx = hdSnap1([O.x + mx, O.x + mx + O.w], L.xs, thr), sy = hdSnap1([O.y + my, O.y + my + O.h], L.ys, thr);
         if(sx !== null) nx = O.x + mx + sx; if(sy !== null) ny = O.y + my + sy;
+        if(O.w <= P.W) nx = Math.min(Math.max(0, nx), P.W - O.w);           // rooms stay inside the outline
+        if(O.h <= P.H) ny = Math.min(Math.max(0, ny), P.H - O.h);
         o.x = Math.round(nx); o.y = Math.round(ny);
+        if(drag.att) hdCarry(drag.att, o);
       } else if(HD.sel.t === 'item'){
         const nx = O.x + mx, ny = O.y + my, b = hdAABB({...O, x: nx, y: ny}), I = hdInner(P);
         const sx = (o.rot || 0) % 90 === 0 ? hdSnap1([b.x1, b.x2], I.xs, thr) : null, sy = (o.rot || 0) % 90 === 0 ? hdSnap1([b.y1, b.y2], I.ys, thr) : null;
@@ -3825,11 +3990,12 @@ function hdBind(svg){
     if(HD.sel.t === 'room'){
       const L = hdLines(P, o.id), sn = (v, lines) => { const s = hdSnap1([v], lines, thr); return Math.round(s !== null ? v + s : hdR(v)); };
       let x1 = O.x, y1 = O.y, x2 = O.x + O.w, y2 = O.y + O.h;
-      if(h.includes('w')) x1 = Math.min(sn(O.x + mx, L.xs), x2 - 60);
-      if(h.includes('e')) x2 = Math.max(sn(O.x + O.w + mx, L.xs), x1 + 60);
-      if(h.includes('n')) y1 = Math.min(sn(O.y + my, L.ys), y2 - 60);
-      if(h.includes('s')) y2 = Math.max(sn(O.y + O.h + my, L.ys), y1 + 60);
+      if(h.includes('w')) x1 = Math.max(0, Math.min(sn(O.x + mx, L.xs), x2 - 60));
+      if(h.includes('e')) x2 = Math.min(P.W, Math.max(sn(O.x + O.w + mx, L.xs), x1 + 60));
+      if(h.includes('n')) y1 = Math.max(0, Math.min(sn(O.y + my, L.ys), y2 - 60));
+      if(h.includes('s')) y2 = Math.min(P.H, Math.max(sn(O.y + O.h + my, L.ys), y1 + 60));
       Object.assign(o, {x: x1, y: y1, w: x2 - x1, h: y2 - y1});
+      if(drag.att) hdCarry(drag.att, o);
     } else if(HD.sel.t === 'item'){
       if(h === 'rot'){
         let a = Math.atan2(p.x - O.x, -(p.y - O.y)) * 180 / Math.PI;
@@ -3845,8 +4011,10 @@ function hdBind(svg){
       }
     } else {
       const [lx] = hdRot(p.x - O.x, p.y - O.y, -(O.rot || 0)), side = h === 'r' ? 1 : -1;
-      const fixed = -side * O.len/2, nl = Math.max(40, hdR(Math.abs(lx - fixed))), c = fixed + side * nl/2, [wx, wy] = hdRot(c, 0, O.rot || 0);
+      const wall = drag.wall !== undefined ? drag.wall : (drag.wall = hdOnWall(P, O));
+      const fixed = -side * O.len/2, nl = Math.min(wall ? wall.b - wall.a : 1e9, Math.max(40, hdR(Math.abs(lx - fixed)))), c = fixed + side * nl/2, [wx, wy] = hdRot(c, 0, O.rot || 0);
       Object.assign(o, {len: nl, x: Math.round(O.x + wx), y: Math.round(O.y + wy)});
+      if(wall) hdSnapOpening(o, o.x, o.y, 2);                                    // keep both ends on the wall
     }
     hdPaint(); hdInspectLive();
   });
@@ -3873,29 +4041,56 @@ function hdBind(svg){
   }, {passive: false});
 }
 document.addEventListener('keydown', e => {
-  if(!HD || !document.getElementById('hdSvg') || document.querySelector('.sheet-bg')) return;
+  if(!HD || window._curTab !== 'house' || !document.getElementById('hdSvg') || document.querySelector('.sheet-bg')) return;
   if(e.target.closest && e.target.closest('input,select,textarea')) return;
   const mod = e.metaKey || e.ctrlKey, key = e.key.toLowerCase();
   if(mod && key === 'z'){ e.preventDefault(); hdUndo(e.shiftKey); return; }
   if(mod && key === 'y'){ e.preventDefault(); hdUndo(true); return; }
   if(mod && key === 'd' && HD.sel){ e.preventDefault(); hdDup(); return; }
   if(mod) return;
-  if(key === 'escape'){ if(HD.tool){ hdTool(HD.tool); } else { HD.sel = null; hdPaint(); hdInspect(); } return; }
+  if(key === '3'){ hd3Toggle(); return; }
+  if(HD.mode3d){
+    if(key === 'f') hd3Fit();
+    else if(key === 'q') hd3Turn(90);
+    else if(key === 'e') hd3Turn(-90);
+    else if(key === 'escape') hd3Toggle(false);
+    return;
+  }
+  if(key === 'escape'){ if(HD.tool){ hdTool(HD.tool); } else { HD.measure = null; HD.sel = null; hdPaint(); hdInspect(); } return; }
   if(key === 'm'){ hdTool('measure'); return; }
   if(key === 'f'){ hdFit(); hdPaint(); return; }
   if(key === 'v'){ hdRenderToggle(); return; }
   if(!HD.sel) return;
   const o = hdFind(HD.sel); if(!o) return;
   if(key === 'delete' || key === 'backspace'){ e.preventDefault(); hdDel(); return; }
-  if(key === 'r' && HD.sel.t !== 'room'){ hdPush(); o.rot = ((o.rot || 0) + (e.shiftKey ? 270 : 90)) % 360; hdPaint(); hdInspect(); hdSave(); return; }
+  if(key === 'r' && HD.sel.t !== 'room'){
+    hdPush();
+    o.rot = ((o.rot || 0) + (HD.sel.t === 'open' ? 180 : e.shiftKey ? 270 : 90)) % 360;   // a door turns its swing, never off the wall
+    hdPaint(); hdInspect(); hdSave(); return;
+  }
   const step = e.shiftKey ? 10 : 1, mv = {arrowleft: [-step, 0], arrowright: [step, 0], arrowup: [0, -step], arrowdown: [0, step]}[key];
-  if(mv){ e.preventDefault(); hdPush(); o.x += mv[0]; o.y += mv[1]; hdPaint(); hdInspectLive(); hdSave(); }
+  if(mv){
+    e.preventDefault();
+    if(!e.repeat) hdPush();                                     // holding a key is one undo step, not hundreds
+    const P = hdP();
+    if(HD.sel.t === 'open'){
+      const horiz = (o.rot % 180) === 0, d = horiz ? mv[0] : mv[1];
+      if(!d) return;
+      hdSnapOpening(o, o.x + (horiz ? d : 0), o.y + (horiz ? 0 : d), 2);
+    } else if(HD.sel.t === 'room'){
+      const att = hdAttached(P, o);
+      o.x = Math.min(Math.max(0, o.x + mv[0]), Math.max(0, P.W - o.w)); o.y = Math.min(Math.max(0, o.y + mv[1]), Math.max(0, P.H - o.h));
+      hdCarry(att, o);
+    } else { o.x += mv[0]; o.y += mv[1]; }
+    hdPaint(); hdInspectLive(); hdSave();
+  }
 });
 
 /* ---------- add / edit / delete ---------- */
 function hdAdd(cat, i){
   const [type, name, w, d] = HD_LIB.find(c => c.cat === cat).items[i], P = hdP(), v = HD.view, [W, H] = hdSize();
-  let cx = hdR(v.x + W / 2 / v.s), cy = hdR(v.y + H / 2 / v.s);
+  // drop it where you're looking: the 3D camera's target, the 2D view's centre, or the middle of the plan
+  let cx = HD.mode3d && HD3 ? hdR(HD3.cam.tx) : v ? hdR(v.x + W / 2 / v.s) : hdR(P.W / 2), cy = HD.mode3d && HD3 ? hdR(HD3.cam.tz) : v ? hdR(v.y + H / 2 / v.s) : hdR(P.H / 2);
   cx = Math.min(P.W - 20, Math.max(20, cx)); cy = Math.min(P.H - 20, Math.max(20, cy));
   // furniture lands in the middle of the room you're looking at, not on whichever wall crosses the screen centre
   const inRoom = P.rooms.find(r => cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h);
@@ -3915,7 +4110,7 @@ function hdAdd(cat, i){
     const it = {id: hdUid(), type, name, x: cx, y: cy, w, d, rot: 0};
     P.items.push(it); sel = {t: 'item', id: it.id};
   }
-  HD.sel = sel; HD.tool = null; hdBarState();
+  HD.sel = sel; HD.tool = null; HD.measure = null; hdBarState();
   hdPaint(); hdInspect(); hdSave();
   if(window.innerWidth < 900) document.getElementById('hdSvg')?.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
@@ -3923,9 +4118,15 @@ function hdDup(){
   const o = hdFind(HD.sel); if(!o) return;
   hdPush();
   const c = {...JSON.parse(JSON.stringify(o)), id: hdUid()}, P = hdP();
-  if(HD.sel.t === 'room'){ c.x += 30; c.y += 30; P.rooms.push(c); }
+  if(HD.sel.t === 'room'){ c.x = Math.min(c.x + 30, Math.max(0, P.W - c.w)); c.y = Math.min(c.y + 30, Math.max(0, P.H - c.h)); P.rooms.push(c); }
   else if(HD.sel.t === 'item'){ c.x += 20; c.y += 20; P.items.push(c); }
-  else { if(o.rot % 180 === 0) c.x += o.len + 20; else c.y += o.len + 20; P.opens.push(c); }
+  else {   // next to the original on the same wall, or on the other side of it if there's no room
+    const s = hdOnWall(P, o), horiz = o.rot % 180 === 0, at = horiz ? o.x : o.y;
+    const fwd = at + o.len + 20, back = at - o.len - 20, ok = v => !s || (v - o.len/2 >= s.a && v + o.len/2 <= s.b);
+    const v = ok(fwd) ? fwd : ok(back) ? back : fwd;
+    hdSnapOpening(c, horiz ? v : o.x, horiz ? o.y : v, o.len);
+    P.opens.push(c);
+  }
   HD.sel = {t: HD.sel.t, id: c.id};
   hdPaint(); hdInspect(); hdSave();
 }
@@ -3939,18 +4140,58 @@ function hdDel(){
 /* inspector edits: one undo step per committed field */
 function hdSet(field, raw){
   const P = hdP(), o = HD.sel ? hdFind(HD.sel) : null;
-  hdPush();
-  if(!HD.sel){
-    if(field === 'name'){ HD.cur.name = raw.trim() || HD.cur.name; const opt = document.querySelector(`#hdPlanSel option[value="${HD.cur.id}"]`); if(opt) opt.textContent = HD.cur.name; }
-    else { const n = hdNum(raw); if(n === null || n < 2 || n > 60){ HD.undo.pop(); toast('Size must be between 2 and 60 m'); hdInspect(); return; } P[field] = hdR(n * 100); }
-  } else if(field === 'name') o.name = raw.trim() || o.name;
-  else if(field === 'kind'){ if(HD.sel.t === 'room'){ const was = HD_KINDS[o.kind].label; o.kind = raw; if(o.name.startsWith(was)) o.name = HD_KINDS[raw].label; } else o.kind = raw; }
-  else if(field === 'rot') o.rot = (((Math.round(hdNum(raw) || 0)) % 360) + 360) % 360;
-  else {
-    let n = hdNum(raw); if(n === null){ HD.undo.pop(); hdInspect(); return; }
-    if(['w','h','d','len'].includes(field)) n = Math.max(field === 'len' ? 40 : 10, Math.round(n));
-    o[field] = Math.round(n);
+  if(HD.sel && !o){ HD.sel = null; hdInspect(); return; }
+  if(field === 'name'){
+    const n = (raw || '').trim(); if(!n){ hdInspect(); return; }
+    if(!HD.sel){   // plan name: not part of the drawing, so no undo step
+      HD.cur.name = n; const opt = document.querySelector(`#hdPlanSel option[value="${HD.cur.id}"]`); if(opt) opt.textContent = n;
+      hdPaint(); hdSave(); return;
+    }
+    hdPush(); o.name = n; hdPaint(); hdInspect(); hdSave(); return;
   }
+  if(field === 'kind'){
+    hdPush();
+    if(HD.sel.t === 'room'){ const was = (HD_KINDS[o.kind] || HD_KINDS.living).label; o.kind = raw; if(o.name.startsWith(was)) o.name = HD_KINDS[raw].label; }
+    else o.kind = raw;
+    hdPaint(); hdInspect(); hdSave(); return;
+  }
+  const n = hdNum(raw);
+  if(n === null){ hdInspect(); return; }
+  if(!HD.sel){   // outline in metres; doors/windows on the right and bottom walls move with them
+    if(n < 2 || n > 60){ toast('Size must be between 2 and 60 m'); hdInspect(); return; }
+    const v = hdR(n * 100), old = P[field];
+    if(v === old){ hdInspect(); return; }
+    hdPush();
+    P[field] = v;
+    P.opens.forEach(op => {
+      const horiz = op.rot % 180 === 0;
+      if(field === 'W' && !horiz && Math.abs(op.x - old) < 1) op.x = v;
+      if(field === 'H' && horiz && Math.abs(op.y - old) < 1) op.y = v;
+      if(field === 'W' && horiz && (Math.abs(op.y) < 1 || Math.abs(op.y - P.H) < 1)) op.x = Math.min(Math.max(op.x, op.len/2), v - op.len/2);
+      if(field === 'H' && !horiz && (Math.abs(op.x) < 1 || Math.abs(op.x - P.W) < 1)) op.y = Math.min(Math.max(op.y, op.len/2), v - op.len/2);
+    });
+    hdPaint(); hdInspect(); hdSave();
+    const out = P.rooms.filter(r => r.x + r.w > P.W + .5 || r.y + r.h > P.H + .5).length;
+    if(out) toast(`${out} room${out > 1 ? 's' : ''} now ${out > 1 ? 'reach' : 'reaches'} past the outline — shown in red`);
+    return;
+  }
+  hdPush();
+  if(field === 'rot') o.rot = ((Math.round(n) % 360) + 360) % 360;
+  else if(HD.sel.t === 'room'){
+    const att = hdAttached(P, o);
+    if(field === 'w') o.w = Math.min(Math.max(60, Math.round(n)), P.W);
+    else if(field === 'h') o.h = Math.min(Math.max(60, Math.round(n)), P.H);
+    else o[field] = Math.round(n);
+    o.x = Math.min(Math.max(0, o.x), P.W - o.w); o.y = Math.min(Math.max(0, o.y), P.H - o.h);
+    hdCarry(att, o);
+  } else if(HD.sel.t === 'open'){
+    if(field === 'len'){
+      const s = hdOnWall(P, o);
+      o.len = Math.min(Math.max(40, Math.round(n)), s ? s.b - s.a : 1e9);
+      if(s) hdSnapOpening(o, o.x, o.y, 2);
+    }
+  } else if(field === 'w' || field === 'd') o[field] = Math.min(Math.max(10, Math.round(n)), 2000);
+  else o[field] = Math.round(n);
   hdPaint(); hdInspect(); hdSave();
 }
 function hdOpenFlip(what){
@@ -3966,10 +4207,27 @@ function hdField(id, label, val, field, extra){
 }
 function hdInspect(){
   const el = document.getElementById('hdInsp'); if(!el || !HD.cur) return;
+  if(HD.mode3d && HD3){
+    const touch = window.matchMedia && matchMedia('(hover: none)').matches;
+    el.innerHTML = `<h3>3D view</h3>
+      <p class="hd-hint" style="margin-top:0">${touch ? 'Drag to turn the model, pinch to zoom, drag with two fingers to move it.' : 'Drag to turn the model, scroll to zoom, right-drag or Shift-drag to move it, double-click to fit. Q / E turn 90°.'}
+        Edit in 2D; this view follows every change.</p>
+      <div class="hd-form">
+        <div><label class="lbl" for="hd3Sun">Sun direction</label><input id="hd3Sun" type="range" min="0" max="359" value="${HD3.sun.az}" oninput="hd3Set('sun', this.value)"></div>
+      </div>
+      <div class="hd-acts"><button class="btn-ghost${HD3.labels ? ' on' : ''}" type="button" onclick="hd3Set('labels')">${HD3.labels ? 'Hide room names' : 'Show room names'}</button>
+        <button class="btn-ghost" type="button" onclick="hd3Toggle(false)">Back to 2D</button></div>`;
+    return;
+  }
   const P = hdP(), sel = HD.sel, o = hdFind(sel);
   if(!o){
     const roomA = P.rooms.reduce((s, r) => s + r.w * r.h, 0) / 1e4;
-    const conf = Object.values(HD.conf || {}), red = conf.filter(c => c.lvl === 'red').length, amb = conf.length - red;
+    const C = HD.conf || {}, cnt = (list, lvl) => list.filter(x => C[x.id] && C[x.id].lvl === lvl).length;
+    const pills = [[cnt(P.items, 'red'), 'piece', "doesn't fit", "don't fit", 'red'], [cnt(P.rooms, 'red'), 'room', 'outside the outline', 'outside the outline', 'red'],
+      [cnt(P.opens, 'red'), 'door or window', 'off a wall', 'off a wall', 'red'], [cnt(P.items, 'amber'), 'piece', 'in a door swing', 'in a door swing', 'amber'],
+      [cnt(P.rooms, 'amber'), 'room', 'overlapping', 'overlapping', 'amber']]
+      .filter(x => x[0]).map(([n, one, s1, sN, lvl]) => `<span class="pill ${lvl}">${n} ${n > 1 ? (one === 'door or window' ? 'doors/windows' : one + 's') : one} ${n > 1 ? sN : s1}</span>`);
+    const touch = window.matchMedia && matchMedia('(hover: none)').matches;
     el.innerHTML = `<h3>Plan</h3>
       <div class="hd-form">
         ${hdField('hdPName', 'Name', HD.cur.name, 'name', 'maxlength="60"')}
@@ -3983,9 +4241,11 @@ function hdInspect(){
         <div><b>${roomA.toLocaleString('en-GB', {maximumFractionDigits: 1})}</b><span>m² in rooms</span></div>
         <div><b>${P.items.length}</b><span>pieces</span></div>
       </div>
-      ${conf.length ? `<div class="hd-warn">${red ? `<span class="pill red">${red} not fitting</span>` : ''}${amb ? `<span class="pill amber">${amb} in a door swing</span>` : ''}</div>` : P.items.length ? `<div class="hd-warn"><span class="pill green">Everything fits</span></div>` : ''}
+      ${pills.length ? `<div class="hd-warn">${pills.join('')}</div>` : P.items.length || P.rooms.length ? `<div class="hd-warn"><span class="pill green">Everything fits</span></div>` : ''}
       ${P.rooms.length ? `<div class="hd-rooms">${P.rooms.map(r => `<button type="button" onclick="HD.sel={t:'room',id:'${r.id}'};hdPaint();hdInspect()"><span>${esc(r.name)}</span><small>${hdM(r.w)} × ${hdM(r.h)} m · ${hdArea(r.w, r.h)} m²</small></button>`).join('')}</div>` : ''}
-      <p class="hd-hint">Tap a piece to select it, then drag to move. Tap a room once to select it before moving it. Drag empty space to pan; pinch or ⌘-scroll to zoom. Keys: R rotate, arrows nudge, ⌫ delete, ⌘D duplicate, M measure.</p>
+      <p class="hd-hint">${touch
+        ? 'Tap a piece to select it, then drag to move it. Tap a room once before dragging it. Drag empty space to pan and pinch to zoom.'
+        : 'Click a piece to select it, then drag to move it. Click a room once before dragging it. Drag empty space to pan; pinch or ⌘-scroll to zoom. Keys: R rotate, arrows nudge, ⌫ delete, ⌘D duplicate, M measure, F fit, V render.'}</p>
       <div class="hd-acts"><button class="btn-ghost" type="button" onclick="hdPlanAction('dup')">Duplicate plan</button><button class="btn-ghost danger" type="button" onclick="hdPlanAction('del')">Delete plan</button></div>`;
     return;
   }
@@ -3997,11 +4257,10 @@ function hdInspect(){
       <div><label class="lbl" for="hdRK">Type</label><select id="hdRK" onchange="hdSet('kind', this.value)">${Object.entries(HD_KINDS).map(([k, v]) => `<option value="${k}" ${k === o.kind ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
       <div class="hd-2">${hdField('hdRW', 'Width (cm)', o.w, 'w')}${hdField('hdRH', 'Length (cm)', o.h, 'h')}</div>
       <div class="hd-2">${hdField('hdRX', 'From left (cm)', o.x, 'x')}${hdField('hdRY', 'From top (cm)', o.y, 'y')}</div>
-      </div><div class="hd-big" id="hdLive">${hdArea(o.w, o.h)} m² · ${hdM(o.w)} × ${hdM(o.h)} m</div>${acts}`;
+      </div><div class="hd-big" id="hdLive">${hdArea(o.w, o.h)} m² · ${hdM(o.w)} × ${hdM(o.h)} m</div>${hdPill(o)}${acts}`;
     return;
   }
   if(sel.t === 'item'){
-    const c = (HD.conf || {})[o.id];
     el.innerHTML = `<h3>Furniture</h3><div class="hd-form">
       ${hdField('hdIN', 'Name', o.name, 'name', 'maxlength="40"')}
       <div class="hd-2">${hdField('hdIW', 'Width (cm)', o.w, 'w')}${hdField('hdID', 'Depth (cm)', o.d, 'd')}</div>
@@ -4011,15 +4270,16 @@ function hdInspect(){
         <button class="hd-ib" type="button" aria-label="Rotate right" onclick="hdRotBy(90)">${HD_I.rot}</button></div></div>
       </div>
       <div class="hd-big" id="hdLive">${hdM(o.w)} × ${hdM(o.d)} m</div>
-      ${c ? `<div class="hd-warn"><span class="pill ${c.lvl}">${esc(c.why)}</span></div>` : ''}${acts}`;
+      ${hdPill(o)}${acts}`;
     return;
   }
   el.innerHTML = `<h3>${o.kind === 'door' ? 'Door' : o.kind === 'window' ? 'Window' : 'Sliding door'}</h3><div class="hd-form">
     <div><label class="lbl" for="hdOK">Type</label><select id="hdOK" onchange="hdSet('kind', this.value)">${[['door','Door'],['window','Window'],['slider','Sliding door']].map(([k, l]) => `<option value="${k}" ${k === o.kind ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     ${hdField('hdOL', 'Width (cm)', o.len, 'len')}
     ${o.kind === 'door' ? `<div class="hd-2"><button class="btn-ghost" type="button" onclick="hdOpenFlip('swing')">Swing side</button><button class="btn-ghost" type="button" onclick="hdOpenFlip('hinge')">Hinge side</button></div>` : ''}
-    </div><p class="hd-hint">Drag it along a wall; it snaps to the nearest one and turns to follow it.</p>${acts}`;
+    </div>${hdPill(o)}<p class="hd-hint">Drag it along a wall; it snaps to the nearest one and turns to follow it.</p>${acts}`;
 }
+function hdPill(o){ const c = (HD.conf || {})[o.id]; return c ? `<div class="hd-warn"><span class="pill ${c.lvl}">${esc(c.why)}</span></div>` : ''; }
 /* cheap refresh while dragging: only the numbers, so inputs aren't rebuilt under the pointer */
 function hdInspectLive(){
   const o = hdFind(HD.sel); if(!o) return;
@@ -4036,8 +4296,15 @@ function hdExport(){
   const svg = document.getElementById('hdSvg'); if(!svg) return;
   const keepV = HD.view, keepS = HD.sel, keepM = HD.measure, P = hdP();
   HD.sel = null; HD.measure = null; HD.textScale = 1.7;
-  const W = 2000, pd = hdPads(W), b = hdBounds(P), s = (W - pd.l - pd.r) / (b.x2 - b.x1);
-  const H = Math.round((b.y2 - b.y1) * s + pd.t + pd.b);
+  // 2000 px wide by default; tall plans are scaled down so the canvas stays inside browser limits (iOS: ~16.7 MP)
+  let W = 2000, b = hdBounds(P), bw = b.x2 - b.x1, bh = b.y2 - b.y1, pd = hdPads(W), s = (W - pd.l - pd.r) / bw;
+  if(hdCrowded(P, s)){ pd = hdPads(W, true); s = (W - pd.l - pd.r) / bw; }
+  let H = Math.round(bh * s + pd.t + pd.b);
+  if(H > 6000 || W * H > 14e6){
+    s = Math.min((6000 - pd.t - pd.b) / bh, (14e6 / W - pd.t - pd.b) / bh);
+    W = Math.max(900, Math.round(bw * s + pd.l + pd.r)); pd = hdPads(W, hdCrowded(P, s)); s = Math.min(s, (W - pd.l - pd.r) / bw);
+    H = Math.round(bh * s + pd.t + pd.b);
+  }
   svg.style.width = W + 'px'; svg.style.height = H + 'px';
   HD.view = {s, x: b.x1 - pd.l / s, y: b.y1 - pd.t / s};
   hdPaint();
@@ -4050,11 +4317,620 @@ function hdExport(){
   img.onload = () => {
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const ctx = c.getContext('2d'); ctx.fillStyle = HD.render ? HD_GROUND : '#f3f2ef'; ctx.fillRect(0, 0, W, H); ctx.drawImage(img, 0, 0);
-    c.toBlob(bl => { const a = document.createElement('a'); a.href = URL.createObjectURL(bl);
-      a.download = (HD.cur.name || 'plan').replace(/[^\w\- ]+/g, '').trim() + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); });
+    c.toBlob(bl => {
+      if(!bl) return toast('The plan is too large to export as one image');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(bl);
+      a.download = ((HD.cur.name || '').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim() || 'plan') + '.png';
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    });
   };
   img.onerror = () => toast('Could not render the image');
   img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+}
+
+/* ================= HOUSE 3D: live isometric cutaway =================
+   The current plan built in real 3D with plain WebGL2 (no library to load): walls at full height
+   with door and window openings, wood / tile / deck floors, furniture as simple solid models, a sun
+   with soft shadow-mapping. Orthographic camera like an architect's axonometric. Walls facing the
+   camera are cut low so you can see in, and the cut follows you as you orbit.
+   View only: editing stays in 2D, and the 3D view rebuilds whenever the plan changes.
+   Units: cm. Plan x -> X, plan y -> Z, height -> Y. */
+const HD3_H = 260, HD3_DOOR = 210, HD3_SILL = 90, HD3_HEAD = 210, HD3_CUT = 24, HD3_LOWW = 110;
+const HD3_K = {
+  wall:'#f3f0eb', wallTop:'#d8d3cb', slab:'#efebe4', ground:'#ddd6cc', oak:'#c69f72', walnut:'#6f4e36', black:'#2c2b29',
+  sofa:'#dbd4c9', sofaDk:'#cbc3b6', velvet:'#47523f', linen:'#f4f2ed', blanket:'#cdbfab', steel:'#d2d3d0', stone:'#a29e97',
+  white:'#f7f6f3', rug:'#8e8981', pot:'#ece7de', leaf:'#5e7951', leaf2:'#76925f', glass:'#b4cdd6', frame:'#353432',
+  card:'#c9a679', screen:'#1d1d1c', chrome:'#bdbdb9', door:'#ece8e1', cabinet:'#b88c5f', book1:'#8a5a44', book2:'#c7b79a', book3:'#4f5d68'
+};
+const hd3c = h => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
+const HD3C = Object.fromEntries(Object.entries(HD3_K).map(([k, v]) => [k, hd3c(v)]));
+let HD3 = null;   // {gl, prog, sprog, bufs, shadow, tex, cam:{yaw,pitch,zoom,tx,ty,tz}, sun:{az,el}, walls, labels, key, face, dirty}
+
+/* ---------- small matrix kit (column-major, like WebGL) ---------- */
+const hd3M = {
+  mul(a, b){ const o = new Float32Array(16); for(let i = 0; i < 4; i++) for(let j = 0; j < 4; j++){ let s = 0; for(let k = 0; k < 4; k++) s += a[k*4 + j] * b[i*4 + k]; o[i*4 + j] = s; } return o; },
+  ortho(l, r, b, t, n, f){ return new Float32Array([2/(r-l),0,0,0, 0,2/(t-b),0,0, 0,0,-2/(f-n),0, -(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n),1]); },
+  look(e, c, u){
+    const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]], nrm = a => { const l = Math.hypot(...a) || 1; return a.map(v => v / l); };
+    const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]], dot = (a, b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+    const z = nrm(sub(e, c)), x = nrm(cross(u, z)), y = cross(z, x);
+    return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0, -dot(x,e),-dot(y,e),-dot(z,e),1]);
+  },
+  xf(m, p){ const w = m[3]*p[0] + m[7]*p[1] + m[11]*p[2] + m[15]; return [(m[0]*p[0] + m[4]*p[1] + m[8]*p[2] + m[12]) / w, (m[1]*p[0] + m[5]*p[1] + m[9]*p[2] + m[13]) / w, (m[2]*p[0] + m[6]*p[1] + m[10]*p[2] + m[14]) / w]; }
+};
+
+/* ---------- geometry builders: everything is boxes, cylinders and spheres ---------- */
+const hd3Mesh = () => ({p: [], n: [], c: [], u: []});
+function hd3Tri(m, a, b, c, n, col, na, nb, nc, ua, ub, uc){
+  m.p.push(...a, ...b, ...c);
+  m.n.push(...(na || n), ...(nb || n), ...(nc || n));
+  m.c.push(...col, ...col, ...col);
+  m.u.push(...(ua || [0, 0]), ...(ub || [0, 0]), ...(uc || [0, 0]));
+}
+function hd3Quad(m, a, b, c, d, n, col, uv){
+  hd3Tri(m, a, b, c, n, col, 0, 0, 0, uv && uv[0], uv && uv[1], uv && uv[2]);
+  hd3Tri(m, a, c, d, n, col, 0, 0, 0, uv && uv[0], uv && uv[2], uv && uv[3]);
+}
+const hd3P = (T, lx, ly, lz) => { const [a, b] = hdRot(lx, lz, T.rot || 0); return [T.x + a, ly, T.z + b]; };
+const hd3N = (T, nx, ny, nz) => { const [a, b] = hdRot(nx, nz, T.rot || 0); return [a, ny, b]; };
+/* box in an object's local frame: x across its width, z across its depth (+z = front), y up */
+function hd3Box(m, T, x0, x1, z0, z1, y0, y1, col, top){
+  if(x1 - x0 < .05 || z1 - z0 < .05 || y1 - y0 < .05) return;
+  const v = [[x0,y0,z0],[x1,y0,z0],[x1,y0,z1],[x0,y0,z1],[x0,y1,z0],[x1,y1,z0],[x1,y1,z1],[x0,y1,z1]].map(q => hd3P(T, ...q));
+  hd3Quad(m, v[4], v[7], v[6], v[5], [0, 1, 0], top || col);
+  hd3Quad(m, v[0], v[1], v[2], v[3], [0, -1, 0], col);
+  hd3Quad(m, v[0], v[4], v[5], v[1], hd3N(T, 0, 0, -1), col);
+  hd3Quad(m, v[3], v[2], v[6], v[7], hd3N(T, 0, 0, 1), col);
+  hd3Quad(m, v[0], v[3], v[7], v[4], hd3N(T, -1, 0, 0), col);
+  hd3Quad(m, v[1], v[5], v[6], v[2], hd3N(T, 1, 0, 0), col);
+}
+/* vertical cylinder (elliptical if rx != rz) */
+function hd3Cyl(m, T, cx, cz, rx, rz, y0, y1, col, n = 18, top){
+  const pt = (a, y) => hd3P(T, cx + Math.cos(a) * rx, y, cz + Math.sin(a) * rz);
+  const c0 = hd3P(T, cx, y0, cz), c1 = hd3P(T, cx, y1, cz);
+  for(let i = 0; i < n; i++){
+    const a0 = i / n * 6.2832, a1 = (i + 1) / n * 6.2832, am = (a0 + a1) / 2;
+    const nn = hd3N(T, Math.cos(am) / rx, 0, Math.sin(am) / rz), l = Math.hypot(...nn), N = nn.map(v => v / l);
+    const na = hd3N(T, Math.cos(a0) / rx, 0, Math.sin(a0) / rz), nb = hd3N(T, Math.cos(a1) / rx, 0, Math.sin(a1) / rz);
+    const la = Math.hypot(...na), lb = Math.hypot(...nb), A = na.map(v => v / la), Bn = nb.map(v => v / lb);
+    hd3Tri(m, pt(a0, y0), pt(a1, y0), pt(a1, y1), N, col, A, Bn, Bn);
+    hd3Tri(m, pt(a0, y0), pt(a1, y1), pt(a0, y1), N, col, A, Bn, A);
+    hd3Tri(m, c1, pt(a1, y1), pt(a0, y1), [0, 1, 0], top || col);
+  }
+}
+function hd3Sph(m, T, cx, cy, cz, r, col, sy = 1){
+  const la = 7, lo = 12, P = (i, j) => { const t = i / la * Math.PI, f = j / lo * 6.2832; return [Math.sin(t) * Math.cos(f), Math.cos(t), Math.sin(t) * Math.sin(f)]; };
+  const W = q => hd3P(T, cx + q[0] * r, cy + q[1] * r * sy, cz + q[2] * r), Nn = q => hd3N(T, q[0], q[1], q[2]);
+  for(let i = 0; i < la; i++) for(let j = 0; j < lo; j++){
+    const a = P(i, j), b = P(i + 1, j), c = P(i + 1, j + 1), d = P(i, j + 1);
+    hd3Tri(m, W(a), W(b), W(c), Nn(a), col, Nn(a), Nn(b), Nn(c));
+    hd3Tri(m, W(a), W(c), W(d), Nn(a), col, Nn(a), Nn(c), Nn(d));
+  }
+}
+
+/* ---------- furniture models, in each piece's own frame ---------- */
+function hd3Item(m, it, glass){
+  const T = {x: it.x, z: it.y, rot: it.rot || 0}, w = it.w, d = it.d, X = w/2, Z = d/2, K = HD3C;
+  const B = (x0, x1, z0, z1, y0, y1, col, top) => hd3Box(m, T, x0, x1, z0, z1, y0, y1, col, top);
+  const C = (cx, cz, rx, rz, y0, y1, col, n, top) => hd3Cyl(m, T, cx, cz, rx, rz, y0, y1, col, n, top);
+  const legs = (h, inset, s, col) => { for(const sx of [-1, 1]) for(const sz of [-1, 1]) B(sx*(X - inset) - s/2, sx*(X - inset) + s/2, sz*(Z - inset) - s/2, sz*(Z - inset) + s/2, 0, h, col); };
+  const small = Math.min(w, d);
+  switch(it.type){
+    case 'sofa': case 'armchair': {
+      const col = it.type === 'armchair' ? K.velvet : K.sofa, dk = it.type === 'armchair' ? K.velvet.map(v => v * .85) : K.sofaDk;
+      const arm = Math.min(18, w * .16), bk = Math.min(22, d * .24);
+      legs(9, 6, 4, K.black);
+      B(-X, X, -Z, Z, 9, 40, dk);
+      B(-X, X, -Z, -Z + bk, 40, 82, col);
+      B(-X, -X + arm, -Z, Z, 40, 62, col); B(X - arm, X, -Z, Z, 40, 62, col);
+      const n = it.type === 'armchair' ? 1 : w > 190 ? 3 : 2, sw = (w - 2*arm) / n;
+      for(let i = 0; i < n; i++) B(-X + arm + i*sw + 1, -X + arm + (i + 1)*sw - 1, -Z + bk, Z - 2, 40, 50, col);
+      if(it.type === 'sofa'){ B(-X + arm + 4, -X + arm + 40, -Z + bk, -Z + bk + 12, 50, 74, K.linen); B(X - arm - 40, X - arm - 4, -Z + bk, -Z + bk + 12, 50, 74, K.blanket); }
+      return;
+    }
+    case 'lsofa': {
+      const dp = Math.min(95, d * .56), cw = Math.min(95, w * .36), bk = 22;
+      legs(9, 6, 4, K.black);
+      B(-X, X, -Z, -Z + dp, 9, 40, K.sofaDk); B(X - cw, X, -Z + dp, Z, 9, 40, K.sofaDk);
+      B(-X, X - bk, -Z, -Z + bk, 40, 82, K.sofa); B(X - bk, X, -Z, Z, 40, 82, K.sofa);
+      B(-X, -X + 16, -Z, -Z + dp, 40, 62, K.sofa);
+      B(-X + 16, X - bk, -Z + bk, -Z + dp - 1, 40, 50, K.sofa); B(X - cw, X - bk, -Z + dp, Z - 2, 40, 50, K.sofa);
+      return;
+    }
+    case 'bed': {
+      B(-X, X, -Z, Z, 6, 30, K.walnut); legs(6, 6, 6, K.black);
+      B(-X, X, -Z, -Z + 6, 6, 100, K.walnut);
+      B(-X + 3, X - 3, -Z + 7, Z - 3, 30, 52, K.linen);
+      B(-X + 2, X - 2, -Z + d * .32, Z - 1, 50, 55, K.blanket);
+      const n = w >= 130 ? 2 : 1, pw = (w - 16 - (n - 1)*6) / n;
+      for(let i = 0; i < n; i++) B(-X + 8 + i*(pw + 6), -X + 8 + i*(pw + 6) + pw, -Z + 10, -Z + 10 + Math.min(34, d * .17), 52, 64, K.white);
+      return;
+    }
+    case 'nightstand': case 'dresser': {
+      const h = it.type === 'dresser' ? 82 : 55;
+      B(-X, X, -Z, Z, 6, h, K.cabinet, K.walnut); legs(6, 3, 3, K.black);
+      B(-X + 2, X - 2, Z, Z + .6, h * .5, h * .5 + .6, K.walnut);
+      return;
+    }
+    case 'wardrobe': {
+      B(-X, X, -Z, Z, 0, 220, K.cabinet, K.walnut);
+      const n = Math.max(2, Math.round(w / 50));
+      for(let i = 1; i < n; i++) B(-X + i*w/n - .4, -X + i*w/n + .4, Z, Z + .8, 4, 216, K.walnut);
+      for(let i = 0; i < n; i++) B(-X + (i + .5)*w/n - .6, -X + (i + .5)*w/n + .6, Z, Z + 2, 100, 130, K.black);
+      return;
+    }
+    case 'table': case 'desk': {
+      const h = it.type === 'desk' ? 75 : small <= 65 ? 40 : 75;
+      B(-X, X, -Z, Z, h - 4, h, it.type === 'desk' ? K.oak : h < 50 ? K.black : K.walnut);
+      legs(h - 4, 5, 4, K.black);
+      if(it.type === 'desk'){ B(-Math.min(30, w*.25), Math.min(30, w*.25), -Z + 6, -Z + 9, h, h + 36, K.screen); B(-4, 4, -Z + 8, -Z + 14, h, h + 12, K.black); }
+      return;
+    }
+    case 'round': {
+      const h = small <= 60 ? 55 : small <= 90 ? 42 : 75;
+      C(0, 0, X, Z, h - 3, h, h < 50 ? K.black : K.walnut, 28);
+      C(0, 0, 4, 4, 0, h - 3, K.black, 10); C(0, 0, X * .45, Z * .45, 0, 2, K.black, 18);
+      return;
+    }
+    case 'chair': {
+      legs(45, 3, 3, K.black);
+      B(-X + 1, X - 1, -Z + 1, Z - 1, 43, 47, K.oak);
+      B(-X + 1, X - 1, -Z, -Z + 3, 47, 84, K.black);
+      return;
+    }
+    case 'stool': C(0, 0, small/2, small/2, 64, 68, K.oak, 16); C(0, 0, 2.5, 2.5, 0, 64, K.black, 8); C(0, 0, small*.35, small*.35, 0, 1.5, K.black, 14); return;
+    case 'ochair': {
+      C(0, 0, 3, 3, 0, 42, K.black, 8); C(0, 0, small*.42, small*.42, 0, 2, K.black, 10);
+      C(0, 3, small*.44, small*.44, 42, 49, K.black, 18);
+      B(-X + 8, X - 8, -Z + 2, -Z + 6, 49, 95, K.black);
+      return;
+    }
+    case 'tvunit': {
+      B(-X, X, -Z, Z, 8, 46, K.walnut); legs(8, 4, 3, K.black);
+      const tw = Math.min(w * .78, 160), th = tw * .57;
+      B(-tw/2, tw/2, -Z + 6, -Z + 9, 52, 52 + th, K.screen); B(-6, 6, -Z + 5, -Z + 12, 46, 52, K.black);
+      return;
+    }
+    case 'shelf': {
+      const h = it.name && /shoe|cabinet/i.test(it.name) ? 90 : 190, n = Math.max(3, Math.round(h / 36));
+      for(const sx of [-1, 1]) for(const sz of [-1, 1]) B(sx*X - (sx > 0 ? 2 : 0), sx*X + (sx < 0 ? 2 : 0), sz*Z - (sz > 0 ? 2 : 0), sz*Z + (sz < 0 ? 2 : 0), 0, h, K.black);
+      let seed = Math.round(Math.abs(it.x * 7 + it.y * 13)) % 97;
+      const rnd = () => (seed = (seed * 31 + 17) % 97) / 97;
+      for(let i = 0; i <= n; i++){
+        const y = 4 + i * (h - 6) / n;
+        B(-X, X, -Z, Z, y, y + 2, K.oak);
+        if(i < n && h > 120){ let x = -X + 3; while(x < X - 8){ const bw = 2 + rnd() * 3.5, bh = (h - 6) / n * (.55 + rnd() * .3); if(rnd() > .25) B(x, x + bw, -Z + 3, Z - 3, y + 2, y + 2 + bh, [K.book1, K.book2, K.book3][Math.floor(rnd() * 3)]); x += bw + .4 + (rnd() > .85 ? 6 : 0); } }
+      }
+      return;
+    }
+    case 'rug': B(-X, X, -Z, Z, .3, 1.6, K.rug); return;
+    case 'plant': {
+      const r = small / 2;
+      C(0, 0, r * .55, r * .55, 0, 34, K.pot, 16);
+      hd3Sph(m, T, 0, 62, 0, r * .62, K.leaf, 1.25); hd3Sph(m, T, r * .3, 78, -r * .2, r * .48, K.leaf2); hd3Sph(m, T, -r * .3, 84, r * .2, r * .42, K.leaf);
+      return;
+    }
+    case 'counter': case 'sink': case 'stove': {
+      B(-X, X, -Z, Z - 1, 10, 86, K.cabinet); B(-X + 1, X - 1, -Z + 1, Z - 2, 0, 10, K.black);
+      const n = Math.max(1, Math.round(w / 60));
+      for(let i = 1; i < n; i++) B(-X + i*w/n - .3, -X + i*w/n + .3, Z - 1, Z - .2, 12, 84, K.walnut);
+      B(-X, X, -Z, Z + 1, 86, 90, K.stone);
+      if(it.type === 'sink'){ B(-X + 10, X - 10, -Z + 10, Z - 10, 89, 90.4, K.steel); C(0, -Z + 6, 1.5, 1.5, 90, 118, K.chrome, 8); B(-1.5, 1.5, -Z + 6, -Z + 22, 116, 119, K.chrome); }
+      if(it.type === 'stove'){ B(-X + 2, X - 2, -Z + 2, Z - 2, 90, 91, K.screen); for(const sx of [-1, 1]) for(const sz of [-1, 1]) C(sx * w/4, sz * d/4, small * .13, small * .13, 91, 91.6, K.black, 14); }
+      return;
+    }
+    case 'fridge': B(-X, X, -Z, Z, 0, 190, K.steel); B(-X + 2, X - 2, Z, Z + .5, 118, 119, K.frame); B(X - 8, X - 6, Z, Z + 3, 130, 170, K.chrome); return;
+    case 'washer': B(-X, X, -Z, Z, 0, 85, K.white); C(0, Z - 1, small * .3, 1.5, 30, 31, K.frame); B(-small*.3, small*.3, Z, Z + 1, 20, 62, K.screen); return;
+    case 'toilet': B(-X + 3, X - 3, -Z, -Z + Math.min(18, d * .26), 0, 80, K.white); hd3Cyl(m, T, 0, Z - d * .38, X * .88, d * .36, 0, 40, K.white, 20); return;
+    case 'basin': B(-X, X, -Z, Z, 10, 80, K.cabinet); B(-X, X, -Z, Z, 80, 86, K.white); B(-X + 8, X - 8, -Z + 8, Z - 6, 85.5, 86.4, K.steel); C(0, -Z + 5, 1.2, 1.2, 86, 104, K.chrome, 8); return;
+    case 'tub': B(-X, X, -Z, Z, 0, 55, K.white); B(-X + 7, X - 7, -Z + 7, Z - 7, 54.5, 55.4, [0.83, 0.86, 0.87]); return;
+    case 'shower': {
+      B(-X, X, -Z, Z, 0, 5, K.white);
+      hd3Box(glass, T, -X, X, Z - 1, Z, 5, 200, K.glass); hd3Box(glass, T, X - 1, X, -Z, Z, 5, 200, K.glass);
+      C(-X + 10, -Z + 10, 1.2, 1.2, 0, 195, K.chrome, 8); C(-X + 18, -Z + 18, 9, 9, 192, 194, K.chrome, 16);
+      return;
+    }
+    case 'bike': {
+      const r = d * .45;
+      B(-X, -X + 2 * r, -1.5, 1.5, 0, 2 * r, K.black); B(X - 2 * r, X, -1.5, 1.5, 0, 2 * r, K.black);
+      B(-X + r, X - r, -1.5, 1.5, r - 1.5, r + 1.5, K.black); B(-X + r, X - r, -1.5, 1.5, r + 20, r + 23, K.black);
+      return;
+    }
+    case 'box': B(-X, X, -Z, Z, 0, Math.min(70, small * .7), K.card); B(-X, X, -.8, .8, Math.min(70, small * .7), Math.min(70, small * .7) + .3, K.walnut.map(v => v * 1.2)); return;
+    default: B(-X, X, -Z, Z, 0, (HD_HGT[it.type] || 12) * 3, K.oak);
+  }
+}
+
+/* ---------- walls: outer outline + merged room edges, split around openings ---------- */
+function hd3WallLines(P){
+  const L = [{h: 1, c: 0, a: 0, b: P.W, th: HD_OUTER, side: 'n'}, {h: 1, c: P.H, a: 0, b: P.W, th: HD_OUTER, side: 's'},
+             {h: 0, c: 0, a: 0, b: P.H, th: HD_OUTER, side: 'w'}, {h: 0, c: P.W, a: 0, b: P.H, th: HD_OUTER, side: 'e'}];
+  const groups = {};
+  P.rooms.forEach(r => [[1, r.y, r.x, r.x + r.w], [1, r.y + r.h, r.x, r.x + r.w], [0, r.x, r.y, r.y + r.h], [0, r.x + r.w, r.y, r.y + r.h]].forEach(([h, c, a, b]) => {
+    if(h ? (Math.abs(c) < 1 || Math.abs(c - P.H) < 1) : (Math.abs(c) < 1 || Math.abs(c - P.W) < 1)) return;   // already the outer wall
+    const k = h + ':' + Math.round(c);
+    (groups[k] = groups[k] || {h, c: Math.round(c), iv: []}).iv.push([Math.max(0, a), Math.min(h ? P.W : P.H, b)]);
+  }));
+  Object.values(groups).forEach(g => {
+    g.iv.sort((p, q) => p[0] - q[0]);
+    let cur = null;
+    g.iv.forEach(([a, b]) => { if(cur && a <= cur[1] + 1) cur[1] = Math.max(cur[1], b); else { if(cur) L.push({h: g.h, c: g.c, a: cur[0], b: cur[1], th: HD_WALL}); cur = [a, b]; } });
+    if(cur) L.push({h: g.h, c: g.c, a: cur[0], b: cur[1], th: HD_WALL});
+  });
+  return L;
+}
+/* cutaway: any wall standing between the point you're looking at and the camera is cut low, so the
+   rooms in front of the target open up and the ones behind keep their walls. Zoom into a room and its
+   near walls drop away; fit the whole plan and the front half opens like a doll's house. */
+function hd3Cut(l, cam){
+  const tx = Math.sin(cam.yaw * Math.PI / 180), tz = Math.cos(cam.yaw * Math.PI / 180), d = l.h ? tz : tx, t = l.h ? cam.tz : cam.tx;
+  if(Math.abs(d) < .2) return false;
+  return d > 0 ? l.c > t + 10 : l.c < t - 10;
+}
+function hd3CutKey(P){ return HD3.walls !== 'cut' ? HD3.walls : hd3WallLines(P).map(l => hd3Cut(l, HD3.cam) ? 1 : 0).join(''); }
+function hd3Walls(m, glass, P, mode, yaw){
+  const K = HD3C, I = {x: 0, z: 0, rot: 0};
+  hd3WallLines(P).forEach(l => {
+    const outer = !!l.side;
+    const hw = (mode === 'full' ? HD3_H : mode === 'low' ? HD3_LOWW : hd3Cut(l, HD3.cam) ? HD3_CUT : HD3_H) - (outer ? 0 : (l.h ? .2 : .5));
+    const ext = outer ? HD_OUTER/2 : HD_WALL/2, t = l.th / 2;
+    const solid = (u0, u1, y0, y1, col) => { if(u1 - u0 < .5 || y1 - y0 < .5) return;
+      if(l.h) hd3Box(m, I, u0, u1, l.c - t, l.c + t, y0, y1, col || K.wall, col ? null : K.wallTop);
+      else hd3Box(m, I, l.c - t, l.c + t, u0, u1, y0, y1, col || K.wall, col ? null : K.wallTop); };
+    const pane = (u0, u1, y0, y1, th) => { if(u1 - u0 < .5 || y1 - y0 < .5) return;
+      if(l.h) hd3Box(glass, I, u0, u1, l.c - th, l.c + th, y0, y1, K.glass); else hd3Box(glass, I, l.c - th, l.c + th, u0, u1, y0, y1, K.glass); };
+    const frame = (u0, u1, y0, y1) => solid(u0, u1, y0, y1, K.frame);
+    const ops = P.opens.filter(o => ((o.rot || 0) % 180 === 0) === !!l.h && Math.abs((l.h ? o.y : o.x) - l.c) < 1 && (l.h ? o.x : o.y) >= l.a - 1 && (l.h ? o.x : o.y) <= l.b + 1)
+      .sort((p, q) => (l.h ? p.x - q.x : p.y - q.y));
+    let cur = l.a - ext;
+    ops.forEach(o => {
+      const at = l.h ? o.x : o.y, s0 = at - o.len/2, s1 = at + o.len/2;
+      solid(cur, s0, 0, hw);
+      if(o.kind === 'door'){
+        if(hw > HD3_DOOR) solid(s0, s1, HD3_DOOR, hw);
+        const hx = o.flip ? o.len/2 : -o.len/2, th = o.th || HD_WALL, T = {x: o.x, z: o.y, rot: o.rot || 0};
+        hd3Box(m, T, o.flip ? hx - 4 : hx, o.flip ? hx : hx + 4, th/2, th/2 + o.len - 3, 1, HD3_DOOR - 3, K.door);
+      } else if(o.kind === 'window'){
+        solid(s0, s1, 0, Math.min(HD3_SILL, hw));
+        if(hw > HD3_HEAD) solid(s0, s1, HD3_HEAD, hw);
+        if(hw > HD3_SILL + 5){
+          const top = Math.min(HD3_HEAD, hw);
+          pane(s0, s1, HD3_SILL, top, 1);
+          frame(s0, s0 + 4, HD3_SILL, top); frame(s1 - 4, s1, HD3_SILL, top); frame(s0, s1, HD3_SILL, HD3_SILL + 4);
+          if(top >= HD3_HEAD) frame(s0, s1, top - 4, top);
+          if(o.len > 100) frame(at - 2, at + 2, HD3_SILL, top);
+        }
+      } else {
+        if(hw > 215) solid(s0, s1, 215, hw);
+        const top = Math.min(215, hw);
+        pane(s0, at + 2, 0, top, 1); frame(s0, s0 + 4, 0, top); frame(s1 - 4, s1, 0, top); frame(at - 2, at + 2, 0, top);
+        pane(at - 2, s1, 0, top, 1);
+      }
+      cur = s1;
+    });
+    solid(cur, l.b + ext, 0, hw);
+  });
+}
+
+/* ---------- floors: procedural textures ---------- */
+function hd3Textures(gl){
+  const mk = (n, draw) => { const c = document.createElement('canvas'); c.width = c.height = n; draw(c.getContext('2d'), n); return c; };
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const wood = mk(512, (x, n) => {   // 160 x 160 cm: eight 20 cm boards, staggered lengths
+    const pw = n / 8;
+    for(let i = 0; i < 8; i++){
+      let y = -rnd() * n;
+      while(y < n){
+        const len = n * (.35 + rnd() * .45), tone = 0.93 + rnd() * .12;
+        const base = [218 * tone, 189 * tone, 150 * tone];
+        x.fillStyle = `rgb(${base.map(Math.round).join(',')})`; x.fillRect(i * pw, y, pw, len);
+        for(let g = 0; g < 9; g++){ x.strokeStyle = `rgba(120,85,50,${.04 + rnd() * .06})`; x.lineWidth = .6 + rnd(); x.beginPath(); const gx = i * pw + rnd() * pw; x.moveTo(gx, y); x.bezierCurveTo(gx + (rnd() - .5) * 8, y + len * .3, gx + (rnd() - .5) * 8, y + len * .7, gx + (rnd() - .5) * 6, y + len); x.stroke(); }
+        x.fillStyle = 'rgba(90,60,35,.22)'; x.fillRect(i * pw, y, pw, 1);
+        if(y + len > n){ x.fillStyle = `rgb(${base.map(Math.round).join(',')})`; x.fillRect(i * pw, y - n, pw, len); }
+        y += len;
+      }
+      x.fillStyle = 'rgba(90,60,35,.22)'; x.fillRect(i * pw, 0, 1, n);
+    }
+  });
+  const tile = mk(512, (x, n) => {   // 120 x 120 cm: four 60 cm tiles
+    x.fillStyle = '#d8d6d1'; x.fillRect(0, 0, n, n);
+    for(let i = 0; i < 2; i++) for(let j = 0; j < 2; j++){ const t = 0.95 + rnd() * .08; x.fillStyle = `rgb(${Math.round(216*t)},${Math.round(214*t)},${Math.round(209*t)})`; x.fillRect(i*n/2 + 2, j*n/2 + 2, n/2 - 4, n/2 - 4); }
+    const im = x.getImageData(0, 0, n, n); for(let i = 0; i < im.data.length; i += 4){ const v = (rnd() - .5) * 8; im.data[i] += v; im.data[i+1] += v; im.data[i+2] += v; } x.putImageData(im, 0, 0);
+  });
+  const deck = mk(256, (x, n) => {
+    for(let i = 0; i < 8; i++){ const t = .9 + rnd() * .15; x.fillStyle = `rgb(${Math.round(150*t)},${Math.round(128*t)},${Math.round(104*t)})`; x.fillRect(0, i * n/8, n, n/8); x.fillStyle = 'rgba(40,30,20,.45)'; x.fillRect(0, i * n/8, n, 2); }
+  });
+  const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+  const up = c => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c); gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    if(aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    return t;
+  };
+  return {wood: up(wood), tile: up(tile), deck: up(deck), size: {wood: 160, tile: 120, deck: 112}};
+}
+function hd3Floor(m, x0, z0, x1, z1, y, tile){
+  hd3Quad(m, [x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0], [0, 1, 0], [1, 1, 1],
+    [[x0 / tile, z0 / tile], [x0 / tile, z1 / tile], [x1 / tile, z1 / tile], [x1 / tile, z0 / tile]]);
+}
+
+/* ---------- the whole scene ---------- */
+function hd3Scene(P){
+  const solid = hd3Mesh(), glass = hd3Mesh(), fl = {wood: hd3Mesh(), tile: hd3Mesh(), deck: hd3Mesh()}, K = HD3C, S = HD3.tex.size;
+  const o = HD_OUTER/2, I = {x: 0, z: 0, rot: 0};
+  // ground and slab
+  hd3Quad(solid, [-4000, -18, -4000], [-4000, -18, P.H + 4000], [P.W + 4000, -18, P.H + 4000], [P.W + 4000, -18, -4000], [0, 1, 0], K.ground);
+  hd3Box(solid, I, -o - 6, P.W + o + 6, -o - 6, P.H + o + 6, -18, -1.5, K.slab);
+  // floors: the whole outline in oak, each room in its own finish on top
+  hd3Floor(fl.wood, 0, 0, P.W, P.H, 0, S.wood);
+  P.rooms.forEach(r => {
+    const f = r.kind === 'kitchen' || r.kind === 'bath' ? 'tile' : r.kind === 'balcony' ? 'deck' : 'wood';
+    if(f !== 'wood') hd3Floor(fl[f], r.x, r.y, r.x + r.w, r.y + r.h, .25, S[f]);
+  });
+  hd3Walls(solid, glass, P, HD3.walls, HD3.cam.yaw);
+  P.items.forEach(it => hd3Item(solid, it, glass));
+  return {solid, glass, fl};
+}
+
+/* ---------- GL plumbing ---------- */
+const HD3_VS = `#version 300 es
+in vec3 aP; in vec3 aN; in vec3 aC; in vec2 aU;
+uniform mat4 uVP; uniform mat4 uL;
+out vec3 vN; out vec3 vC; out vec2 vU; out vec4 vL;
+void main(){ vN = aN; vC = aC; vU = aU; vL = uL * vec4(aP, 1.0); gl_Position = uVP * vec4(aP, 1.0); }`;
+const HD3_FS = `#version 300 es
+precision highp float; precision highp sampler2DShadow;
+in vec3 vN; in vec3 vC; in vec2 vU; in vec4 vL;
+uniform sampler2DShadow uS; uniform sampler2D uT; uniform float uTex; uniform vec3 uSun; uniform float uA; uniform float uTx;
+out vec4 o;
+float sh(float nl){
+  vec3 p = vL.xyz / vL.w * 0.5 + 0.5;
+  if(p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0 || p.z > 1.0) return 1.0;
+  float b = 0.0006 + 0.0025 * (1.0 - nl), s = 0.0;
+  for(int x = -2; x <= 2; x++) for(int y = -2; y <= 2; y++) s += texture(uS, vec3(p.xy + vec2(x, y) * uTx * 1.4, p.z - b));
+  return s / 25.0;
+}
+void main(){
+  vec3 n = normalize(vN);
+  vec3 base = vC; if(uTex > 0.5) base *= texture(uT, vU).rgb;
+  float nl = max(dot(n, uSun), 0.0);
+  float s = nl > 0.0 ? sh(nl) : 0.0;
+  vec3 sky = mix(vec3(0.70, 0.67, 0.63), vec3(1.0, 0.99, 0.97), 0.5 + 0.5 * n.y);
+  vec3 c = base * (sky * 0.70 + vec3(1.0, 0.95, 0.85) * nl * s * 0.48);
+  o = vec4(c, uA);
+}`;
+const HD3_SVS = `#version 300 es
+in vec3 aP; uniform mat4 uL; void main(){ gl_Position = uL * vec4(aP, 1.0); }`;
+const HD3_SFS = `#version 300 es
+precision mediump float; void main(){}`;
+function hd3Prog(gl, vs, fs){
+  const sh = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src); gl.compileShader(s); if(!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+  const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+  ['aP', 'aN', 'aC', 'aU'].forEach((a, i) => gl.bindAttribLocation(p, i, a));
+  gl.linkProgram(p); if(!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  return p;
+}
+function hd3Upload(gl, m, old){
+  if(old) gl.deleteVertexArray(old.vao), old.bufs.forEach(b => gl.deleteBuffer(b));
+  const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+  const bufs = [[m.p, 3], [m.n, 3], [m.c, 3], [m.u, 2]].map(([arr, sz], i) => {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(arr), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(i); gl.vertexAttribPointer(i, sz, gl.FLOAT, false, 0, 0); return b;
+  });
+  gl.bindVertexArray(null);
+  return {vao, bufs, n: m.p.length / 3};
+}
+function hd3Init(canvas){
+  const gl = canvas.getContext('webgl2', {antialias: true, preserveDrawingBuffer: true, alpha: false});
+  if(!gl) return null;
+  const R = {gl, prog: hd3Prog(gl, HD3_VS, HD3_FS), sprog: hd3Prog(gl, HD3_SVS, HD3_SFS), meshes: {}, size: 2048};
+  R.loc = n => gl.getUniformLocation(R.prog, n);
+  // shadow map: depth texture with hardware comparison (gives free 2x2 filtering on top of the 5x5 PCF)
+  R.depth = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, R.depth);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT24, R.size, R.size, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_MODE, gl.COMPARE_REF_TO_TEXTURE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
+  R.fbo = gl.createFramebuffer(); gl.bindFramebuffer(gl.FRAMEBUFFER, R.fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, R.depth, 0);
+  gl.drawBuffers([gl.NONE]); gl.readBuffer(gl.NONE);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return R;
+}
+
+/* ---------- camera ---------- */
+function hd3View(){
+  const c = HD3.cam, cv = HD3.canvas, a = cv.clientWidth / Math.max(1, cv.clientHeight);
+  const y = c.yaw * Math.PI / 180, p = c.pitch * Math.PI / 180, D = 6000;
+  const eye = [c.tx + D * Math.cos(p) * Math.sin(y), c.ty + D * Math.sin(p), c.tz + D * Math.cos(p) * Math.cos(y)];
+  const V = hd3M.look(eye, [c.tx, c.ty, c.tz], [0, 1, 0]);
+  return hd3M.mul(hd3M.ortho(-c.zoom * a, c.zoom * a, -c.zoom, c.zoom, 1, 14000), V);
+}
+function hd3Fit(){
+  const P = hdP(); if(!P || !HD3) return;
+  const c = HD3.cam, b = hdBounds(P);
+  c.tx = (b.x1 + b.x2) / 2; c.tz = (b.y1 + b.y2) / 2; c.ty = 60; c.zoom = 1;
+  const V = hd3View(), cv = HD3.canvas, a = cv.clientWidth / Math.max(1, cv.clientHeight);
+  let mx = 0, my = 0;
+  for(const X of [b.x1, b.x2]) for(const Z of [b.y1, b.y2]) for(const Y of [-18, HD3_H]){ const q = hd3M.xf(V, [X, Y, Z]); mx = Math.max(mx, Math.abs(q[0])); my = Math.max(my, Math.abs(q[1])); }
+  c.zoom = Math.max(my, mx / a) * 1.06;
+  hd3Draw();
+}
+
+/* ---------- build + draw ---------- */
+function hd3Key(P){ return JSON.stringify([P.W, P.H, P.rooms, P.items, P.opens, hd3CutKey(P)]); }
+function hd3Sync(force){
+  if(!HD3 || !HD || !HD.mode3d) return;
+  const P = hdP(); if(!P) return;
+  const key = hd3Key(P);
+  if(key !== HD3.key || force){
+    HD3.key = key;
+    const sc = hd3Scene(P), gl = HD3.gl, M = HD3.R.meshes;
+    M.solid = hd3Upload(gl, sc.solid, M.solid); M.glass = hd3Upload(gl, sc.glass, M.glass);
+    for(const k of ['wood', 'tile', 'deck']) M[k] = hd3Upload(gl, sc.fl[k], M[k]);
+    HD3.shadowDirty = true;
+  }
+  hd3Draw();
+}
+function hd3Draw(){
+  if(!HD3 || HD3.raf) return;
+  HD3.raf = requestAnimationFrame(hd3Frame);
+}
+function hd3Frame(){
+  HD3.raf = 0;
+  const cv = HD3.canvas; if(!cv || !document.body.contains(cv) || !HD3.R.meshes.solid) return;
+  const gl = HD3.gl, R = HD3.R, P = hdP(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+  if(!W || !H) return;
+  if(cv.width !== W || cv.height !== H){ cv.width = W; cv.height = H; }
+  // sun: light space covering the whole plan
+  const az = HD3.sun.az * Math.PI / 180, el = HD3.sun.el * Math.PI / 180, sun = [Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)];
+  const cx = P.W / 2, cz = P.H / 2, rad = Math.hypot(P.W, P.H) / 2 + 350;
+  const LVP = hd3M.mul(hd3M.ortho(-rad, rad, -rad, rad, 1, 12000), hd3M.look([cx + sun[0] * 5000, sun[1] * 5000, cz + sun[2] * 5000], [cx, 0, cz], [0, 1, 0]));
+  gl.enable(gl.DEPTH_TEST);
+  if(HD3.shadowDirty){
+    HD3.shadowDirty = false;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, R.fbo); gl.viewport(0, 0, R.size, R.size); gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.useProgram(R.sprog); gl.uniformMatrix4fv(gl.getUniformLocation(R.sprog, 'uL'), false, LVP);
+    gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(1.5, 3);
+    gl.bindVertexArray(R.meshes.solid.vao); gl.drawArrays(gl.TRIANGLES, 0, R.meshes.solid.n);
+    gl.disable(gl.POLYGON_OFFSET_FILL);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  gl.viewport(0, 0, W, H);
+  gl.clearColor(.906, .886, .855, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(R.prog);
+  const VP = hd3View();
+  gl.uniformMatrix4fv(R.loc('uVP'), false, VP); gl.uniformMatrix4fv(R.loc('uL'), false, LVP);
+  gl.uniform3fv(R.loc('uSun'), sun); gl.uniform1f(R.loc('uTx'), 1 / R.size);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, R.depth); gl.uniform1i(R.loc('uS'), 0);
+  gl.uniform1i(R.loc('uT'), 1); gl.uniform1f(R.loc('uA'), 1);
+  const draw = (mesh, tex) => { if(!mesh || !mesh.n) return; gl.uniform1f(R.loc('uTex'), tex ? 1 : 0); if(tex){ gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tex); } gl.bindVertexArray(mesh.vao); gl.drawArrays(gl.TRIANGLES, 0, mesh.n); };
+  draw(R.meshes.wood, HD3.tex.wood); draw(R.meshes.tile, HD3.tex.tile); draw(R.meshes.deck, HD3.tex.deck);
+  draw(R.meshes.solid);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); gl.depthMask(false);
+  gl.uniform1f(R.loc('uA'), .32); draw(R.meshes.glass);
+  gl.depthMask(true); gl.disable(gl.BLEND);
+  gl.bindVertexArray(null);
+  hd3Labels(VP);
+}
+/* room names float over each floor, kept in screen space so they stay crisp */
+function hd3Labels(VP){
+  const box = document.getElementById('hd3Labels'), P = hdP(); if(!box || !P) return;
+  if(!HD3.labels){ box.innerHTML = ''; return; }
+  const cv = HD3.canvas, w = cv.clientWidth, h = cv.clientHeight;
+  box.innerHTML = P.rooms.map(r => {
+    const q = hd3M.xf(VP, [r.x + r.w/2, 2, r.y + r.h/2]);
+    return `<span style="left:${((q[0] + 1) / 2 * w).toFixed(1)}px;top:${((1 - q[1]) / 2 * h).toFixed(1)}px">${esc(r.name)}<small>${hdArea(r.w, r.h)} m²</small></span>`;
+  }).join('');
+}
+
+/* ---------- interaction: orbit, pan, zoom ---------- */
+function hd3Bind(cv){
+  const ptrs = new Map(); let g = null;
+  const start = () => {
+    const pts = [...ptrs.values()], c = HD3.cam;
+    g = pts.length >= 2 ? {two: true, d: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), m: {x: (pts[0].x + pts[1].x)/2, y: (pts[0].y + pts[1].y)/2}, cam: {...c}}
+                        : {two: false, x: pts[0].x, y: pts[0].y, pan: pts[0].pan, cam: {...c}};
+  };
+  cv.addEventListener('pointerdown', e => {
+    try{ cv.setPointerCapture(e.pointerId); }catch(ex){}
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY, pan: e.button === 2 || e.shiftKey || e.button === 1});
+    start();
+  });
+  cv.addEventListener('pointermove', e => {
+    if(!ptrs.has(e.pointerId) || !g) return;
+    ptrs.get(e.pointerId).x = e.clientX; ptrs.get(e.pointerId).y = e.clientY;
+    const c = HD3.cam, pts = [...ptrs.values()], px = 2 * c.zoom / Math.max(1, cv.clientHeight);
+    if(g.two && pts.length >= 2){
+      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y), m = {x: (pts[0].x + pts[1].x)/2, y: (pts[0].y + pts[1].y)/2};
+      c.zoom = Math.min(8000, Math.max(80, g.cam.zoom * g.d / Math.max(1, d)));
+      hd3Pan(g.cam, m.x - g.m.x, m.y - g.m.y, 2 * g.cam.zoom / Math.max(1, cv.clientHeight));
+    } else if(!g.two){
+      const dx = e.clientX - g.x, dy = e.clientY - g.y;
+      if(g.pan) hd3Pan(g.cam, dx, dy, px);
+      else { c.yaw = g.cam.yaw - dx * .35; c.pitch = Math.min(89, Math.max(12, g.cam.pitch + dy * .25)); }
+    }
+    hd3Sync();
+  });
+  const up = e => { ptrs.delete(e.pointerId); if(ptrs.size) start(); else g = null; };
+  cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('dblclick', () => hd3Fit());
+  cv.addEventListener('wheel', e => {
+    e.preventDefault();
+    const c = HD3.cam;
+    if(!e.ctrlKey && !e.metaKey && Math.abs(e.deltaX) > Math.abs(e.deltaY) * 1.5){ c.yaw -= e.deltaX * .2; }   // sideways two-finger swipe turns the model
+    else c.zoom = Math.min(8000, Math.max(80, c.zoom * Math.exp(e.deltaY * (e.ctrlKey ? .01 : .0015))));
+    hd3Sync();
+  }, {passive: false});
+}
+/* move the target in the camera's own right/up directions, so the model follows the finger */
+function hd3Pan(from, dx, dy, px){
+  const c = HD3.cam, y = c.yaw * Math.PI / 180, p = c.pitch * Math.PI / 180;
+  const right = [Math.cos(y), 0, -Math.sin(y)], upv = [-Math.sin(p) * Math.sin(y), Math.cos(p), -Math.sin(p) * Math.cos(y)];
+  c.tx = from.tx - (right[0] * dx - upv[0] * dy) * px; c.ty = from.ty - (right[1] * dx - upv[1] * dy) * px; c.tz = from.tz - (right[2] * dx - upv[2] * dy) * px;
+}
+function hd3Turn(deg){
+  if(!HD3) return;
+  const c = HD3.cam, from = c.yaw, to = from + deg, t0 = performance.now();
+  const step = t => { const k = Math.min(1, (t - t0) / 350), e = k < .5 ? 2*k*k : 1 - (-2*k + 2) ** 2 / 2; c.yaw = from + (to - from) * e; hd3Sync(); if(k < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function hd3Zoom(f){ if(!HD3) return; HD3.cam.zoom = Math.min(8000, Math.max(80, HD3.cam.zoom / f)); hd3Sync(); }
+
+/* ---------- switching 2D <-> 3D ---------- */
+function hd3Toggle(on){
+  HD.mode3d = on === undefined ? !HD.mode3d : on;
+  const svg = document.getElementById('hdSvg'), cv = document.getElementById('hd3Canvas');
+  if(!svg || !cv) return;
+  if(HD.mode3d){
+    if(!HD3 || HD3.canvas !== cv){
+      let R = null;
+      try{ R = hd3Init(cv); }catch(ex){ console.error(ex); }
+      if(!R){ HD.mode3d = false; toast('3D needs WebGL 2, which this browser has turned off'); return; }
+      const keep = HD3 && HD3.cam;
+      HD3 = {R, gl: R.gl, canvas: cv, tex: hd3Textures(R.gl), cam: keep ? {...keep} : {yaw: 32, pitch: 48, zoom: 600, tx: 0, ty: 60, tz: 0},
+             sun: HD3 ? HD3.sun : {az: 72, el: 46}, walls: HD3 ? HD3.walls : 'cut', labels: HD3 ? HD3.labels : true, key: null};
+      hd3Bind(cv);
+      HD3.fitPending = true;                     // a new canvas (first open, or another plan): frame the whole plan
+    }
+    HD.sel = null; HD.tool = null; HD.measure = null;
+  }
+  document.querySelector('.hd-stage')?.classList.toggle('is3d', HD.mode3d);
+  hdBarState(); hdInspect();
+  if(HD.mode3d){
+    HD3.key = null;
+    requestAnimationFrame(() => { hd3Sync(); if(HD3.fitPending){ HD3.fitPending = false; hd3Fit(); } });
+  } else hdPaint();
+}
+function hd3Set(k, v){
+  if(!HD3) return;
+  if(k === 'walls'){ HD3.walls = v; document.querySelectorAll('.hd3-walls button').forEach(b => b.classList.toggle('on', b.dataset.w === v)); }
+  if(k === 'sun'){ HD3.sun.az = +v; HD3.shadowDirty = true; }
+  if(k === 'labels'){ HD3.labels = !HD3.labels; hdInspect(); }
+  hd3Sync();
+}
+/* export: the 3D canvas plus the room names, as a PNG */
+function hd3Export(){
+  if(!HD3) return;
+  hd3Frame();
+  const cv = HD3.canvas, out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height;
+  const x = out.getContext('2d'); x.drawImage(cv, 0, 0);
+  const dpr = cv.width / Math.max(1, cv.clientWidth);
+  if(HD3.labels) document.querySelectorAll('#hd3Labels span').forEach(s => {
+    const lx = parseFloat(s.style.left) * dpr, ly = parseFloat(s.style.top) * dpr;
+    x.textAlign = 'center'; x.fillStyle = '#2a2927';
+    x.font = `600 ${11 * dpr}px "Space Grotesk", system-ui, sans-serif`; x.fillText(s.firstChild.textContent.toUpperCase(), lx, ly);
+    x.font = `${10 * dpr}px "Space Grotesk", system-ui, sans-serif`; x.fillStyle = '#5b5852'; x.fillText(s.querySelector('small').textContent, lx, ly + 14 * dpr);
+  });
+  out.toBlob(bl => {
+    if(!bl) return toast('Could not render the image');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(bl);
+    a.download = ((HD.cur.name || '').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim() || 'plan') + ' 3D.png';
+    a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  });
 }
 </script>
 </body>
