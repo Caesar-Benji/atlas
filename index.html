@@ -95,7 +95,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-top .hub-date::before{content:'·';margin:0 8px;opacity:.6}
 .hub-meta{display:flex;align-items:center;gap:10px}
 /* the greeting sits beside the figure, in the free upper-right of the orbit */
-.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--figh) * .40);white-space:nowrap;animation:tileIn .6s ease .1s both}
+.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--R) * .4067 - 124px);white-space:nowrap;animation:tileIn .6s ease .1s both}
 .hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .hub-status{color:var(--muted);font-size:14px;margin-top:9px;min-height:18px;display:flex;align-items:center;gap:7px}
 .hub-status svg{width:15px;height:15px;flex:none}
@@ -121,6 +121,7 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 .hub-col.left .tile:nth-child(4){animation-delay:.19s}
 .hub-col.right .tile:nth-child(1){animation-delay:.12s}
 .hub-col.right .tile:nth-child(2){animation-delay:.17s}
+.hub-col.right .tile:nth-child(3){animation-delay:.22s}
 /* the figure is taller than the disc: head above its rim, body fading out below it */
 /* pointer-events:none — the figure's box overlaps the tiles beside it; clicks must fall through to them */
 .hub-figure{pointer-events:none;position:absolute;left:50%;top:calc(50% - var(--figh) * .63);transform:translateX(-50%);display:flex;align-items:flex-start;justify-content:center;width:calc(var(--figh) * 1.02);height:calc(var(--figh) * 1.36)}
@@ -446,6 +447,79 @@ bdi{unicode-bidi:isolate}
   .insight{grid-template-columns:28px 1fr;gap:10px}
   .insight .ico{width:28px;height:28px}.insight .ico svg{width:15px;height:15px}
 }
+
+/* ---------- House: floor-plan designer ---------- */
+main.wide{max-width:1500px}
+.hd-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.hd-bar select{width:auto;max-width:220px;padding:8px 10px;font-weight:600}
+.hd-sep{width:1px;height:22px;background:var(--border);margin:0 4px}
+.hd-ib{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:38px;height:38px;padding:0 9px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--accent2);font-size:13px;font-weight:600}
+.hd-ib svg{width:17px;height:17px}
+.hd-ib:hover{border-color:var(--accent);color:var(--text)}
+.hd-ib.on{background:var(--grad);border-color:var(--accent);color:var(--on-ink)}
+.hd-ib:disabled{opacity:.4;pointer-events:none}
+.hd-add-m{display:none}
+.hd-saved{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.hd-saved.bad{color:var(--red);font-weight:600}
+.hd-wrap{display:grid;grid-template-columns:236px minmax(0,1fr) 270px;gap:14px;align-items:start}
+.hd-side{padding:12px;position:sticky;top:70px;max-height:calc(100vh - 90px);overflow-y:auto}
+.hd-cats{flex-wrap:wrap;margin-bottom:10px}
+.hd-cats button{padding:5px 10px;font-size:12px}
+.hd-lib-list{display:flex;flex-direction:column;gap:4px}
+.hd-lib-it{display:flex;align-items:center;gap:10px;background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 7px;text-align:left;color:var(--text);transition:background .12s,border-color .12s}
+.hd-lib-it:hover{background:var(--surface2);border-color:var(--border)}
+.hd-lib-it .pv{flex:none;width:46px;height:38px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:8px}
+.hd-lib-it .pv svg{width:38px;height:30px}
+.hd-lib-it .nm{display:flex;flex-direction:column;font-size:13px;font-weight:600;line-height:1.25}
+.hd-lib-it small{font-size:11px;color:var(--muted);font-weight:500}
+.sheet .hd-lib-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.hd-stage{position:relative;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg);height:calc(100vh - 230px);min-height:460px}
+#hdSvg{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+#hdSvg:active{cursor:grabbing}
+#hdSvg.measuring{cursor:crosshair}
+#hdSvg .hd-it,#hdSvg .hd-op{cursor:move}
+#hdSvg [data-t=room]{cursor:pointer}
+.hd-tip{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--accent);color:var(--on-ink);font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .15s}
+.hd-tip.show{opacity:1}
+.hd-insp{padding:16px}
+.hd-form{display:flex;flex-direction:column;gap:10px}
+.hd-form input,.hd-form select{padding:8px 10px}
+.hd-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hd-2 .btn-ghost{width:100%}
+.hd-rot{display:grid;grid-template-columns:38px 1fr 38px;gap:6px}
+.hd-big{margin-top:12px;font-size:14px;font-weight:600}
+.hd-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:14px 0 10px}
+.hd-stats div{background:var(--surface2);border-radius:10px;padding:9px 8px;display:flex;flex-direction:column}
+.hd-stats b{font-size:17px}
+.hd-stats span{font-size:11px;color:var(--muted)}
+.hd-warn{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.hd-rooms{display:flex;flex-direction:column;gap:2px;margin:6px 0 4px}
+.hd-rooms button{display:flex;justify-content:space-between;align-items:baseline;gap:8px;background:transparent;border:none;border-bottom:1px solid var(--border);padding:8px 2px;text-align:left;color:var(--text);font-size:13px;font-weight:600}
+.hd-rooms button:hover{color:var(--accent)}
+.hd-rooms small{color:var(--muted);font-weight:500;font-size:11.5px;white-space:nowrap}
+.hd-hint{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 0}
+.hd-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.hd-acts .btn-ghost{display:inline-flex;align-items:center;gap:6px}
+.hd-acts svg{width:14px;height:14px}
+.btn-ghost.danger:hover{color:var(--red);border-color:var(--red)}
+.hd-start{max-width:640px}
+.hd-start p{margin:-4px 0 14px}
+@media(max-width:1180px){
+  .hd-wrap{grid-template-columns:210px minmax(0,1fr)}
+  .hd-insp{grid-column:1 / -1}
+}
+@media(max-width:900px){
+  .hd-wrap{grid-template-columns:minmax(0,1fr)}
+  .hd-side{display:none}
+  .hd-add-m{display:inline-flex}
+  .hd-stage{height:62vh;min-height:340px}
+}
+@media(max-width:560px){
+  .hd-bar select{max-width:none;flex:1 1 140px}
+  .hd-sep{display:none}
+  .hd-saved{flex-basis:100%;margin-left:0;order:9}
+  .hd-ib{min-width:36px;height:36px;padding:0 8px}
+}
 </style>
 </head>
 <body>
@@ -514,12 +588,13 @@ bdi{unicode-bidi:isolate}
              onerror="this.remove()">
       </div>
       <div class="hub-col right">
+        <button class="tile" data-tab="house" style="--tx:0.9135;--ty:-0.4067"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><b>House</b></button>
         <button class="tile" data-tab="goals" style="--tx:0.9962;--ty:0.0872"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
         <button class="tile" data-tab="chores" style="--tx:0.8387;--ty:0.5446"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v38</span></div>
+    <div class="hub-foot"><span id="ver">v39</span></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -533,6 +608,7 @@ bdi{unicode-bidi:isolate}
         <button class="tab" data-tab="rent">Rent</button>
         <button class="tab" data-tab="goals">Goals</button>
         <button class="tab" data-tab="chores">Chores</button>
+        <button class="tab" data-tab="house">House</button>
       </nav>
       <button class="icon-btn" id="signOutBtn" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
     </header>
@@ -584,7 +660,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v38');
+console.log('Atlas v39');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -697,6 +773,7 @@ function go(tab){
   // bumping the token here cancels any section render still awaiting Supabase
   if(home){ renderStart(); renderHub(); return; }
   document.querySelectorAll('.tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('main').classList.toggle('wide', tab === 'house');
   views[tab]();
 }
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
@@ -2816,6 +2893,873 @@ function drawMeterCharts(){
         scales: {y: {beginAtZero: true}}}
     });
   });
+}
+/* ================= HOUSE (top-down floor-plan designer) =================
+   One plan = one row in floor_plans: {name, data:{W,H,rooms[],items[],opens[]}}. All units are cm.
+   - apartment: the outer W x H rectangle at (0,0), drawn with the thick outer wall
+   - rooms:  {id,kind,name,x,y,w,h}     top-left + size, never rotated
+   - items:  {id,type,name,x,y,w,d,rot} CENTRE + size; local +y is the item's front
+   - opens:  {id,kind,x,y,len,rot,flip,th} doors / windows / sliders, centred on a wall,
+             local x runs along the wall, a door swings into local +y
+   The SVG keeps one persistent <svg id="hdSvg">; only its inner <g> is repainted, so pointer
+   capture survives every repaint during a drag. Stroke widths for drawn lines use
+   vector-effect:non-scaling-stroke so they stay crisp at any zoom; walls are real thickness. */
+const HD_WALL = 12, HD_OUTER = 22, HD_SNAP = 5;
+const HD_INK = '#2b2a27', HD_FLOOR = '#fbfaf8', HD_MUTED = '#78756e', HD_RED = '#9b463a', HD_AMBER = '#8a6b22';
+const HD_KINDS = {
+  living:  {label:'Living room', fill:HD_FLOOR},
+  bedroom: {label:'Bedroom',     fill:HD_FLOOR},
+  kitchen: {label:'Kitchen',     fill:'url(#hdTile)'},
+  bath:    {label:'Bathroom',    fill:'url(#hdTile)'},
+  office:  {label:'Office',      fill:HD_FLOOR},
+  hall:    {label:'Hallway',     fill:'#f6f5f2'},
+  storage: {label:'Storage',     fill:'#f1efeb'},
+  balcony: {label:'Balcony',     fill:'url(#hdDeck)'},
+};
+// [type, name, width, depth]
+const HD_LIB = [
+  {cat:'Structure', items:[['room-living','Living room',450,400],['room-bedroom','Bedroom',350,320],['room-kitchen','Kitchen',300,250],
+    ['room-bath','Bathroom',200,220],['room-office','Office',280,260],['room-hall','Hallway',300,120],['room-storage','Storage',150,120],
+    ['room-balcony','Balcony',300,150],['open-door','Door',80,0],['open-window','Window',120,0],['open-slider','Sliding door',200,0]]},
+  {cat:'Living', items:[['sofa','Sofa, 3-seat',220,95],['sofa','Sofa, 2-seat',160,90],['lsofa','Corner sofa',270,170],['armchair','Armchair',85,85],
+    ['table','Coffee table',110,60],['round','Side table',50,50],['tvunit','TV unit',180,45],['shelf','Bookshelf',90,35],['rug','Rug',200,140],['plant','Plant',45,45]]},
+  {cat:'Bedroom', items:[['bed','Double bed',160,200],['bed','Queen bed',180,200],['bed','Single bed',90,200],['nightstand','Nightstand',50,40],
+    ['wardrobe','Wardrobe',200,60],['dresser','Dresser',120,50],['desk','Desk',140,70],['ochair','Office chair',60,60],['rug','Bedside rug',160,100]]},
+  {cat:'Kitchen', items:[['counter','Counter',240,60],['sink','Sink unit',80,60],['stove','Stove',60,60],['fridge','Fridge',70,70],['washer','Dishwasher',60,60],
+    ['counter','Island',180,90],['table','Dining table',160,90],['round','Round table',110,110],['chair','Chair',45,50],['stool','Bar stool',40,40]]},
+  {cat:'Bath', items:[['toilet','Toilet',40,70],['basin','Basin',60,45],['shower','Shower',90,90],['tub','Bathtub',170,75],['washer','Washing machine',60,60],['shelf','Cabinet',60,30]]},
+  {cat:'Other', items:[['box','Box',100,100],['desk','Gaming desk',160,80],['shelf','Shoe rack',80,30],['bike','Bicycle',175,60],['box','Storage boxes',80,60]]},
+];
+const hdUid = () => Math.random().toString(36).slice(2, 10);
+const hdR = n => Math.round(n / HD_SNAP) * HD_SNAP;
+const hdM = cm => (cm / 100).toLocaleString('en-GB', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const hdArea = (w, h) => (w * h / 1e4).toLocaleString('en-GB', {maximumFractionDigits: 1});
+const hdNum = v => { const n = parseFloat(v); return isFinite(n) ? n : null; };
+let HD = null;   // {plans, cur, sel:{t,id}, view:{x,y,s}, undo, redo, tool, labels, saveT, status}
+
+/* ---------- item symbols: local coords, centred, front = +y. Returned markup is ink line art. ---------- */
+function hdSym(type, w, d){
+  const L = 'fill="none" stroke="' + HD_INK + '" vector-effect="non-scaling-stroke" stroke-width="1.1"';
+  const F = 'fill="' + HD_FLOOR + '" stroke="' + HD_INK + '" vector-effect="non-scaling-stroke" stroke-width="1.5"';
+  const x0 = -w/2, y0 = -d/2, r = (x, y, ww, hh, rx, a) => `<rect x="${x}" y="${y}" width="${Math.max(ww,0)}" height="${Math.max(hh,0)}" rx="${rx||0}" ${a||L}/>`;
+  const ln = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" ${L}/>`;
+  const ci = (cx, cy, rr, a) => `<circle cx="${cx}" cy="${cy}" r="${rr}" ${a||L}/>`;
+  const base = r(x0, y0, w, d, Math.min(4, w/10, d/10), F);
+  switch(type){
+    case 'bed': {
+      const n = w >= 130 ? 2 : 1, pw = (w - 12 - (n-1)*6) / n, out = [base];
+      for(let i = 0; i < n; i++) out.push(r(x0 + 6 + i*(pw+6), y0 + 7, pw, Math.min(32, d*.16), 6));
+      const by = y0 + Math.min(52, d*.27);
+      out.push(r(x0 + 2, by, w - 4, d - (by - y0) - 2, 3));
+      out.push(`<path d="M${x0+2} ${by+22} L${x0+w*.35} ${by} " ${L}/>`);
+      return out.join('');
+    }
+    case 'sofa': case 'armchair': {
+      const bk = Math.min(24, d*.25), arm = Math.min(18, w*.14), out = [base];
+      out.push(r(x0, y0, w, bk, 3), r(x0, y0, arm, d, 3), r(x0 + w - arm, y0, arm, d, 3));
+      const n = type === 'armchair' ? 1 : w > 190 ? 3 : 2, sw = (w - 2*arm) / n;
+      for(let i = 1; i < n; i++) out.push(ln(x0 + arm + i*sw, y0 + bk, x0 + arm + i*sw, y0 + d - 4));
+      return out.join('');
+    }
+    case 'lsofa': {
+      const dp = Math.min(95, d*.56), cw = Math.min(95, w*.36), bk = 22;
+      const p = `M${x0} ${y0} H${x0+w} V${y0+d} H${x0+w-cw} V${y0+dp} H${x0} Z`;
+      return `<path d="${p}" ${F}/>` + `<path d="M${x0} ${y0+bk} H${x0+w-bk} V${y0+d}" ${L}/>` +
+        ln(x0+w-cw, y0+bk, x0+w-cw, y0+dp) + ln(x0+(w-cw)/2, y0+bk, x0+(w-cw)/2, y0+dp) + r(x0, y0, 16, dp, 3);
+    }
+    case 'table': case 'desk': {
+      const out = [base, r(x0+4, y0+4, w-8, d-8, 2)];
+      if(type === 'desk') out.push(r(-Math.min(30, w*.25), y0+6, Math.min(60, w*.5), 5, 1));
+      return out.join('');
+    }
+    case 'round': return `<ellipse cx="0" cy="0" rx="${w/2}" ry="${d/2}" ${F}/><ellipse cx="0" cy="0" rx="${w/2-4}" ry="${d/2-4}" ${L}/>`;
+    case 'stool': return ci(0, 0, Math.min(w, d)/2, F) + ci(0, 0, Math.min(w, d)/2 - 5);
+    case 'chair': return r(x0+3, y0+8, w-6, d-10, 4, F) + r(x0, y0, w, 8, 3, F);
+    case 'ochair': { const rr = Math.min(w, d)/2; return ci(0, 3, rr - 4, F) + `<path d="M${-rr+4} ${-rr*.35} Q0 ${-rr-6} ${rr-4} ${-rr*.35}" ${L} stroke-width="2.2"/>`; }
+    case 'nightstand': case 'dresser': {
+      const out = [base], n = type === 'nightstand' ? 1 : Math.max(2, Math.round(w/45));
+      for(let i = 1; i < n; i++) out.push(ln(x0 + i*w/n, y0+3, x0 + i*w/n, y0+d-3));
+      out.push(ln(x0+3, y0+d-6, x0+w-3, y0+d-6));
+      return out.join('');
+    }
+    case 'wardrobe': {
+      const out = [base], n = Math.max(2, Math.round(w/50));
+      for(let i = 1; i < n; i++) out.push(ln(x0 + i*w/n, y0+3, x0 + i*w/n, y0+d-3));
+      out.push(ln(x0+3, y0+d-4, x0+w-3, y0+d-4), ln(x0+4, y0+d*.4, x0+w-4, y0+d*.4));
+      return out.join('');
+    }
+    case 'tvunit': return base + r(-w*.32, y0+4, w*.64, 5, 1, F) + ln(x0+w/3, y0+12, x0+w/3, y0+d-3) + ln(x0+2*w/3, y0+12, x0+2*w/3, y0+d-3);
+    case 'shelf': { const out = [base], n = Math.max(2, Math.round(w/30)); for(let i = 1; i < n; i++) out.push(ln(x0 + i*w/n, y0+2, x0 + i*w/n, y0+d-2)); return out.join(''); }
+    case 'rug': return r(x0, y0, w, d, 2, `fill="#efede8" stroke="${HD_MUTED}" vector-effect="non-scaling-stroke" stroke-width="1" stroke-dasharray="4 3"`) + r(x0+8, y0+8, w-16, d-16, 1);
+    case 'plant': {
+      const rr = Math.min(w, d)/2, out = [ci(0, 0, rr*.55, F)];
+      for(let i = 0; i < 6; i++){ const a = i*Math.PI/3, ex = Math.cos(a)*rr, ey = Math.sin(a)*rr;
+        out.push(`<path d="M0 0 Q${Math.cos(a+.5)*rr*.7} ${Math.sin(a+.5)*rr*.7} ${ex} ${ey} Q${Math.cos(a-.5)*rr*.7} ${Math.sin(a-.5)*rr*.7} 0 0" ${L}/>`); }
+      return out.join('');
+    }
+    case 'counter': return base + ln(x0+3, y0+d-5, x0+w-3, y0+d-5);
+    case 'sink': return base + r(x0+8, y0+10, w-16, d-18, 7) + ci(0, y0+5, 2.5);
+    case 'stove': { const rx = w/4, ry = d/4, rr = Math.min(w, d)*.15; return base + ci(-rx, -ry, rr) + ci(rx, -ry, rr*.8) + ci(-rx, ry, rr*.8) + ci(rx, ry, rr); }
+    case 'fridge': return base + ln(x0+3, y0+d-7, x0+w-3, y0+d-7) + ln(x0+w*.35, y0+d-7, x0+w*.35, y0+d);
+    case 'washer': return base + ci(0, 2, Math.min(w, d)*.32) + ci(0, 2, Math.min(w, d)*.2) + ln(x0+4, y0+8, x0+w-4, y0+8);
+    case 'toilet': return r(x0, y0, w, Math.min(20, d*.28), 3, F) + `<ellipse cx="0" cy="${y0 + d*.62}" rx="${w*.44}" ry="${d*.36}" ${F}/>` + `<ellipse cx="0" cy="${y0 + d*.64}" rx="${w*.28}" ry="${d*.22}" ${L}/>`;
+    case 'basin': return base + `<ellipse cx="0" cy="3" rx="${w*.36}" ry="${d*.3}" ${L}/>` + ci(0, y0+5, 2);
+    case 'tub': return base + r(x0+7, y0+7, w-14, d-14, Math.min(d, w)*.3) + ci(x0+20, 0, 3);
+    case 'shower': return base + ln(x0+3, y0+3, x0+w-3, y0+d-3) + ln(x0+w-3, y0+3, x0+3, y0+d-3) + ci(0, 0, 4, F);
+    case 'bike': return ci(x0+d*.4, 0, d*.4) + ci(x0+w-d*.4, 0, d*.4) + ln(x0+d*.4, 0, x0+w-d*.4, 0) + ln(x0+w*.6, -d*.45, x0+w*.6, d*.45);
+    default: return base + ln(x0+4, y0+4, x0+w-4, y0+d-4) + ln(x0+w-4, y0+4, x0+4, y0+d-4);
+  }
+}
+function hdPreview(type, w, d){
+  if(type.startsWith('room-')) return `<svg viewBox="0 0 40 30"><rect x="3" y="3" width="34" height="24" fill="#fbfaf8" stroke="${HD_INK}" stroke-width="3"/></svg>`;
+  if(type === 'open-door') return `<svg viewBox="0 0 40 30"><path d="M4 26H36" stroke="${HD_INK}" stroke-width="3"/><path d="M10 26V6M10 6A20 20 0 0 1 30 26" fill="none" stroke="${HD_INK}" stroke-width="1.4"/></svg>`;
+  if(type === 'open-window') return `<svg viewBox="0 0 40 30"><rect x="4" y="11" width="32" height="8" fill="#fbfaf8" stroke="${HD_INK}" stroke-width="1.4"/><path d="M4 15H36" stroke="${HD_INK}" stroke-width="1.2"/></svg>`;
+  if(type === 'open-slider') return `<svg viewBox="0 0 40 30"><path d="M4 13H24M16 17H36" stroke="${HD_INK}" stroke-width="2.4"/><path d="M4 21H36" stroke="${HD_INK}" stroke-width="1"/></svg>`;
+  const m = Math.max(w, d) * .06;
+  return `<svg viewBox="${-w/2-m} ${-d/2-m} ${w+2*m} ${d+2*m}">${hdSym(type, w, d)}</svg>`;
+}
+
+/* ---------- geometry ---------- */
+const hdRot = (x, y, deg) => { const a = deg * Math.PI/180, c = Math.cos(a), s = Math.sin(a); return [x*c - y*s, x*s + y*c]; };
+function hdCorners(o){   // o = {x,y,w,d,rot} centred box
+  return [[-1,-1],[1,-1],[1,1],[-1,1]].map(([sx, sy]) => { const [a, b] = hdRot(sx*o.w/2, sy*o.d/2, o.rot||0); return [o.x + a, o.y + b]; });
+}
+function hdOverlap(A, B, eps = 0.6){   // separating-axis test on two convex quads
+  for(const P of [A, B]) for(let i = 0; i < 4; i++){
+    const [x1, y1] = P[i], [x2, y2] = P[(i+1) % 4], nx = y1 - y2, ny = x2 - x1, len = Math.hypot(nx, ny) || 1;
+    let a1 = Infinity, a2 = -Infinity, b1 = Infinity, b2 = -Infinity;
+    for(const [x, y] of A){ const p = (x*nx + y*ny)/len; a1 = Math.min(a1, p); a2 = Math.max(a2, p); }
+    for(const [x, y] of B){ const p = (x*nx + y*ny)/len; b1 = Math.min(b1, p); b2 = Math.max(b2, p); }
+    if(a2 <= b1 + eps || b2 <= a1 + eps) return false;
+  }
+  return true;
+}
+const hdBoxQ = (x, y, w, h) => [[x, y], [x+w, y], [x+w, y+h], [x, y+h]];
+function hdAABB(o){ const c = hdCorners(o), xs = c.map(p => p[0]), ys = c.map(p => p[1]);
+  return {x1: Math.min(...xs), y1: Math.min(...ys), x2: Math.max(...xs), y2: Math.max(...ys)}; }
+/* every wall as a segment: apartment outline (thick) + each room's four edges */
+function hdWalls(P){
+  const segs = [], add = (x, y, w, h, th, outer) => {
+    segs.push({h:1, c:y, a:x, b:x+w, th, outer}, {h:1, c:y+h, a:x, b:x+w, th, outer},
+              {h:0, c:x, a:y, b:y+h, th, outer}, {h:0, c:x+w, a:y, b:y+h, th, outer}); };
+  add(0, 0, P.W, P.H, HD_OUTER, true);
+  P.rooms.forEach(r => add(r.x, r.y, r.w, r.h, HD_WALL, false));
+  return segs;
+}
+const hdWallQuad = s => s.h ? hdBoxQ(s.a, s.c - s.th/2, s.b - s.a, s.th) : hdBoxQ(s.c - s.th/2, s.a, s.th, s.b - s.a);
+/* door swing footprint: the len x len square on the swing side, hinged at one jamb */
+function hdSwingQuad(o){ return hdCorners({x: o.x + hdRot(0, o.len/2 + (o.th||HD_WALL)/2, o.rot)[0], y: o.y + hdRot(0, o.len/2 + (o.th||HD_WALL)/2, o.rot)[1], w: o.len, d: o.len, rot: o.rot}); }
+/* fit check: red = hits a wall / another item / outside the apartment, amber = inside a door's swing */
+function hdConflicts(P){
+  const res = {}, walls = hdWalls(P).map(hdWallQuad), soft = t => t === 'rug';
+  const Q = P.items.map(it => ({it, q: hdCorners(it)}));
+  Q.forEach(({it, q}) => {
+    if(q.some(([x, y]) => x < -0.5 || y < -0.5 || x > P.W + .5 || y > P.H + .5)){ res[it.id] = {lvl:'red', why:'Sticks out of the apartment'}; return; }
+    if(walls.some(w => hdOverlap(q, w))){ res[it.id] = {lvl:'red', why:'Runs into a wall'}; return; }
+  });
+  for(let i = 0; i < Q.length; i++) for(let j = i+1; j < Q.length; j++){
+    const a = Q[i], b = Q[j];
+    if(soft(a.it.type) || soft(b.it.type)) continue;
+    if(hdOverlap(a.q, b.q)){
+      res[a.it.id] = res[a.it.id] || {lvl:'red', why:'Overlaps ' + b.it.name};
+      res[b.it.id] = res[b.it.id] || {lvl:'red', why:'Overlaps ' + a.it.name};
+    }
+  }
+  P.opens.filter(o => o.kind === 'door').forEach(o => {
+    const s = hdSwingQuad(o);
+    Q.forEach(({it, q}) => { if(!soft(it.type) && !res[it.id] && hdOverlap(q, s, 2)) res[it.id] = {lvl:'amber', why:'Blocks a door swing'}; });
+  });
+  return res;
+}
+
+/* ---------- state, undo, save ---------- */
+const hdP = () => HD && HD.cur && HD.cur.data;
+function hdNormalise(d){
+  d = d || {};
+  return {W: +d.W || 900, H: +d.H || 700, rooms: d.rooms || [], items: d.items || [], opens: d.opens || []};
+}
+function hdPush(){ if(!HD) return; HD.undo.push(JSON.stringify(hdP())); if(HD.undo.length > 80) HD.undo.shift(); HD.redo = []; hdUndoBtns(); }
+function hdUndo(redo){
+  const from = redo ? HD.redo : HD.undo, to = redo ? HD.undo : HD.redo;
+  if(!from.length) return;
+  to.push(JSON.stringify(hdP()));
+  HD.cur.data = JSON.parse(from.pop());
+  if(HD.sel && !hdFind(HD.sel)) HD.sel = null;
+  hdPaint(); hdInspect(); hdUndoBtns(); hdSave();
+}
+function hdUndoBtns(){
+  const u = document.getElementById('hdUndo'), r = document.getElementById('hdRedo');
+  if(u) u.disabled = !HD.undo.length; if(r) r.disabled = !HD.redo.length;
+}
+function hdStatus(s){ HD.status = s; const el = document.getElementById('hdSaved'); if(el){ el.textContent = s; el.classList.toggle('bad', /not/i.test(s)); } }
+function hdSave(){
+  if(!HD || !HD.cur) return;
+  hdStatus('Saving…');
+  clearTimeout(HD.saveT);
+  HD.saveT = setTimeout(hdFlush, 700);
+}
+async function hdFlush(){
+  if(!HD || !HD.cur || !HD.saveT) return;
+  clearTimeout(HD.saveT); HD.saveT = null;
+  const plan = HD.cur;
+  const {error} = await sb.from('floor_plans').update({name: plan.name, data: plan.data, updated_at: new Date().toISOString()}).eq('id', plan.id);
+  if(error){ hdStatus('Not saved'); err(error); HD.saveT = setTimeout(hdFlush, 5000); return; }
+  hdStatus('Saved');
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden' && HD && HD.saveT) hdFlush(); });
+
+function hdFind(sel){
+  const P = hdP(); if(!P || !sel) return null;
+  const list = sel.t === 'room' ? P.rooms : sel.t === 'item' ? P.items : P.opens;
+  return list.find(o => o.id === sel.id) || null;
+}
+
+/* ---------- view ---------- */
+views.house = async function(){
+  const seq = renderStart();
+  if(HD && HD.saveT) hdFlush();   // a pending autosave must not be lost when the view rebuilds its state
+  document.getElementById('main').innerHTML = `
+    <div class="page-head"><h2>House</h2><img src="hero-house.png" alt="" onerror="this.remove()"></div>
+    <div id="hdBody"><div class="empty">Loading…</div></div>`;
+  const {data, error} = await sb.from('floor_plans').select('*').order('created_at');
+  if(stale(seq)) return;
+  if(error){
+    document.getElementById('hdBody').innerHTML = `<div class="empty">Couldn't load your plans — ${esc(error.message)}.
+      <button class="linkish" type="button" onclick="views.house()">Retry</button></div>`;
+    return;
+  }
+  const keep = HD && HD.cur ? HD.cur.id : null;
+  const plans = (data || []).map(p => ({...p, data: hdNormalise(p.data)}));
+  let last = keep; try{ last = last || localStorage.getItem('atlas_house_plan'); }catch(e){}
+  HD = {plans, cur: plans.find(p => p.id === last) || plans[0] || null, sel: null, view: null, undo: [], redo: [],
+        tool: null, labels: HD ? HD.labels : false, saveT: null, status: 'Saved', libCat: HD ? HD.libCat : 'Structure'};
+  if(!HD.cur){ hdEmpty(); return; }
+  hdLayout();
+};
+
+function hdEmpty(){
+  document.getElementById('hdBody').innerHTML = `
+    <div class="card hd-start">
+      <h3>Design your apartment</h3>
+      <p class="hd-hint">Set the outer size, then add rooms, doors, windows and furniture from the top-down view. Everything is in centimetres and saves as you go.</p>
+      ${hdNewForm()}
+    </div>`;
+}
+function hdNewForm(){
+  return `<form onsubmit="submitGuard(event, hdCreate)">
+    <div class="form-grid">
+      <div><label class="lbl" for="hdNName">Plan name</label><input id="hdNName" value="${HD && HD.plans.length ? 'Plan ' + (HD.plans.length + 1) : 'My apartment'}" maxlength="60"></div>
+      <div><label class="lbl" for="hdNW">Width (m)</label><input id="hdNW" type="number" inputmode="decimal" step="0.05" min="2" max="60" value="10"></div>
+      <div><label class="lbl" for="hdNH">Length (m)</label><input id="hdNH" type="number" inputmode="decimal" step="0.05" min="2" max="60" value="8"></div>
+      <div><label class="lbl" for="hdNT">Start with</label><select id="hdNT">
+        <option value="3">3 rooms (living, 2 bedrooms)</option><option value="2">2 rooms (living, bedroom)</option><option value="0">Empty outline</option></select></div>
+    </div>
+    <button class="btn" type="submit">Create plan</button>
+  </form>`;
+}
+/* starter layouts: a quick split of the outline so there is something to drag around */
+function hdStarter(W, H, n){
+  const P = {W, H, rooms: [], items: [], opens: []}, R = (kind, name, x, y, w, h) => P.rooms.push({id: hdUid(), kind, name, x: hdR(x), y: hdR(y), w: hdR(w), h: hdR(h)});
+  if(n == 2){
+    const a = W*.6;
+    R('living', 'Living room', 0, 0, a, H*.62); R('kitchen', 'Kitchen', 0, H*.62, a, H - hdR(H*.62));
+    R('bedroom', 'Bedroom', hdR(a), 0, W - hdR(a), H*.6); R('bath', 'Bathroom', hdR(a), hdR(H*.6), W - hdR(a), H - hdR(H*.6));
+  } else if(n == 3){
+    const a = W*.56;
+    R('living', 'Living room', 0, 0, a, H*.64); R('kitchen', 'Kitchen', 0, H*.64, a, H - hdR(H*.64));
+    R('bedroom', 'Bedroom', hdR(a), 0, W - hdR(a), H*.42); R('bedroom', 'Bedroom 2', hdR(a), hdR(H*.42), W - hdR(a), hdR(H*.33));
+    R('bath', 'Bathroom', hdR(a), hdR(H*.42) + hdR(H*.33), W - hdR(a), H - hdR(H*.42) - hdR(H*.33));
+  }
+  if(n > 0){
+    const lv = P.rooms[0], kt = P.rooms[1], bd = P.rooms[2];
+    P.opens.push({id: hdUid(), kind: 'door', x: hdR(kt.x + kt.w*.7), y: H, len: 90, rot: 180, flip: false, th: HD_OUTER});
+    P.opens.push({id: hdUid(), kind: 'window', x: hdR(lv.w/2), y: 0, len: 180, rot: 0, flip: false, th: HD_OUTER});
+    P.opens.push({id: hdUid(), kind: 'window', x: hdR(bd.x + bd.w/2), y: 0, len: 120, rot: 0, flip: false, th: HD_OUTER});
+    P.opens.push({id: hdUid(), kind: 'door', x: bd.x, y: hdR(bd.y + bd.h - 60), len: 80, rot: 90, flip: true, th: HD_WALL});
+  }
+  return P;
+}
+async function hdCreate(){
+  const name = (document.getElementById('hdNName').value || '').trim() || 'My apartment';
+  const W = hdR((hdNum(document.getElementById('hdNW').value) || 10) * 100), H = hdR((hdNum(document.getElementById('hdNH').value) || 8) * 100);
+  if(W < 200 || H < 200 || W > 6000 || H > 6000) return toast('Size must be between 2 and 60 m');
+  const data = hdStarter(W, H, +document.getElementById('hdNT').value);
+  if(HD && HD.saveT) await hdFlush();
+  const {data: row, error} = await sb.from('floor_plans').insert({name, data}).select().single();
+  if(error) return err(error);
+  document.querySelector('.sheet-bg')?.remove();
+  HD.plans.push({...row, data: hdNormalise(row.data)});
+  hdOpen(row.id);
+  toast('Plan created');
+}
+async function hdOpen(id){
+  if(HD.saveT) await hdFlush();
+  HD.cur = HD.plans.find(p => p.id === id) || HD.plans[0];
+  HD.sel = null; HD.undo = []; HD.redo = []; HD.view = null; HD.tool = null;
+  try{ localStorage.setItem('atlas_house_plan', HD.cur.id); }catch(e){}
+  hdLayout();
+}
+function hdNewSheet(){
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet" style="max-width:560px"><div class="sheet-head"><div class="top"><h3>New plan</h3>
+    <button class="icon-btn" type="button" aria-label="Close" onclick="this.closest('.sheet-bg').remove()">${ICO.x}</button></div></div>
+    <div class="sheet-body">${hdNewForm()}</div></div>`;
+  bg.addEventListener('click', e => { if(e.target === bg) bg.remove(); });
+  document.body.appendChild(bg);
+}
+async function hdPlanAction(act){
+  const p = HD.cur;
+  if(act === 'rename'){
+    const n = (prompt('Rename plan', p.name) || '').trim(); if(!n) return;
+    p.name = n; hdSave(); hdLayout(); return;
+  }
+  if(act === 'dup'){
+    if(HD.saveT) await hdFlush();
+    const {data: row, error} = await sb.from('floor_plans').insert({name: p.name + ' (copy)', data: p.data}).select().single();
+    if(error) return err(error);
+    HD.plans.push({...row, data: hdNormalise(row.data)}); hdOpen(row.id); toast('Plan duplicated'); return;
+  }
+  if(act === 'del'){
+    if(!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    clearTimeout(HD.saveT); HD.saveT = null;
+    const {error} = await sb.from('floor_plans').delete().eq('id', p.id);
+    if(error) return err(error);
+    HD.plans = HD.plans.filter(x => x.id !== p.id);
+    HD.cur = null;
+    if(HD.plans.length) hdOpen(HD.plans[0].id); else hdEmpty();
+    toast('Plan deleted');
+  }
+}
+
+function hdLibHTML(){
+  const cat = HD_LIB.find(c => c.cat === HD.libCat) || HD_LIB[0];
+  return `<div class="seg hd-cats">${HD_LIB.map(c => `<button type="button" class="${c.cat === cat.cat ? 'on' : ''}" onclick="HD.libCat='${c.cat}';hdLibRefresh()">${c.cat}</button>`).join('')}</div>
+    <div class="hd-lib-list">${cat.items.map(([t, n, w, d], i) => `
+      <button type="button" class="hd-lib-it" onclick="hdAdd('${cat.cat}',${i})">
+        <span class="pv">${hdPreview(t, w, d || 30)}</span>
+        <span class="nm">${esc(n)}<small>${t.startsWith('open-') ? hdM(w) + ' m wide' : hdM(w) + ' × ' + hdM(d) + ' m'}</small></span>
+      </button>`).join('')}</div>`;
+}
+function hdLibRefresh(){ document.querySelectorAll('.hd-lib').forEach(el => el.innerHTML = hdLibHTML()); }
+function hdLibSheet(){
+  const bg = document.createElement('div'); bg.className = 'sheet-bg';
+  bg.innerHTML = `<div class="sheet"><div class="sheet-head"><div class="top"><h3>Add to plan</h3>
+    <button class="icon-btn" type="button" aria-label="Close" onclick="this.closest('.sheet-bg').remove()">${ICO.x}</button></div></div>
+    <div class="sheet-body hd-lib">${hdLibHTML()}</div></div>`;
+  bg.addEventListener('click', e => { if(e.target === bg || e.target.closest('.hd-lib-it')) setTimeout(() => bg.remove(), 0); });
+  document.body.appendChild(bg);
+}
+
+const HD_I = {
+  undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg>',
+  redo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/></svg>',
+  ruler:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
+  minus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  fit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  rot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v5h-5"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h3"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  add:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+};
+function hdLayout(){
+  const body = document.getElementById('hdBody'); if(!body) return;
+  body.innerHTML = `
+    <div class="hd-bar">
+      <select id="hdPlanSel" aria-label="Plan" onchange="hdOpen(this.value)">${HD.plans.map(p => `<option value="${p.id}" ${p.id === HD.cur.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+      <button class="btn-ghost" type="button" onclick="hdNewSheet()">New plan</button>
+      <span class="hd-sep"></span>
+      <button class="hd-ib hd-add-m" type="button" onclick="hdLibSheet()" title="Add">${HD_I.add}<span>Add</span></button>
+      <button class="hd-ib" id="hdUndo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" onclick="hdUndo()">${HD_I.undo}</button>
+      <button class="hd-ib" id="hdRedo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" onclick="hdUndo(true)">${HD_I.redo}</button>
+      <button class="hd-ib" id="hdMeasure" type="button" title="Measure (M)" aria-label="Measure" onclick="hdTool('measure')">${HD_I.ruler}</button>
+      <button class="hd-ib" id="hdLabels" type="button" title="Furniture names" aria-label="Furniture names" onclick="HD.labels=!HD.labels;hdPaint();hdBarState()">${HD_I.tag}</button>
+      <span class="hd-sep"></span>
+      <button class="hd-ib" type="button" title="Zoom out" aria-label="Zoom out" onclick="hdZoomBy(1/1.25)">${HD_I.minus}</button>
+      <button class="hd-ib" type="button" title="Fit to screen (F)" aria-label="Fit to screen" onclick="hdFit();hdPaint()">${HD_I.fit}</button>
+      <button class="hd-ib" type="button" title="Zoom in" aria-label="Zoom in" onclick="hdZoomBy(1.25)">${HD_I.plus}</button>
+      <button class="hd-ib" type="button" title="Download as image" aria-label="Download as image" onclick="hdExport()">${HD_I.dl}</button>
+      <span class="hd-saved" id="hdSaved">${esc(HD.status)}</span>
+    </div>
+    <div class="hd-wrap">
+      <aside class="card hd-lib hd-side">${hdLibHTML()}</aside>
+      <div class="hd-stage">
+        <svg id="hdSvg" xmlns="http://www.w3.org/2000/svg" font-family="Space Grotesk, system-ui, sans-serif"><g id="hdScene"></g></svg>
+        <div class="hd-tip" id="hdTip"></div>
+      </div>
+      <aside class="card hd-insp" id="hdInsp"></aside>
+    </div>`;
+  const svg = document.getElementById('hdSvg');
+  if(window.innerWidth < 900){   // phones: size the canvas to the plan's shape instead of a fixed 62vh slab
+    const P = hdP(), stage = svg.parentElement, w = stage.clientWidth;
+    stage.style.height = Math.round(Math.max(300, Math.min(window.innerHeight * .66, w * (P.H + 140) / (P.W + 100)))) + 'px';
+  }
+  hdBind(svg);
+  new ResizeObserver(() => { if(!document.body.contains(svg)) return; const first = !HD.view; if(first) hdFit(); hdPaint(); if(first) hdInspect(); }).observe(svg);
+  hdUndoBtns(); hdBarState(); hdInspect();
+}
+function hdBarState(){
+  document.getElementById('hdMeasure')?.classList.toggle('on', HD.tool === 'measure');
+  document.getElementById('hdLabels')?.classList.toggle('on', !!HD.labels);
+  const tip = document.getElementById('hdTip');
+  if(tip){ tip.textContent = HD.tool === 'measure' ? 'Drag to measure · Esc to stop' : ''; tip.classList.toggle('show', HD.tool === 'measure'); }
+  const svg = document.getElementById('hdSvg'); if(svg) svg.classList.toggle('measuring', HD.tool === 'measure');
+}
+function hdTool(t){ HD.tool = HD.tool === t ? null : t; if(!HD.tool) HD.measure = null; hdBarState(); hdPaint(); }
+
+/* ---------- camera ---------- */
+function hdSize(){ const s = document.getElementById('hdSvg'); return s ? [s.clientWidth || 1, s.clientHeight || 1] : [1, 1]; }
+function hdFit(){
+  const P = hdP(); if(!P) return;
+  let x1 = -60, y1 = -60, x2 = P.W + 30, y2 = P.H + 30;
+  P.items.forEach(it => { const b = hdAABB(it); x1 = Math.min(x1, b.x1 - 30); y1 = Math.min(y1, b.y1 - 30); x2 = Math.max(x2, b.x2 + 30); y2 = Math.max(y2, b.y2 + 30); });
+  const [W, H] = hdSize(), s = Math.min(W / (x2 - x1), H / (y2 - y1));
+  HD.view = {s, x: (x1 + x2)/2 - W/2/s, y: (y1 + y2)/2 - H/2/s};
+}
+function hdZoomAt(f, px, py){
+  const v = HD.view, s2 = Math.min(12, Math.max(0.05, v.s * f)), wx = v.x + px / v.s, wy = v.y + py / v.s;
+  v.s = s2; v.x = wx - px / s2; v.y = wy - py / s2;
+}
+function hdZoomBy(f){ const [W, H] = hdSize(); hdZoomAt(f, W/2, H/2); hdPaint(); }
+function hdPt(e){ const svg = document.getElementById('hdSvg'), b = svg.getBoundingClientRect(), v = HD.view;
+  return {px: e.clientX - b.left, py: e.clientY - b.top, x: v.x + (e.clientX - b.left) / v.s, y: v.y + (e.clientY - b.top) / v.s}; }
+
+/* ---------- paint ---------- */
+function hdPaint(){
+  const svg = document.getElementById('hdSvg'), g = document.getElementById('hdScene'), P = hdP();
+  if(!svg || !g || !P) return;
+  if(!HD.view) hdFit();
+  const [W, H] = hdSize(), v = HD.view, k = 1 / v.s;   // k = cm per screen pixel
+  svg.setAttribute('viewBox', `${v.x} ${v.y} ${W * k} ${H * k}`);
+  const conf = hdConflicts(P); HD.conf = conf;
+  const NS = 'vector-effect="non-scaling-stroke"', fs = n => (n * k * (HD.textScale || 1)).toFixed(2);
+  const o = [];
+  // patterns + page grid (50 cm minor, 1 m major)
+  o.push(`<defs>
+    <pattern id="hdGrid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M100 0H0V100" fill="none" stroke="#dcd9d3" stroke-width="${k}"/><path d="M50 0V100M0 50H100" fill="none" stroke="#e7e5e0" stroke-width="${k}"/></pattern>
+    <pattern id="hdTile" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${HD_FLOOR}"/><path d="M30 0H0V30" fill="none" stroke="#e2dfd9" stroke-width="${k}"/></pattern>
+    <pattern id="hdDeck" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#f4f3ef"/><path d="M0 0H14" stroke="#e0ddd6" stroke-width="${k}"/></pattern>
+  </defs>`);
+  o.push(`<rect x="${v.x}" y="${v.y}" width="${W*k}" height="${H*k}" fill="url(#hdGrid)"/>`);
+  o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="#f7f6f3"/>`);
+  // room floors, then furniture, then walls on top so nothing hides a wall
+  P.rooms.forEach(r => o.push(`<rect data-t="room" data-id="${r.id}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${(HD_KINDS[r.kind] || HD_KINDS.living).fill}"/>`));
+  const itemSvg = it => {
+    const c = conf[it.id], sel = HD.sel && HD.sel.id === it.id;
+    const hl = c ? `<rect x="${-it.w/2}" y="${-it.d/2}" width="${it.w}" height="${it.d}" fill="${c.lvl === 'red' ? 'rgba(155,70,58,.16)' : 'rgba(138,107,34,.14)'}" stroke="${c.lvl === 'red' ? HD_RED : HD_AMBER}" stroke-width="1.6" ${NS} stroke-dasharray="${c.lvl === 'red' ? '' : '5 3'}"/>` : '';
+    return `<g data-t="item" data-id="${it.id}" class="hd-it${sel ? ' sel' : ''}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0})">
+      <rect x="${-it.w/2}" y="${-it.d/2}" width="${it.w}" height="${it.d}" fill="transparent"/>${hdSym(it.type, it.w, it.d)}${hl}</g>`;
+  };
+  P.items.filter(i => i.type === 'rug').forEach(it => o.push(itemSvg(it)));
+  P.items.filter(i => i.type !== 'rug').forEach(it => o.push(itemSvg(it)));
+  P.rooms.forEach(r => o.push(`<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${HD_INK}" stroke-width="${HD_WALL}" ${r.kind === 'balcony' ? `stroke-dasharray="${HD_WALL*2} ${HD_WALL}"` : ''} pointer-events="none"/>`));
+  o.push(`<rect x="0" y="0" width="${P.W}" height="${P.H}" fill="none" stroke="${HD_INK}" stroke-width="${HD_OUTER}" pointer-events="none"/>`);
+  // openings: punch the wall with a floor-coloured patch, then draw the symbol
+  P.opens.forEach(op => {
+    const th = op.th || HD_WALL, L = op.len, hx = op.flip ? L/2 : -L/2, sel = HD.sel && HD.sel.id === op.id;
+    let s = `<rect x="${-L/2}" y="${-th/2 - 1}" width="${L}" height="${th + 2}" fill="${HD_FLOOR}"/>` +
+      `<path d="M${-L/2} ${-th/2}V${th/2}M${L/2} ${-th/2}V${th/2}" stroke="${HD_INK}" stroke-width="1.6" ${NS}/>`;
+    if(op.kind === 'door') s += `<path d="M${hx} ${th/2}V${th/2 + L}" stroke="${HD_INK}" stroke-width="2.2" ${NS}/>` +
+      `<path d="M${hx} ${th/2 + L}A${L} ${L} 0 0 ${op.flip ? 1 : 0} ${-hx} ${th/2}" fill="none" stroke="${HD_MUTED}" stroke-width="1" stroke-dasharray="4 3" ${NS}/>`;
+    else if(op.kind === 'window') s += `<rect x="${-L/2}" y="${-th/2}" width="${L}" height="${th}" fill="none" stroke="${HD_INK}" stroke-width="1.1" ${NS}/><path d="M${-L/2} 0H${L/2}" stroke="${HD_INK}" stroke-width="1.1" ${NS}/>`;
+    else s += `<path d="M${-L/2} ${-th/6}H${L*.1}M${-L*.1} ${th/6}H${L/2}" stroke="${HD_INK}" stroke-width="2.4" ${NS}/>`;
+    o.push(`<g data-t="open" data-id="${op.id}" class="hd-op${sel ? ' sel' : ''}" transform="translate(${op.x} ${op.y}) rotate(${op.rot || 0})">
+      <rect x="${-L/2}" y="${-th/2 - 8}" width="${L}" height="${th + 16}" fill="transparent"/>${s}</g>`);
+  });
+  // labels
+  P.rooms.forEach(r => {
+    if(r.w * v.s < 36 || r.h * v.s < 26) return;
+    const cx = r.x + r.w/2, cy = r.y + r.h/2;
+    o.push(`<text x="${cx}" y="${cy - 2*k}" text-anchor="middle" font-size="${fs(12.5)}" font-weight="600" fill="${HD_INK}" pointer-events="none">${esc(r.name)}</text>
+      <text x="${cx}" y="${cy + 13*k}" text-anchor="middle" font-size="${fs(11)}" fill="${HD_MUTED}" pointer-events="none">${hdArea(r.w, r.h)} m²</text>`);
+  });
+  if(HD.labels || P.items.some(i => i.type === 'box')) P.items.forEach(it => {
+    if(!HD.labels && it.type !== 'box') return;
+    if(Math.max(it.w, it.d) * v.s < 34) return;
+    o.push(`<text x="${it.x}" y="${it.y + 4*k}" text-anchor="middle" font-size="${fs(10.5)}" font-weight="600" fill="${HD_INK}" stroke="${HD_FLOOR}" stroke-width="${3*k}" paint-order="stroke" pointer-events="none">${esc(it.name)}</text>`);
+  });
+  // outer dimensions
+  o.push(hdDim(0, -HD_OUTER/2 - 26*k, P.W, -HD_OUTER/2 - 26*k, k, P.W));
+  o.push(hdDim(-HD_OUTER/2 - 26*k, 0, -HD_OUTER/2 - 26*k, P.H, k, P.H));
+  // selection overlay
+  o.push(hdSelOverlay(k));
+  // measure line
+  if(HD.measure){
+    const m = HD.measure, dist = Math.hypot(m.x2 - m.x1, m.y2 - m.y1);
+    o.push(`<g pointer-events="none"><line x1="${m.x1}" y1="${m.y1}" x2="${m.x2}" y2="${m.y2}" stroke="${HD_RED}" stroke-width="1.8" ${NS}/>
+      <circle cx="${m.x1}" cy="${m.y1}" r="${3.5*k}" fill="${HD_RED}"/><circle cx="${m.x2}" cy="${m.y2}" r="${3.5*k}" fill="${HD_RED}"/>
+      <text x="${(m.x1 + m.x2)/2}" y="${(m.y1 + m.y2)/2 - 8*k}" text-anchor="middle" font-size="${fs(13)}" font-weight="700" fill="${HD_RED}" stroke="${HD_FLOOR}" stroke-width="${4*k}" paint-order="stroke">${hdM(dist)} m</text></g>`);
+  }
+  g.innerHTML = o.join('');
+}
+function hdDim(x1, y1, x2, y2, k, val){
+  const vert = x1 === x2, tx = (x1 + x2)/2, ty = (y1 + y2)/2, t = 4*k, NS = 'vector-effect="non-scaling-stroke"';
+  const ticks = vert ? `M${x1 - t} ${y1}H${x1 + t}M${x2 - t} ${y2}H${x2 + t}` : `M${x1} ${y1 - t}V${y1 + t}M${x2} ${y2 - t}V${y2 + t}`;
+  return `<g pointer-events="none"><path d="M${x1} ${y1}L${x2} ${y2}${ticks}" stroke="${HD_MUTED}" stroke-width="1" ${NS}/>
+    <text x="${tx}" y="${ty}" ${vert ? `transform="rotate(-90 ${tx} ${ty})"` : ''} dy="${-5*k}" text-anchor="middle" font-size="${(11*k*(HD.textScale || 1)).toFixed(2)}" fill="${HD_MUTED}" stroke="#f3f2ef" stroke-width="${3*k}" paint-order="stroke">${hdM(val)} m</text></g>`;
+}
+function hdSelOverlay(k){
+  const o = hdFind(HD.sel); if(!o) return '';
+  const hs = 9*k, NS = 'vector-effect="non-scaling-stroke"';
+  const H = (x, y, h, cur) => `<rect data-h="${h}" x="${x - hs/2}" y="${y - hs/2}" width="${hs}" height="${hs}" rx="${1.5*k}" fill="#fff" stroke="${HD_INK}" stroke-width="1.4" ${NS} style="cursor:${cur}"/>`;
+  if(HD.sel.t === 'room'){
+    const {x, y, w, h} = o, out = [`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="rgba(35,34,31,.05)" stroke="${HD_INK}" stroke-width="2" stroke-dasharray="6 4" ${NS} pointer-events="none"/>`];
+    out.push(hdDim(x, y + 24*k, x + w, y + 24*k, k, w), hdDim(x + 24*k, y, x + 24*k, y + h, k, h));
+    [['nw',x,y,'nwse-resize'],['n',x+w/2,y,'ns-resize'],['ne',x+w,y,'nesw-resize'],['e',x+w,y+h/2,'ew-resize'],
+     ['se',x+w,y+h,'nwse-resize'],['s',x+w/2,y+h,'ns-resize'],['sw',x,y+h,'nesw-resize'],['w',x,y+h/2,'ew-resize']].forEach(([n, a, b, c]) => out.push(H(a, b, n, c)));
+    return out.join('');
+  }
+  if(HD.sel.t === 'item'){
+    const {w, d} = o, rh = d/2 + 22*k;
+    return `<g transform="translate(${o.x} ${o.y}) rotate(${o.rot || 0})">
+      <rect x="${-w/2}" y="${-d/2}" width="${w}" height="${d}" fill="none" stroke="${HD_INK}" stroke-width="1.4" stroke-dasharray="5 3" ${NS} pointer-events="none"/>
+      <path d="M0 ${-d/2}V${-rh}" stroke="${HD_INK}" stroke-width="1.2" ${NS} pointer-events="none"/>
+      <circle data-h="rot" cx="0" cy="${-rh}" r="${6*k}" fill="#fff" stroke="${HD_INK}" stroke-width="1.4" ${NS} style="cursor:grab"/>
+      ${H(-w/2, -d/2, 'nw', 'move')}${H(w/2, -d/2, 'ne', 'move')}${H(w/2, d/2, 'se', 'move')}${H(-w/2, d/2, 'sw', 'move')}
+      ${hdDim(-w/2, d/2 + 18*k, w/2, d/2 + 18*k, k, w)}${hdDim(w/2 + 18*k, -d/2, w/2 + 18*k, d/2, k, d)}</g>`;
+  }
+  const L = o.len, th = o.th || HD_WALL;
+  return `<g transform="translate(${o.x} ${o.y}) rotate(${o.rot || 0})">
+    <rect x="${-L/2}" y="${-th/2 - 4*k}" width="${L}" height="${th + 8*k}" fill="none" stroke="${HD_RED}" stroke-width="1.6" stroke-dasharray="5 3" ${NS} pointer-events="none"/>
+    ${H(-L/2, 0, 'l', 'ew-resize')}${H(L/2, 0, 'r', 'ew-resize')}${hdDim(-L/2, -th/2 - 16*k, L/2, -th/2 - 16*k, k, L)}</g>`;
+}
+
+/* ---------- snapping ---------- */
+function hdLines(P, skipRoom){   // candidate x / y lines for room edges
+  const xs = [0, P.W], ys = [0, P.H];
+  P.rooms.forEach(r => { if(r.id === skipRoom) return; xs.push(r.x, r.x + r.w); ys.push(r.y, r.y + r.h); });
+  return {xs, ys};
+}
+function hdInner(P){             // inner wall faces, for pushing furniture against walls
+  const xs = [HD_OUTER/2, P.W - HD_OUTER/2], ys = [HD_OUTER/2, P.H - HD_OUTER/2];
+  P.rooms.forEach(r => { xs.push(r.x + HD_WALL/2, r.x - HD_WALL/2, r.x + r.w - HD_WALL/2, r.x + r.w + HD_WALL/2);
+                         ys.push(r.y + HD_WALL/2, r.y - HD_WALL/2, r.y + r.h - HD_WALL/2, r.y + r.h + HD_WALL/2); });
+  return {xs, ys};
+}
+function hdSnap1(vals, lines, thr){   // best shift that puts any of vals on any line
+  let best = null;
+  vals.forEach(v => lines.forEach(l => { const d = l - v; if(Math.abs(d) <= thr && (best === null || Math.abs(d) < Math.abs(best))) best = d; }));
+  return best;
+}
+/* doors/windows hug the nearest wall and turn to follow it */
+function hdSnapOpening(op, x, y, thr){
+  let best = null;
+  hdWalls(hdP()).forEach(s => {
+    const along = s.h ? x : y, across = s.h ? y : x, len = s.b - s.a;
+    if(len < op.len) return;
+    const t = Math.min(s.b - op.len/2, Math.max(s.a + op.len/2, along)), dist = Math.hypot(along - t, across - s.c);
+    if(dist <= thr && (!best || dist < best.dist - 0.01 || (Math.abs(dist - best.dist) < .01 && s.outer))) best = {s, t, dist};
+  });
+  if(!best){ op.x = hdR(x); op.y = hdR(y); return; }
+  const s = best.s, t = Math.round(best.t);
+  op.th = s.th;
+  if(s.h){ op.x = t; op.y = s.c; if(op.rot % 180 !== 0) op.rot = (op.rot + 270) % 360; }
+  else   { op.x = s.c; op.y = t; if(op.rot % 180 === 0) op.rot = (op.rot + 90) % 360; }
+}
+
+/* ---------- pointer interaction ---------- */
+function hdBind(svg){
+  const ptrs = new Map();
+  let drag = null;
+  svg.addEventListener('pointerdown', e => {
+    if(e.button > 0) return;
+    svg.setPointerCapture(e.pointerId);
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if(ptrs.size === 2){   // second finger: switch to pinch, abandon whatever the first finger started
+      if(drag && drag.moved && drag.mode !== 'pan' && HD.undo.length) { HD.cur.data = JSON.parse(HD.undo.pop()); }
+      const [a, b] = [...ptrs.values()];
+      drag = {mode: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y), s0: HD.view.s, v0: {...HD.view}, m0: {x: (a.x + b.x)/2, y: (a.y + b.y)/2}};
+      return;
+    }
+    const p = hdPt(e), P = hdP();
+    const hEl = e.target.closest('[data-h]'), oEl = e.target.closest('[data-t]');
+    const base = {sx: e.clientX, sy: e.clientY, p0: p, moved: false};
+    if(HD.tool === 'measure'){ HD.measure = {x1: p.x, y1: p.y, x2: p.x, y2: p.y}; drag = {...base, mode: 'measure'}; return; }
+    if(hEl && HD.sel){
+      const o = hdFind(HD.sel);
+      drag = {...base, mode: 'handle', h: hEl.dataset.h, orig: JSON.parse(JSON.stringify(o))};
+      return;
+    }
+    if(oEl){
+      const t = oEl.dataset.t, id = oEl.dataset.id, o = hdFind({t, id});
+      if(t === 'room' && !(HD.sel && HD.sel.id === id)){ drag = {...base, mode: 'pan', v0: {...HD.view}, tapSel: {t, id}}; return; }
+      if(!(HD.sel && HD.sel.id === id)){ HD.sel = {t, id}; hdPaint(); hdInspect(); }
+      drag = {...base, mode: 'move', orig: JSON.parse(JSON.stringify(o))};
+      return;
+    }
+    drag = {...base, mode: 'pan', v0: {...HD.view}, tapSel: null};
+  });
+  svg.addEventListener('pointermove', e => {
+    if(!ptrs.has(e.pointerId) || !drag) return;
+    ptrs.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if(drag.mode === 'pinch'){
+      if(ptrs.size < 2) return;
+      const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), m = {x: (a.x + b.x)/2, y: (a.y + b.y)/2};
+      const r = svg.getBoundingClientRect();
+      HD.view = {...drag.v0};
+      HD.view.x -= (m.x - drag.m0.x) / HD.view.s; HD.view.y -= (m.y - drag.m0.y) / HD.view.s;
+      hdZoomAt(d / drag.d0, m.x - r.left, m.y - r.top);
+      hdPaint(); return;
+    }
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if(!drag.moved && Math.hypot(dx, dy) < 4) return;
+    if(!drag.moved){ drag.moved = true; if(drag.mode === 'move' || drag.mode === 'handle') hdPush(); }
+    const p = hdPt(e), P = hdP(), k = 1 / HD.view.s, thr = 10 * k;
+    if(drag.mode === 'pan'){ HD.view.x = drag.v0.x - dx / HD.view.s; HD.view.y = drag.v0.y - dy / HD.view.s; hdPaint(); return; }
+    if(drag.mode === 'measure'){
+      let x2 = p.x, y2 = p.y;
+      if(!e.shiftKey){ if(Math.abs(x2 - drag.p0.x) < 8*k) x2 = drag.p0.x; if(Math.abs(y2 - drag.p0.y) < 8*k) y2 = drag.p0.y; }
+      HD.measure.x2 = x2; HD.measure.y2 = y2; hdPaint(); return;
+    }
+    const o = hdFind(HD.sel); if(!o) return;
+    const O = drag.orig, mx = p.x - drag.p0.x, my = p.y - drag.p0.y;
+    if(drag.mode === 'move'){
+      if(HD.sel.t === 'room'){
+        let nx = hdR(O.x + mx), ny = hdR(O.y + my);
+        const L = hdLines(P, o.id), sx = hdSnap1([O.x + mx, O.x + mx + O.w], L.xs, thr), sy = hdSnap1([O.y + my, O.y + my + O.h], L.ys, thr);
+        if(sx !== null) nx = O.x + mx + sx; if(sy !== null) ny = O.y + my + sy;
+        o.x = Math.round(nx); o.y = Math.round(ny);
+      } else if(HD.sel.t === 'item'){
+        const nx = O.x + mx, ny = O.y + my, b = hdAABB({...O, x: nx, y: ny}), I = hdInner(P);
+        const sx = (o.rot || 0) % 90 === 0 ? hdSnap1([b.x1, b.x2], I.xs, thr) : null, sy = (o.rot || 0) % 90 === 0 ? hdSnap1([b.y1, b.y2], I.ys, thr) : null;
+        o.x = sx !== null ? Math.round(nx + sx) : hdR(nx); o.y = sy !== null ? Math.round(ny + sy) : hdR(ny);
+      } else hdSnapOpening(o, O.x + mx, O.y + my, Math.max(30, 24 * k));
+      hdPaint(); hdInspectLive(); return;
+    }
+    // handles
+    const h = drag.h;
+    if(HD.sel.t === 'room'){
+      const L = hdLines(P, o.id), sn = (v, lines) => { const s = hdSnap1([v], lines, thr); return Math.round(s !== null ? v + s : hdR(v)); };
+      let x1 = O.x, y1 = O.y, x2 = O.x + O.w, y2 = O.y + O.h;
+      if(h.includes('w')) x1 = Math.min(sn(O.x + mx, L.xs), x2 - 60);
+      if(h.includes('e')) x2 = Math.max(sn(O.x + O.w + mx, L.xs), x1 + 60);
+      if(h.includes('n')) y1 = Math.min(sn(O.y + my, L.ys), y2 - 60);
+      if(h.includes('s')) y2 = Math.max(sn(O.y + O.h + my, L.ys), y1 + 60);
+      Object.assign(o, {x: x1, y: y1, w: x2 - x1, h: y2 - y1});
+    } else if(HD.sel.t === 'item'){
+      if(h === 'rot'){
+        let a = Math.atan2(p.x - O.x, -(p.y - O.y)) * 180 / Math.PI;
+        a = e.shiftKey ? Math.round(a) : Math.round(a / 15) * 15;
+        o.rot = ((a % 360) + 360) % 360;
+      } else {
+        const sx = h.includes('e') ? 1 : -1, sy = h.includes('s') ? 1 : -1;
+        const [lx, ly] = hdRot(p.x - O.x, p.y - O.y, -(O.rot || 0));          // pointer in the item's frame
+        const ax = -sx * O.w/2, ay = -sy * O.d/2;                              // the opposite corner stays put
+        const nw = Math.max(10, hdR(Math.abs(lx - ax))), nd = Math.max(10, hdR(Math.abs(ly - ay)));
+        const cx = ax + sx * nw/2, cy = ay + sy * nd/2, [wx, wy] = hdRot(cx, cy, O.rot || 0);
+        Object.assign(o, {w: nw, d: nd, x: Math.round(O.x + wx), y: Math.round(O.y + wy)});
+      }
+    } else {
+      const [lx] = hdRot(p.x - O.x, p.y - O.y, -(O.rot || 0)), side = h === 'r' ? 1 : -1;
+      const fixed = -side * O.len/2, nl = Math.max(40, hdR(Math.abs(lx - fixed))), c = fixed + side * nl/2, [wx, wy] = hdRot(c, 0, O.rot || 0);
+      Object.assign(o, {len: nl, x: Math.round(O.x + wx), y: Math.round(O.y + wy)});
+    }
+    hdPaint(); hdInspectLive();
+  });
+  const up = e => {
+    if(!ptrs.has(e.pointerId)) return;
+    ptrs.delete(e.pointerId);
+    if(!drag) return;
+    if(drag.mode === 'pinch'){ if(ptrs.size === 0) drag = null; return; }
+    if(!drag.moved){
+      if(drag.mode === 'pan'){ HD.sel = drag.tapSel; hdPaint(); hdInspect(); }
+      if(drag.mode === 'measure'){ HD.measure = null; hdPaint(); }
+    } else if(drag.mode === 'move' || drag.mode === 'handle'){ hdInspect(); hdSave(); }
+    drag = null;
+  };
+  svg.addEventListener('pointerup', up);
+  svg.addEventListener('pointercancel', up);
+  svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    const p = hdPt(e);
+    if(e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > 40 && e.deltaMode === 0 && !e.deltaX && Number.isInteger(e.deltaY) && Math.abs(e.deltaY) % 100 === 0){
+      hdZoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.012 : 0.0018)), p.px, p.py);   // pinch on a trackpad, or a mouse wheel notch
+    } else { HD.view.x += e.deltaX / HD.view.s; HD.view.y += e.deltaY / HD.view.s; }   // two-finger scroll pans
+    hdPaint();
+  }, {passive: false});
+}
+document.addEventListener('keydown', e => {
+  if(!HD || !document.getElementById('hdSvg') || document.querySelector('.sheet-bg')) return;
+  if(e.target.closest && e.target.closest('input,select,textarea')) return;
+  const mod = e.metaKey || e.ctrlKey, key = e.key.toLowerCase();
+  if(mod && key === 'z'){ e.preventDefault(); hdUndo(e.shiftKey); return; }
+  if(mod && key === 'y'){ e.preventDefault(); hdUndo(true); return; }
+  if(mod && key === 'd' && HD.sel){ e.preventDefault(); hdDup(); return; }
+  if(mod) return;
+  if(key === 'escape'){ if(HD.tool){ hdTool(HD.tool); } else { HD.sel = null; hdPaint(); hdInspect(); } return; }
+  if(key === 'm'){ hdTool('measure'); return; }
+  if(key === 'f'){ hdFit(); hdPaint(); return; }
+  if(!HD.sel) return;
+  const o = hdFind(HD.sel); if(!o) return;
+  if(key === 'delete' || key === 'backspace'){ e.preventDefault(); hdDel(); return; }
+  if(key === 'r' && HD.sel.t !== 'room'){ hdPush(); o.rot = ((o.rot || 0) + (e.shiftKey ? 270 : 90)) % 360; hdPaint(); hdInspect(); hdSave(); return; }
+  const step = e.shiftKey ? 10 : 1, mv = {arrowleft: [-step, 0], arrowright: [step, 0], arrowup: [0, -step], arrowdown: [0, step]}[key];
+  if(mv){ e.preventDefault(); hdPush(); o.x += mv[0]; o.y += mv[1]; hdPaint(); hdInspectLive(); hdSave(); }
+});
+
+/* ---------- add / edit / delete ---------- */
+function hdAdd(cat, i){
+  const [type, name, w, d] = HD_LIB.find(c => c.cat === cat).items[i], P = hdP(), v = HD.view, [W, H] = hdSize();
+  let cx = hdR(v.x + W / 2 / v.s), cy = hdR(v.y + H / 2 / v.s);
+  cx = Math.min(P.W - 20, Math.max(20, cx)); cy = Math.min(P.H - 20, Math.max(20, cy));
+  // furniture lands in the middle of the room you're looking at, not on whichever wall crosses the screen centre
+  const inRoom = P.rooms.find(r => cx >= r.x && cx <= r.x + r.w && cy >= r.y && cy <= r.y + r.h);
+  if(inRoom && !type.startsWith('room-') && !type.startsWith('open-')){ cx = hdR(inRoom.x + inRoom.w/2); cy = hdR(inRoom.y + inRoom.h/2); }
+  hdPush();
+  let sel;
+  if(type.startsWith('room-')){
+    const kind = type.slice(5), rw = Math.min(w, P.W), rh = Math.min(d, P.H);
+    const n = P.rooms.filter(r => r.kind === kind).length;
+    const r = {id: hdUid(), kind, name: n ? `${name} ${n + 1}` : name, x: hdR(Math.min(P.W - rw, Math.max(0, cx - rw/2))), y: hdR(Math.min(P.H - rh, Math.max(0, cy - rh/2))), w: rw, h: rh};
+    P.rooms.push(r); sel = {t: 'room', id: r.id};
+  } else if(type.startsWith('open-')){
+    const op = {id: hdUid(), kind: type.slice(5), x: cx, y: cy, len: w, rot: 0, flip: false, th: HD_WALL};
+    hdSnapOpening(op, cx, cy, 1e6);   // drop it onto the nearest wall
+    P.opens.push(op); sel = {t: 'open', id: op.id};
+  } else {
+    const it = {id: hdUid(), type, name, x: cx, y: cy, w, d, rot: 0};
+    P.items.push(it); sel = {t: 'item', id: it.id};
+  }
+  HD.sel = sel; HD.tool = null; hdBarState();
+  hdPaint(); hdInspect(); hdSave();
+  if(window.innerWidth < 900) document.getElementById('hdSvg')?.scrollIntoView({block: 'center', behavior: 'smooth'});
+}
+function hdDup(){
+  const o = hdFind(HD.sel); if(!o) return;
+  hdPush();
+  const c = {...JSON.parse(JSON.stringify(o)), id: hdUid()}, P = hdP();
+  if(HD.sel.t === 'room'){ c.x += 30; c.y += 30; P.rooms.push(c); }
+  else if(HD.sel.t === 'item'){ c.x += 20; c.y += 20; P.items.push(c); }
+  else { if(o.rot % 180 === 0) c.x += o.len + 20; else c.y += o.len + 20; P.opens.push(c); }
+  HD.sel = {t: HD.sel.t, id: c.id};
+  hdPaint(); hdInspect(); hdSave();
+}
+function hdDel(){
+  if(!HD.sel) return;
+  hdPush();
+  const P = hdP(), id = HD.sel.id;
+  P.rooms = P.rooms.filter(o => o.id !== id); P.items = P.items.filter(o => o.id !== id); P.opens = P.opens.filter(o => o.id !== id);
+  HD.sel = null; hdPaint(); hdInspect(); hdSave();
+}
+/* inspector edits: one undo step per committed field */
+function hdSet(field, raw){
+  const P = hdP(), o = HD.sel ? hdFind(HD.sel) : null;
+  hdPush();
+  if(!HD.sel){
+    if(field === 'name'){ HD.cur.name = raw.trim() || HD.cur.name; const opt = document.querySelector(`#hdPlanSel option[value="${HD.cur.id}"]`); if(opt) opt.textContent = HD.cur.name; }
+    else { const n = hdNum(raw); if(n === null || n < 2 || n > 60){ HD.undo.pop(); toast('Size must be between 2 and 60 m'); hdInspect(); return; } P[field] = hdR(n * 100); }
+  } else if(field === 'name') o.name = raw.trim() || o.name;
+  else if(field === 'kind'){ if(HD.sel.t === 'room'){ const was = HD_KINDS[o.kind].label; o.kind = raw; if(o.name.startsWith(was)) o.name = HD_KINDS[raw].label; } else o.kind = raw; }
+  else if(field === 'rot') o.rot = (((Math.round(hdNum(raw) || 0)) % 360) + 360) % 360;
+  else {
+    let n = hdNum(raw); if(n === null){ HD.undo.pop(); hdInspect(); return; }
+    if(['w','h','d','len'].includes(field)) n = Math.max(field === 'len' ? 40 : 10, Math.round(n));
+    o[field] = Math.round(n);
+  }
+  hdPaint(); hdInspect(); hdSave();
+}
+function hdOpenFlip(what){
+  const o = hdFind(HD.sel); if(!o) return;
+  hdPush();
+  if(what === 'swing') o.rot = (o.rot + 180) % 360; else o.flip = !o.flip;
+  hdPaint(); hdSave();
+}
+function hdRotBy(d){ const o = hdFind(HD.sel); if(!o) return; hdPush(); o.rot = (((o.rot || 0) + d) % 360 + 360) % 360; hdPaint(); hdInspect(); hdSave(); }
+
+function hdField(id, label, val, field, extra){
+  return `<div><label class="lbl" for="${id}">${label}</label><input id="${id}" value="${esc(val)}" ${extra || 'type="number" inputmode="numeric"'} onchange="hdSet('${field}', this.value)"></div>`;
+}
+function hdInspect(){
+  const el = document.getElementById('hdInsp'); if(!el || !HD.cur) return;
+  const P = hdP(), sel = HD.sel, o = hdFind(sel);
+  if(!o){
+    const roomA = P.rooms.reduce((s, r) => s + r.w * r.h, 0) / 1e4;
+    const conf = Object.values(HD.conf || {}), red = conf.filter(c => c.lvl === 'red').length, amb = conf.length - red;
+    el.innerHTML = `<h3>Plan</h3>
+      <div class="hd-form">
+        ${hdField('hdPName', 'Name', HD.cur.name, 'name', 'maxlength="60"')}
+        <div class="hd-2">
+          ${hdField('hdPW', 'Width (m)', (P.W/100).toFixed(2), 'W', 'type="number" inputmode="decimal" step="0.05"')}
+          ${hdField('hdPH', 'Length (m)', (P.H/100).toFixed(2), 'H', 'type="number" inputmode="decimal" step="0.05"')}
+        </div>
+      </div>
+      <div class="hd-stats">
+        <div><b>${hdArea(P.W, P.H)}</b><span>m² outline</span></div>
+        <div><b>${roomA.toLocaleString('en-GB', {maximumFractionDigits: 1})}</b><span>m² in rooms</span></div>
+        <div><b>${P.items.length}</b><span>pieces</span></div>
+      </div>
+      ${conf.length ? `<div class="hd-warn">${red ? `<span class="pill red">${red} not fitting</span>` : ''}${amb ? `<span class="pill amber">${amb} in a door swing</span>` : ''}</div>` : P.items.length ? `<div class="hd-warn"><span class="pill green">Everything fits</span></div>` : ''}
+      ${P.rooms.length ? `<div class="hd-rooms">${P.rooms.map(r => `<button type="button" onclick="HD.sel={t:'room',id:'${r.id}'};hdPaint();hdInspect()"><span>${esc(r.name)}</span><small>${hdM(r.w)} × ${hdM(r.h)} m · ${hdArea(r.w, r.h)} m²</small></button>`).join('')}</div>` : ''}
+      <p class="hd-hint">Tap a piece to select it, then drag to move. Tap a room once to select it before moving it. Drag empty space to pan; pinch or ⌘-scroll to zoom. Keys: R rotate, arrows nudge, ⌫ delete, ⌘D duplicate, M measure.</p>
+      <div class="hd-acts"><button class="btn-ghost" type="button" onclick="hdPlanAction('dup')">Duplicate plan</button><button class="btn-ghost danger" type="button" onclick="hdPlanAction('del')">Delete plan</button></div>`;
+    return;
+  }
+  const acts = `<div class="hd-acts"><button class="btn-ghost" type="button" onclick="hdDup()">${HD_I.copy}Duplicate</button><button class="btn-ghost danger" type="button" onclick="hdDel()">${HD_I.trash}Delete</button>
+    <button class="btn-ghost" type="button" onclick="HD.sel=null;hdPaint();hdInspect()">Done</button></div>`;
+  if(sel.t === 'room'){
+    el.innerHTML = `<h3>Room</h3><div class="hd-form">
+      ${hdField('hdRN', 'Name', o.name, 'name', 'maxlength="40"')}
+      <div><label class="lbl" for="hdRK">Type</label><select id="hdRK" onchange="hdSet('kind', this.value)">${Object.entries(HD_KINDS).map(([k, v]) => `<option value="${k}" ${k === o.kind ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
+      <div class="hd-2">${hdField('hdRW', 'Width (cm)', o.w, 'w')}${hdField('hdRH', 'Length (cm)', o.h, 'h')}</div>
+      <div class="hd-2">${hdField('hdRX', 'From left (cm)', o.x, 'x')}${hdField('hdRY', 'From top (cm)', o.y, 'y')}</div>
+      </div><div class="hd-big" id="hdLive">${hdArea(o.w, o.h)} m² · ${hdM(o.w)} × ${hdM(o.h)} m</div>${acts}`;
+    return;
+  }
+  if(sel.t === 'item'){
+    const c = (HD.conf || {})[o.id];
+    el.innerHTML = `<h3>Furniture</h3><div class="hd-form">
+      ${hdField('hdIN', 'Name', o.name, 'name', 'maxlength="40"')}
+      <div class="hd-2">${hdField('hdIW', 'Width (cm)', o.w, 'w')}${hdField('hdID', 'Depth (cm)', o.d, 'd')}</div>
+      <div><label class="lbl" for="hdIR">Rotation (°)</label><div class="hd-rot">
+        <button class="hd-ib" type="button" aria-label="Rotate left" onclick="hdRotBy(-90)" style="transform:scaleX(-1)">${HD_I.rot}</button>
+        <input id="hdIR" type="number" inputmode="numeric" step="15" value="${o.rot || 0}" onchange="hdSet('rot', this.value)">
+        <button class="hd-ib" type="button" aria-label="Rotate right" onclick="hdRotBy(90)">${HD_I.rot}</button></div></div>
+      </div>
+      <div class="hd-big" id="hdLive">${hdM(o.w)} × ${hdM(o.d)} m</div>
+      ${c ? `<div class="hd-warn"><span class="pill ${c.lvl}">${esc(c.why)}</span></div>` : ''}${acts}`;
+    return;
+  }
+  el.innerHTML = `<h3>${o.kind === 'door' ? 'Door' : o.kind === 'window' ? 'Window' : 'Sliding door'}</h3><div class="hd-form">
+    <div><label class="lbl" for="hdOK">Type</label><select id="hdOK" onchange="hdSet('kind', this.value)">${[['door','Door'],['window','Window'],['slider','Sliding door']].map(([k, l]) => `<option value="${k}" ${k === o.kind ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    ${hdField('hdOL', 'Width (cm)', o.len, 'len')}
+    ${o.kind === 'door' ? `<div class="hd-2"><button class="btn-ghost" type="button" onclick="hdOpenFlip('swing')">Swing side</button><button class="btn-ghost" type="button" onclick="hdOpenFlip('hinge')">Hinge side</button></div>` : ''}
+    </div><p class="hd-hint">Drag it along a wall; it snaps to the nearest one and turns to follow it.</p>${acts}`;
+}
+/* cheap refresh while dragging: only the numbers, so inputs aren't rebuilt under the pointer */
+function hdInspectLive(){
+  const o = hdFind(HD.sel); if(!o) return;
+  const set = (id, v) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = v; };
+  if(HD.sel.t === 'room'){ set('hdRW', o.w); set('hdRH', o.h); set('hdRX', o.x); set('hdRY', o.y);
+    const l = document.getElementById('hdLive'); if(l) l.textContent = `${hdArea(o.w, o.h)} m² · ${hdM(o.w)} × ${hdM(o.h)} m`; }
+  else if(HD.sel.t === 'item'){ set('hdIW', o.w); set('hdID', o.d); set('hdIR', o.rot || 0);
+    const l = document.getElementById('hdLive'); if(l) l.textContent = `${hdM(o.w)} × ${hdM(o.d)} m`; }
+  else set('hdOL', o.len);
+}
+
+/* ---------- export: the whole plan, fitted, as a PNG ---------- */
+function hdExport(){
+  const svg = document.getElementById('hdSvg'); if(!svg) return;
+  const keepV = HD.view, keepS = HD.sel, keepM = HD.measure;
+  HD.sel = null; HD.measure = null;
+  const W = 1800, P = hdP();
+  const bw = P.W + 160, bh = P.H + 160, H = Math.round(W * bh / bw);
+  svg.style.width = W + 'px'; svg.style.height = H + 'px';
+  HD.view = {s: W / bw, x: -100, y: -100}; HD.textScale = 1.8;
+  hdPaint(); HD.textScale = 1;
+  const xml = new XMLSerializer().serializeToString(svg).replace('<svg', `<svg width="${W}" height="${H}"`);
+  svg.style.width = ''; svg.style.height = '';
+  HD.view = keepV; HD.sel = keepS; HD.measure = keepM; hdPaint();
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#f3f2ef'; ctx.fillRect(0, 0, W, H); ctx.drawImage(img, 0, 0);
+    c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = (HD.cur.name || 'plan').replace(/[^\w\- ]+/g, '').trim() + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); });
+  };
+  img.onerror = () => toast('Could not render the image');
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
 }
 </script>
 </body>
