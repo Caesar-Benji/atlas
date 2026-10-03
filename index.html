@@ -555,6 +555,13 @@ main.wide{max-width:1500px}
 #hd3Sun{padding:0;height:auto;background:transparent;border:none;accent-color:var(--accent)}
 .hd-acts .btn-ghost.on{border-color:var(--accent);color:var(--text)}
 @media(max-width:560px){ .hd3-walls button{padding:5px 8px;font-size:11.5px} .hd3-turn button{width:34px;height:34px} }
+
+/* ---------- intro (after sign-in) ---------- */
+#atlasIntro{position:fixed;inset:0;z-index:200;background:#f3f2ef;cursor:pointer;opacity:1}
+#atlasIntro canvas{display:block}
+.ai-skip{position:absolute;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));background:rgba(251,250,248,.85);border:1px solid var(--border);border-radius:99px;padding:7px 15px;font-size:12.5px;font-weight:600;color:var(--accent2)}
+.ai-skip:hover{color:var(--text);border-color:var(--accent)}
+.hub-foot .linkish{font-size:10px;font-weight:500;color:var(--muted);margin-left:8px}
 </style>
 </head>
 <body>
@@ -629,7 +636,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v42</span></div>
+    <div class="hub-foot"><span id="ver">v43</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -695,7 +702,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v42');
+console.log('Atlas v43');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -742,6 +749,7 @@ document.getElementById('authForm').addEventListener('submit', async e => {
     ? await sb.auth.signUp({email, password})
     : await sb.auth.signInWithPassword({email, password});
   if(error){ msg.className = 'auth-msg err'; msg.textContent = error.message; return; }
+  if(!signupMode){ msg.textContent = ''; atlasIntro(); }   // a real sign-in gets the intro; a remembered session goes straight home
   if(signupMode){ msg.className = 'auth-msg ok'; msg.textContent = 'Account created! If asked, confirm via the email we sent — then sign in.'; signupMode = false; toggleAuthMode(); toggleAuthMode(); }
 });
 ['signOutBtn','signOutHub'].forEach(id => document.getElementById(id).addEventListener('click', () => sb.auth.signOut()));
@@ -4932,6 +4940,432 @@ function hd3Export(){
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   });
 }
+
+/* ================= INTRO: Atlas holds the line (plays after sign-in) =================
+   A ~6 s hand-drawn sequence on one canvas: the hub hero is sketched in, robots climb the hill
+   toward him, he fires three shots, they burst into ink, the wordmark is drawn, and the whole
+   thing fades into the hub. Everything except the hero PNG is drawn in code with a "rough"
+   double stroke whose jitter is re-rolled 12 times a second, the classic hand-animation line
+   boil. No libraries: rough.js / GSAP would do parts of this, but a fixed seeded renderer keeps
+   it tiny, offline-safe and testable frame by frame (window.atlasIntroFrame(t)). */
+const AI_INK = '#1c1b19', AI_PAPER = '#f3f2ef';
+const AI_SRC = 'hero-atlas-hub.png?v=38';
+const AI_IMG = {w: 756, h: 1100, muzzle: [732, 975], pivot: [300, 700], port: [400, 612], axis: 40.2};
+const AI_T = {reveal: [0, 1.15], enter: .7, shots: [2.3, 2.85, 3.4], title: 4.05, out: 5.5, end: 6.1};
+let AI = null;
+
+/* seeded randomness: same seed -> same jitter, so lines only change on a boil tick */
+function aiRng(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+/* a hand-drawn line: two slightly different passes with a bowed middle */
+function aiLine(x, rnd, x1, y1, x2, y2, j = 1.4, passes = 2){
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1, nx = -(y2 - y1) / len, ny = (x2 - x1) / len;
+  for(let p = 0; p < passes; p++){
+    const o = () => (rnd() - .5) * 2 * j, bow = (rnd() - .5) * Math.min(len * .04, j * 2.2);
+    const ax = x1 + o(), ay = y1 + o(), bx = x2 + o(), by = y2 + o();
+    x.moveTo(ax, ay); x.quadraticCurveTo((ax + bx) / 2 + nx * bow, (ay + by) / 2 + ny * bow, bx, by);
+  }
+}
+function aiPoly(x, rnd, pts, j){ for(let i = 0; i < pts.length; i++){ const a = pts[i], b = pts[(i + 1) % pts.length]; aiLine(x, rnd, a[0], a[1], b[0], b[1], j); } }
+function aiCircle(x, rnd, cx, cy, r, j = 1.2, turns = 1.15){
+  const st = rnd() * 6.28, n = Math.max(10, Math.round(r * .8));
+  for(let p = 0; p < 2; p++){
+    const rr = r + (rnd() - .5) * j * 2, s2 = st + (rnd() - .5) * .4;
+    for(let i = 0; i <= n * turns; i++){
+      const a = s2 + i / n * 6.2832, k = rr + Math.sin(i * 1.7 + p) * j * .6;
+      i ? x.lineTo(cx + Math.cos(a) * k, cy + Math.sin(a) * k) : x.moveTo(cx + Math.cos(a) * k, cy + Math.sin(a) * k);
+    }
+  }
+}
+/* engraving-style hatch inside a polygon */
+function aiHatch(x, rnd, pts, gap, ang, j = .8){
+  x.save(); x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath(); x.clip();
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  const R = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) / 2 + 4, c = Math.cos(ang), s = Math.sin(ang);
+  x.beginPath();
+  for(let d = -R; d <= R; d += gap){ const ox = cx - s * d, oy = cy + c * d; aiLine(x, rnd, ox - c * R, oy - s * R, ox + c * R, oy + s * R, j, 1); }
+  x.stroke(); x.restore();
+}
+
+/* ---------- composition: one landscape and one portrait stage ---------- */
+function aiLayout(W, H){
+  const land = W / H >= .95;
+  const L = land ? {sw: 1600, sh: 1000, F: 780, fx: 110, fy: 20, rot: -21, hr: 230, ts: [230, 470, 700], title: [1190, 215, 128]}
+                 : {sw: 800, sh: 1600, F: 700, fx: -60, fy: 40, rot: 12, hr: 170, ts: [200, 410, 620], title: [330, 1400, 100]};
+  L.k = L.F / AI_IMG.h;
+  L.scale = Math.min(W / L.sw, H / L.sh); L.ox = (W - L.sw * L.scale) / 2; L.oy = (H - L.sh * L.scale) / 2;
+  L.piv = [L.fx + AI_IMG.pivot[0] * L.k, L.fy + AI_IMG.pivot[1] * L.k];
+  L.toStage = (ix, iy, rot = L.rot, dx = 0, dy = 0) => {
+    const a = rot * Math.PI / 180, lx = (ix - AI_IMG.pivot[0]) * L.k, ly = (iy - AI_IMG.pivot[1]) * L.k;
+    return [L.piv[0] + lx * Math.cos(a) - ly * Math.sin(a) + dx, L.piv[1] + lx * Math.sin(a) + ly * Math.cos(a) + dy];
+  };
+  L.M = L.toStage(...AI_IMG.muzzle);
+  const aim = (AI_IMG.axis + L.rot) * Math.PI / 180;
+  L.d = [Math.cos(aim), Math.sin(aim)];
+  L.chest = L.hr * .6;
+  L.at = t => [L.M[0] + L.d[0] * t, L.M[1] + L.d[1] * t];                     // a point on the line of fire
+  L.feet = t => { const p = L.at(t); return [p[0], p[1] + L.chest]; };     // the slope the robots climb
+  // the slope the robots climb, easing into a flat crest under Atlas so it never cuts across him
+  const slope = L.d[1] / L.d[0], xk = L.M[0], b = L.hr * 1.2, yk = L.M[1] + L.chest;
+  L.groundY = x => { if(x >= xk) return yk + (x - xk) * slope; const u = xk - x; return u < b ? yk - slope * (u - u * u / (2 * b)) : yk - slope * b / 2; };
+  return L;
+}
+
+/* ---------- the robots: armoured walkers drawn like the engraving, paper-filled so parts overlap ---------- */
+function aiRobot(x, rnd, R, phase, kind, s){
+  const P = (px, py) => [R[0] + px * s, R[1] + py * s], lw = x.lineWidth;
+  const part = (pts, gap, ang, cross) => {
+    x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath();
+    x.fillStyle = AI_PAPER; x.fill();
+    if(gap){ x.lineWidth = lw * .42; aiHatch(x, rnd, pts, gap * s, ang, .4); if(cross) aiHatch(x, rnd, pts, gap * s * 1.3, ang + 1.2, .4); x.lineWidth = lw; }
+    x.beginPath(); aiPoly(x, rnd, pts, .9); x.stroke();
+  };
+  const tube = (a, b, w, gap) => {   // a limb segment as a shaded quad
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l * w * s / 2, ny = dx / l * w * s / 2;
+    part([[a[0] + nx, a[1] + ny], [b[0] + nx, b[1] + ny], [b[0] - nx, b[1] - ny], [a[0] - nx, a[1] - ny]], gap, Math.atan2(dy, dx) + 1.3);
+  };
+  const joint = (c, r) => { x.beginPath(); x.arc(c[0], c[1], r * s, 0, 6.29); x.fillStyle = AI_PAPER; x.fill(); x.beginPath(); aiCircle(x, rnd, c[0], c[1], r * s, .6); x.stroke(); };
+  const sw = Math.sin(phase), bob = Math.abs(Math.cos(phase)) * .015, wide = kind === 1 ? 1.12 : 1;
+  const leg = (side, k, near) => {
+    const hip = P(side * .1, -.47 + bob), knee = P(side * .1 + k * .1, -.25 - Math.max(0, k) * .03), foot = P(side * .1 + k * .16, -.03 - Math.max(0, k) * .04);
+    tube(hip, knee, .1, near ? 0 : .025); joint(knee, .042); tube(knee, foot, .085, near ? 0 : .025);
+    part([[foot[0] - .09 * s, foot[1] + .03 * s], [foot[0] + .07 * s, foot[1] + .03 * s], [foot[0] + .05 * s, foot[1] - .02 * s], [foot[0] - .05 * s, foot[1] - .03 * s]], .02, .4);
+  };
+  // far side first
+  const shF = P(.2 * wide, -.78 + bob), elF = P(.27 * wide, -.62 - sw * .03 + bob), haF = P(.24 * wide, -.46 - sw * .06 + bob);
+  tube(shF, elF, .08, .02); tube(elF, haF, .07, .02);
+  leg(1, -sw, false);
+  // pelvis + torso
+  part([P(-.13, -.5 + bob), P(.13, -.5 + bob), P(.1, -.41 + bob), P(-.1, -.41 + bob)], .022, 1.1);
+  const T = [P(-.21 * wide, -.86 + bob), P(.21 * wide, -.86 + bob), P(.17 * wide, -.5 + bob), P(-.17 * wide, -.5 + bob)];
+  part(T, 0);
+  x.lineWidth = lw * .42;
+  aiHatch(x, rnd, [P(.03, -.86 + bob), T[1], T[2], P(.03, -.5 + bob)], .02 * s, -1.05, .4);
+  aiHatch(x, rnd, [P(.1, -.86 + bob), T[1], T[2], P(.09, -.5 + bob)], .028 * s, .45, .4);
+  x.lineWidth = lw * .7; x.beginPath();
+  aiLine(x, rnd, ...P(-.19 * wide, -.62 + bob), ...P(.19 * wide, -.62 + bob), .6, 1);                  // belt seam
+  for(let i = 0; i < 3; i++) aiLine(x, rnd, ...P(-.15, -.8 + i * .035 + bob), ...P(-.05, -.8 + i * .035 + bob), .4, 1);   // vents
+  x.stroke();
+  [[-.17, -.83], [.17, -.83], [-.15, -.55], [.15, -.55]].forEach(([u, v]) => { const c = P(u * wide, v + bob); x.beginPath(); x.arc(c[0], c[1], .009 * s, 0, 6.29); x.fillStyle = AI_INK; x.fill(); });
+  x.lineWidth = lw;
+  const core = P(-.06, -.7 + bob); joint(core, .045); x.beginPath(); x.arc(core[0], core[1], .02 * s, 0, 6.29); x.fillStyle = AI_INK; x.fill();
+  // near leg in front of the torso
+  leg(-1, sw, true);
+  // head: helmet with a dark visor band and a lit slit
+  const hb = -.86 + bob;
+  if(kind === 2){ const c = P(0, hb - .1); x.beginPath(); x.arc(c[0], c[1], .12 * s, Math.PI, 0); x.lineTo(c[0] + .12 * s, c[1] + .07 * s); x.lineTo(c[0] - .12 * s, c[1] + .07 * s); x.closePath(); x.fillStyle = AI_PAPER; x.fill(); x.beginPath(); aiCircle(x, rnd, c[0], c[1], .12 * s, .7, .55); x.stroke(); }
+  else part([P(-.12, hb - .2), P(.11, hb - .2), P(.13, hb - .02), P(-.13, hb - .02)], .025, -1.1);
+  part([P(-.14, hb - .12), P(.06, hb - .12), P(.06, hb - .07), P(-.14, hb - .07)], 0);
+  x.beginPath(); const v0 = P(-.14, hb - .12); x.rect(v0[0], v0[1], .2 * s, .05 * s); x.fillStyle = AI_INK; x.fill();
+  x.beginPath(); const e0 = P(-.12, hb - .1); x.rect(e0[0], e0[1], .07 * s, .012 * s); x.fillStyle = AI_PAPER; x.fill();
+  x.beginPath(); aiLine(x, rnd, ...P(.06, hb - .2), ...P(.1, hb - .32), .5, 1); x.stroke(); joint(P(.1, hb - .33), .018);
+  // near arm: shoulder plate and a forearm cannon aimed up at the hill
+  const shN = P(-.22 * wide, -.79 + bob), elN = P(-.33 * wide, -.66 + bob);
+  part([P(-.29 * wide, -.86 + bob), P(-.14 * wide, -.87 + bob), P(-.13 * wide, -.74 + bob), P(-.3 * wide, -.72 + bob)], .02, .9, true);
+  tube(shN, elN, .085, 0); joint(elN, .04);
+  const c0 = elN, c1 = P(-.62 * wide, -.78 + bob);
+  tube(c0, c1, .075, .02);
+  const dx = c1[0] - c0[0], dy = c1[1] - c0[1], l = Math.hypot(dx, dy);
+  x.beginPath(); for(const f of [.35, .7]){ const q = [c0[0] + dx * f, c0[1] + dy * f], nx = -dy / l * .045 * s, ny = dx / l * .045 * s; aiLine(x, rnd, q[0] + nx, q[1] + ny, q[0] - nx, q[1] - ny, .4, 1); } x.stroke();
+  x.beginPath(); x.arc(c1[0], c1[1], .022 * s, 0, 6.29); x.fillStyle = AI_INK; x.fill();
+  x.fillStyle = AI_INK;
+}
+/* where a robot's cannon ends, for the shot it fires back */
+function aiCannon(R, s, kind){ const wide = kind === 1 ? 1.12 : 1; return [R[0] - .62 * wide * s, R[1] - .78 * s]; }
+
+/* ---------- effects ---------- */
+function aiStar(x, rnd, cx, cy, ang, rL, rS, n, fill){
+  x.save(); x.translate(cx, cy); x.rotate(ang);
+  x.beginPath();
+  for(let i = 0; i < n * 2; i++){
+    const a = i / (n * 2) * 6.2832, fwd = Math.max(0, Math.cos(a)), r = i % 2 ? rS * (.6 + rnd() * .3) : rS + (rL - rS) * fwd ** 1.6 * (.7 + rnd() * .5);
+    x.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  x.closePath();
+  if(fill){ x.fillStyle = fill; x.fill(); }
+  x.stroke(); x.restore();
+}
+function aiFlash(x, rnd, M, ang, k){
+  x.save(); x.lineWidth = 2.2;
+  aiStar(x, rnd, M[0], M[1], ang, 70 * k, 18 * k, 7, AI_INK);
+  aiStar(x, rnd, M[0] + Math.cos(ang) * 14 * k, M[1] + Math.sin(ang) * 14 * k, ang, 38 * k, 9 * k, 6, AI_PAPER);
+  x.beginPath();
+  for(let i = 0; i < 7; i++){ const a = ang + (rnd() - .5) * 1.6, r0 = 40 * k, r1 = (70 + rnd() * 40) * k; aiLine(x, rnd, M[0] + Math.cos(a) * r0, M[1] + Math.sin(a) * r0, M[0] + Math.cos(a) * r1, M[1] + Math.sin(a) * r1, 1, 1); }
+  x.stroke(); x.restore();
+}
+/* an engraved smoke puff: paper body, cross-hatched on its shadow side, rough outline */
+function aiPuff(x, rnd, cx, cy, r, lw){
+  x.beginPath(); x.arc(cx, cy, r, 0, 6.29); x.fillStyle = AI_PAPER; x.fill();
+  x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 6.29); x.clip();
+  x.beginPath(); x.rect(cx - r * .1, cy - r * .3, r * 1.2, r * 1.4); x.clip();
+  x.lineWidth = lw * .5; const pts = [[cx - r, cy - r], [cx + r, cy - r], [cx + r, cy + r], [cx - r, cy + r]];
+  aiHatch(x, rnd, pts, Math.max(3, r * .16), -.8, .5); if(r > 14) aiHatch(x, rnd, pts, Math.max(4, r * .22), .7, .5);
+  x.restore();
+  x.lineWidth = lw; x.beginPath(); aiCircle(x, rnd, cx, cy, r, Math.max(.8, r * .05), 1.05); x.stroke();
+}
+function aiBlast(x, rnd, c, age, s){
+  const e = 1 - Math.pow(1 - Math.min(1, age / .55), 2);
+  x.save(); x.lineWidth = 2;
+  x.globalAlpha = Math.max(0, 1 - Math.max(0, age - .45) / .9);
+  const n = 6, lay = [];
+  for(let i = 0; i < n; i++){
+    const a = i / n * 6.28 + .5, rr = (14 + 30 * e) * s * (.75 + ((i * 7) % 3) * .18), d = (10 + 34 * e) * s;
+    lay.push([c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d * .8 - 40 * s * Math.min(1, age), rr]);
+  }
+  lay.push([c[0], c[1] - 30 * s * Math.min(1, age), (22 + 30 * e) * s]);
+  lay.sort((p, q) => q[2] - p[2]).forEach(([px, py, rr]) => aiPuff(x, rnd, px, py, rr, 2));
+  if(age < .16){ x.globalAlpha = 1; aiStar(x, rnd, c[0], c[1], rnd() * 6.28, (70 + 50 * e) * s, 24 * s, 10, AI_INK); x.fillStyle = AI_PAPER; x.beginPath(); x.arc(c[0], c[1], 9 * s, 0, 6.29); x.fill(); }
+  x.restore();
+}
+
+/* ---------- one frame ---------- */
+function aiFrame(t){
+  if(!AI) return;
+  const {cv, ctx: x, img, fig} = AI, dpr = AI.dpr, W = cv.width / dpr, H = cv.height / dpr, L = AI.L;
+  const boil = Math.floor(t * 12), R0 = s => aiRng(boil * 977 + s * 131);
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.fillStyle = AI_PAPER; x.fillRect(0, 0, W, H);
+  if(AI.grain){ x.globalAlpha = .55; x.fillStyle = AI.grain; x.fillRect(0, 0, W, H); x.globalAlpha = 1; }
+  // camera shake on each shot
+  let shx = 0, shy = 0;
+  AI_T.shots.forEach(s => { const a = t - s; if(a > 0 && a < .14){ const r = aiRng(boil * 31 + s * 100); shx += (r() - .5) * 9 * (1 - a / .14); shy += (r() - .5) * 9 * (1 - a / .14); } });
+  x.setTransform(dpr * L.scale, 0, 0, dpr * L.scale, dpr * (L.ox + shx), dpr * (L.oy + shy));
+  x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = AI_INK; x.fillStyle = AI_INK;
+
+  // sky: engraved horizontal strokes, densest at the top, thinning out toward the ground
+  x.lineWidth = 1; const sk = aiRng(31), skb = R0(32);
+  for(let y = 18; y < L.sh * .42; y += 8){
+    x.globalAlpha = .34 * (1 - y / (L.sh * .42)); x.beginPath();
+    let sx = -20 + sk() * 80;
+    while(sx < L.sw){ const len = 40 + sk() * 220; if(sk() > .22) aiLine(x, skb, sx, y + sk() * 2, sx + len, y + sk() * 2, .7, 1); sx += len + 8 + sk() * 40; }
+    x.stroke();
+  }
+  x.globalAlpha = 1;
+
+  // Atlas: sketched in by broad hatch strokes, then held with a tiny boil; recoil on each shot
+  const rv = Math.min(1, Math.max(0, (t - AI_T.reveal[0]) / (AI_T.reveal[1] - AI_T.reveal[0])));
+  let kick = 0, kr = 0;
+  AI_T.shots.forEach(s => { const a = t - s; if(a > 0 && a < .22){ const e = a < .05 ? a / .05 : 1 - (a - .05) / .17; kick += e * 10; kr += e * 1.6; } });
+  const raise = Math.min(1, Math.max(0, (t - 1.7) / .45)), lower = Math.min(1, Math.max(0, (t - 3.85) / .6));
+  const rot = L.rot + (1 - raise) * 7 + lower * 3 - kr, br = R0(1);
+  const jit = [(br() - .5) * 1.2, (br() - .5) * 1.2], bj = (br() - .5) * .2;
+  x.save();
+  x.translate(L.piv[0] - L.d[0] * kick + jit[0], L.piv[1] - L.d[1] * kick + jit[1]); x.rotate((rot + bj) * Math.PI / 180);
+  x.translate(-AI_IMG.pivot[0] * L.k, -AI_IMG.pivot[1] * L.k); x.scale(L.k, L.k);
+  if(rv < 1){
+    const m = AI.mask, mx = m.getContext('2d'), n = AI.strokes.length, upto = rv * n;
+    mx.globalCompositeOperation = 'source-over'; mx.clearRect(0, 0, m.width, m.height);
+    mx.lineCap = 'round'; mx.strokeStyle = '#000';
+    for(let i = 0; i < Math.ceil(upto); i++){ const s = AI.strokes[i], f = Math.min(1, upto - i); mx.lineWidth = s.w; mx.beginPath(); mx.moveTo(s.x1, s.y1); mx.lineTo(s.x1 + (s.x2 - s.x1) * f, s.y1 + (s.y2 - s.y1) * f); mx.stroke(); }
+    mx.globalCompositeOperation = 'source-in'; mx.drawImage(fig, 0, 0);
+    x.drawImage(m, 0, 0, AI_IMG.w, AI_IMG.h);
+  } else x.drawImage(fig, 0, 0, AI_IMG.w, AI_IMG.h);
+  x.restore();
+  const Mnow = L.toStage(...AI_IMG.muzzle, rot, -L.d[0] * kick, -L.d[1] * kick), ang = (AI_IMG.axis + rot) * Math.PI / 180;
+
+  // the hill Atlas stands behind: paper fill hides his waist, engraved contour lines below the crest
+  const gx0 = L.fx - 80, gx1 = L.sw + 60, crest = [[gx0, L.groundY(gx0)], [gx1, L.groundY(gx1)]];
+  const hillDraw = Math.min(1, Math.max(0, (t - .25) / .8));
+  x.save();
+  x.beginPath(); for(let sx = gx0; sx <= gx1; sx += 20) x.lineTo(sx, L.groundY(sx)); x.lineTo(gx1, L.sh + 400); x.lineTo(gx0, L.sh + 400); x.closePath();
+  x.fillStyle = AI_PAPER; x.fill();
+  x.clip();
+  if(AI.grain){ x.globalAlpha = .55; x.fillStyle = AI.grain; x.fillRect(gx0, 0, gx1 - gx0, L.sh + 400); x.globalAlpha = 1; }
+  const hs = aiRng(7), hb = R0(7), span = gx1 - gx0, reveal = gx0 + span * hillDraw;
+  x.lineWidth = 1.05;
+  for(let i = 1; i < 34; i++){
+    const off = 3 + i * 3.2 + i * i * .42;
+    x.globalAlpha = Math.max(.12, 1 - off / 620); x.beginPath();
+    let sx = gx0 + hs() * 40;
+    while(sx < reveal){
+      const len = 70 + hs() * 160, ex = Math.min(sx + len, reveal);
+      if(hs() > .12 - i * .004){ const mx = (sx + ex) / 2; aiLine(x, hb, sx, L.groundY(sx) + off, mx, L.groundY(mx) + off, .9, 1); aiLine(x, hb, mx, L.groundY(mx) + off, ex, L.groundY(ex) + off, .9, 1); }
+      sx += len + 6 + hs() * (10 + i * 2);
+    }
+    x.stroke();
+  }
+  x.globalAlpha = 1;
+  x.lineWidth = .8; x.globalAlpha = .8; x.beginPath();
+  for(let sx = gx0; sx < reveal; sx += 6 + hs() * 5){ const y = L.groundY(sx) + 2, l = 8 + hs() * 22; aiLine(x, hb, sx, y, sx - l * .35, y + l, .5, 1); }
+  x.stroke(); x.globalAlpha = 1;
+  x.restore();
+  x.lineWidth = 2.6; x.beginPath();
+  const cx1 = gx0 + span * hillDraw, cr = R0(8);
+  for(let sx = gx0; sx < cx1; sx += 90){ const ex = Math.min(sx + 90, cx1); aiLine(x, cr, sx, L.groundY(sx), ex, L.groundY(ex), 1.2, 2); }
+  x.stroke();
+  // tufts of grass along the crest
+  x.lineWidth = 1.2; x.beginPath();
+  const gr = aiRng(99);
+  for(let i = 0; i < 26; i++){ const sx = gx0 + gr() * span; if(sx > cx1) continue; const y = L.groundY(sx), b = R0(200 + i); for(let k = -1; k <= 1; k++) aiLine(x, b, sx + k * 3, y + 1, sx + k * 6 + (b() - .5) * 4, y - 9 - b() * 8, .6, 1); }
+  x.stroke();
+
+  // robots: climb toward Atlas until the shot lands
+  // each walks in from beyond the right edge and reaches its mark exactly when Atlas fires at it
+  const tOff = (L.sw + L.hr * .5 - L.M[0]) / L.d[0], robotAt = (i, tt) => {
+    const st = AI_T.shots[i], sp = (tOff - L.ts[i]) / (st - AI_T.enter);
+    return L.ts[i] + Math.max(0, st - tt) * sp;
+  };
+  AI_T.shots.forEach((st, i) => {
+    const tAt = L.ts[i], pos = robotAt(i, t);
+    if(t < AI_T.enter) return;
+    const age = t - st, s = L.hr * (i === 1 ? 1.04 : 1);
+    if(age < 0){
+      const R = L.feet(pos), phase = (pos / (L.hr * .2));
+      x.lineWidth = 2.3; aiRobot(x, R0(300 + i), R, phase, i, s);
+    } else {
+      const c = L.at(tAt);
+      if(age < 1.6) aiBlast(x, R0(400 + i), c, age, s / 150);
+      AI.debris[i].forEach(d => {
+        let px = c[0] + d.vx * age, py = c[1] + d.vy * age + 700 * age * age, a = d.va * age;
+        const gy = L.groundY(px) - 3;
+        if(py > gy){ py = gy; a = d.va * .3; }
+        x.save(); x.globalAlpha = Math.max(0, 1 - Math.max(0, age - 1.6) / .5); x.translate(px, py); x.rotate(a); x.lineWidth = 1.8;
+        x.beginPath(); const r = R0(500 + i * 20 + d.id);
+        if(d.kind === 'gear'){ aiCircle(x, r, 0, 0, d.r * s, 1); for(let k = 0; k < 8; k++){ const q = k / 8 * 6.28; aiLine(x, r, Math.cos(q) * d.r * s, Math.sin(q) * d.r * s, Math.cos(q) * d.r * s * 1.35, Math.sin(q) * d.r * s * 1.35, .5, 1); } }
+        else aiPoly(x, r, [[-d.w * s / 2, -d.h * s / 2], [d.w * s / 2, -d.h * s / 2], [d.w * s / 2, d.h * s / 2], [-d.w * s / 2, d.h * s / 2]], 1);
+        x.stroke(); x.restore();
+      });
+    }
+  });
+
+  // the robots fire first: one bolt over his shoulder, one into the crest beside him
+  [[1, 1.82, L.toStage(640, 60), false], [2, 2.02, [L.piv[0] + L.hr * .9, L.groundY(L.piv[0] + L.hr * .9)], true]].forEach(([i, ft, tg, hit]) => {
+    const a = t - ft; if(a < 0 || a > .8 || t >= AI_T.shots[i]) return;
+    const s = L.hr * (i === 1 ? 1.04 : 1), C = aiCannon(L.feet(robotAt(i, ft)), s, i);
+    const dx = tg[0] - C[0], dy = tg[1] - C[1], fl = .2;
+    if(a < fl + .08){
+      const h = Math.min(1, a / fl), tl = Math.max(0, h - 150 / Math.hypot(dx, dy));
+      x.lineWidth = 2.2; x.beginPath();
+      const l = Math.hypot(dx, dy), nx = -dy / l * 3, ny = dx / l * 3;
+      for(const k of [-1, 1]) aiLine(x, R0(800 + i), C[0] + dx * tl + nx * k, C[1] + dy * tl + ny * k, C[0] + dx * h + nx * k, C[1] + dy * h + ny * k, .8, 1);
+      x.stroke();
+    }
+    if(a < .07){ x.lineWidth = 1.6; aiStar(x, R0(810 + i), C[0], C[1], Math.atan2(dy, dx), 26, 7, 6, AI_INK); }
+    if(hit && a > fl && a < fl + .6) aiBlast(x, R0(820 + i), tg, a - fl, .45);
+  });
+
+  // shots: tracer, muzzle flash, smoke, a spent case flying out
+  AI_T.shots.forEach((st, i) => {
+    const a = t - st; if(a < 0) return;
+    const target = L.at(L.ts[i]);
+    if(a < .1){
+      x.lineWidth = 3.4; x.beginPath(); aiLine(x, R0(600 + i), Mnow[0] + L.d[0] * 60, Mnow[1] + L.d[1] * 60, target[0], target[1], 1.5, 1); x.stroke();
+      x.lineWidth = 1.2; x.beginPath();
+      for(let k = -1; k <= 1; k += 2) aiLine(x, R0(610 + i), Mnow[0] + L.d[0] * 80 - L.d[1] * 9 * k, Mnow[1] + L.d[1] * 80 + L.d[0] * 9 * k, target[0] - L.d[0] * 40 - L.d[1] * 9 * k, target[1] - L.d[1] * 40 + L.d[0] * 9 * k, 1, 1);
+      x.stroke();
+    }
+    if(a < .09) aiFlash(x, R0(620 + i), Mnow, ang, L.F / 800);
+    if(a < 1.3){
+      x.save(); x.globalAlpha = Math.max(0, .85 - a * .65); x.lineWidth = 1.4;
+      for(let k = 2; k >= 0; k--){ const p = Math.min(1, a / 1.2), rr = (7 + 20 * p + k * 5) * L.F / 800, px = Mnow[0] + L.d[0] * (26 + k * 14) * L.F / 800 + 10 * p, py = Mnow[1] - (18 + 60 * p + k * 16) * L.F / 800;
+        aiPuff(x, R0(640 + i * 3 + k), px, py, rr, 1.3); }
+      x.restore();
+      const port = L.toStage(...AI_IMG.port, rot), cx = port[0] + 160 * a, cy = port[1] - 320 * a + 900 * a * a;
+      if(a < .7){ x.save(); x.translate(cx, cy); x.rotate(a * 18); x.lineWidth = 1.6; x.beginPath(); aiPoly(x, R0(660 + i), [[-6, -2.5], [6, -2.5], [6, 2.5], [-6, 2.5]], .5); x.stroke(); x.restore(); }
+    }
+  });
+
+  // wordmark, drawn left to right, then the tagline
+  const tt = t - AI_T.title;
+  if(tt > 0){
+    const [tx, ty, fs] = L.title, letters = 'ATLAS';
+    x.save(); x.font = `700 ${fs}px "Space Grotesk", system-ui, sans-serif`; x.textAlign = 'left'; x.textBaseline = 'alphabetic';
+    const full = x.measureText(letters).width + fs * .12 * 4, sx = tx - full / 2;
+    const cf = Math.min(1, tt / .35), bw = full + fs * .7, bh = fs * 1.9, bx = tx - bw / 2, by = ty - fs * 1.05;
+    x.globalAlpha = cf; x.fillStyle = AI_PAPER; x.fillRect(bx, by, bw, bh);
+    x.lineWidth = 2; x.beginPath(); aiPoly(x, R0(710), [[bx, by], [bx + bw, by], [bx + bw, by + bh], [bx, by + bh]], 1.2);
+    x.stroke(); x.lineWidth = 1; x.beginPath(); const g2 = fs * .09;
+    aiPoly(x, R0(711), [[bx + g2, by + g2], [bx + bw - g2, by + g2], [bx + bw - g2, by + bh - g2], [bx + g2, by + bh - g2]], .8); x.stroke();
+    x.globalAlpha = 1;
+    let px = sx;
+    for(let i = 0; i < letters.length; i++){
+      const w = x.measureText(letters[i]).width, f = Math.min(1, Math.max(0, (tt - i * .09) / .16));
+      if(f > 0){ x.save(); x.beginPath(); x.rect(px - 4, ty - fs, (w + 8) * f, fs * 1.3); x.clip(); x.fillStyle = AI_INK; x.fillText(letters[i], px, ty); x.restore(); }
+      px += w + fs * .12;
+    }
+    const uf = Math.min(1, Math.max(0, (tt - .45) / .4));
+    if(uf > 0){ x.lineWidth = 2.4; x.beginPath(); aiLine(x, R0(700), sx, ty + fs * .2, sx + full * uf, ty + fs * .2 + 2, 1.4, 2); x.stroke(); }
+    const ga = Math.min(1, Math.max(0, (tt - .7) / .4));
+    if(ga > 0){ x.globalAlpha = ga; x.font = `500 ${Math.round(fs * .2)}px "Space Grotesk", system-ui, sans-serif`; x.fillStyle = '#5c5953'; x.textAlign = 'center'; x.fillText('Your life, organized', tx, ty + fs * .56); }
+    x.restore();
+  }
+  // edges of the page darken a touch, like an old print
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if(AI.vig){ x.fillStyle = AI.vig; x.fillRect(0, 0, W, H); }
+}
+
+/* ---------- lifecycle ---------- */
+function aiPrepare(img){
+  // hero with its lower edge faded (as on the hub), at native size
+  const fig = document.createElement('canvas'); fig.width = AI_IMG.w; fig.height = AI_IMG.h;
+  const f = fig.getContext('2d'); f.drawImage(img, 0, 0, AI_IMG.w, AI_IMG.h);
+  f.globalCompositeOperation = 'destination-in';
+  const g = f.createLinearGradient(0, AI_IMG.h * .8, 0, AI_IMG.h); g.addColorStop(0, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  f.fillStyle = g; f.fillRect(0, 0, AI_IMG.w, AI_IMG.h);
+  // broad diagonal "pencil" strokes that sketch him in, top to bottom
+  const strokes = [], r = aiRng(4242);
+  for(let y = -300; y < AI_IMG.h + 200; y += 34) strokes.push({x1: -60 + r() * 60, y1: y + r() * 20, x2: AI_IMG.w + 60, y2: y + AI_IMG.w * .42 + r() * 40, w: 58 + r() * 26});
+  const mask = document.createElement('canvas'); mask.width = AI_IMG.w; mask.height = AI_IMG.h;
+  // paper grain
+  const gc = document.createElement('canvas'); gc.width = gc.height = 160;
+  const gx = gc.getContext('2d'), im = gx.createImageData(160, 160), gr = aiRng(77);
+  for(let i = 0; i < im.data.length; i += 4){ const v = 150 + gr() * 80; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = gr() < .5 ? 10 : 0; }
+  gx.putImageData(im, 0, 0);
+  return {fig, strokes, mask, grainSrc: gc};
+}
+function aiDebris(){
+  const r = aiRng(9);
+  return [0, 1, 2].map(() => Array.from({length: 9}, (_, id) => {
+    const kind = id < 2 ? 'gear' : 'plate', a = -Math.PI / 2 + (r() - .5) * 2.6, v = 260 + r() * 380;
+    return {id, kind, r: .05 + r() * .03, w: .06 + r() * .12, h: .04 + r() * .08, vx: Math.cos(a) * v, vy: Math.sin(a) * v, va: (r() - .5) * 18};
+  }));
+}
+function atlasIntro(){
+  if(AI || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'atlasIntro'; wrap.setAttribute('role', 'img'); wrap.setAttribute('aria-label', 'Intro: Atlas holds the hill against a line of robots');
+  wrap.innerHTML = `<canvas></canvas><button type="button" class="ai-skip">Skip</button>`;
+  document.body.appendChild(wrap);
+  const cv = wrap.querySelector('canvas'), img = new Image();
+  AI = {wrap, cv, ctx: cv.getContext('2d'), img, t0: 0, raf: 0, debris: aiDebris(), dpr: Math.min(2, window.devicePixelRatio || 1)};
+  const size = () => {
+    if(!AI) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    cv.width = Math.round(W * AI.dpr); cv.height = Math.round(H * AI.dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    AI.L = aiLayout(W, H);
+    if(AI.grainSrc){ AI.grain = AI.ctx.createPattern(AI.grainSrc, 'repeat'); const v = AI.ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.hypot(W, H) * .62); v.addColorStop(0, 'rgba(60,50,40,0)'); v.addColorStop(1, 'rgba(60,50,40,.10)'); AI.vig = v; }
+  };
+  AI.size = size;
+  window.addEventListener('resize', size);
+  const finish = fast => {
+    if(!AI || AI.closing) return;
+    AI.closing = true;
+    wrap.style.transition = `opacity ${fast ? .25 : .6}s ease`; wrap.style.opacity = '0';
+    setTimeout(() => { cancelAnimationFrame(AI && AI.raf); window.removeEventListener('resize', size); wrap.remove(); AI = null; }, fast ? 260 : 620);
+  };
+  AI.finish = finish;
+  wrap.addEventListener('pointerdown', () => finish(true));
+  AI.key = e => { if(AI && !AI.test) finish(true); };
+  window.addEventListener('keydown', AI.key, {once: true});
+  const start = () => {
+    if(!AI) return;
+    Object.assign(AI, aiPrepare(img)); size();
+    AI.t0 = performance.now();
+    const loop = now => {
+      if(!AI) return;
+      if(AI.test) return;                     // frames are being driven by atlasIntroFrame()
+      const t = (now - AI.t0) / 1000;
+      aiFrame(t);
+      if(t >= AI_T.out && !AI.closing) finish(false);
+      AI.raf = requestAnimationFrame(loop);
+    };
+    AI.raf = requestAnimationFrame(loop);
+  };
+  img.onload = start;
+  img.onerror = () => finish(true);      // no hero, no intro
+  img.src = AI_SRC;
+}
+/* test hook: render a single moment of the intro without the clock */
+window.atlasIntroFrame = t => { if(AI){ AI.test = true; aiFrame(t); } };
 </script>
 </body>
 </html>
