@@ -431,17 +431,21 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   #hub{padding:20px 16px 14px}
   .hub-top{font-size:13px;align-items:flex-start}
   .hub-hello .hub-date{font-size:13.5px;margin-top:4px}
-  .hub-hello{position:static;white-space:normal;text-align:center;order:1;flex:0 0 100%;margin:-4px 0 4px}
+  /* phone order: greeting, then the figure, then the tiles */
+  .hub-hello{position:static;white-space:normal;text-align:center;order:0;flex:0 0 100%;margin:0 0 2px}
   .hub-greet{font-size:27px}
   .hub-status{justify-content:center;font-size:13px}
   /* no room to orbit on a phone: Atlas on top with the circle behind him, tiles in two rows */
   .hub-stage{padding:6px 0 10px}
   .hub-orbit{--figh:clamp(210px,34vh,320px);width:100%;height:auto;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:18px 0;padding-top:calc(var(--figh) * .06)}
-  .hub-circle{top:calc(var(--figh) / 2);width:calc(var(--figh) * .95);height:calc(var(--figh) * .95);box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--border)}
+  /* the disc travels with the figure here: drawn by the figure itself, so it sits behind him wherever he lands */
+  .hub-circle{display:none}
+  .hub-figure::before{content:'';position:absolute;left:50%;top:calc(var(--figh) * .5);width:calc(var(--figh) * .95);height:calc(var(--figh) * .95);border-radius:50%;z-index:-1;
+    transform:translate(-50%,-50%) translateZ(-40px);background:radial-gradient(circle at 50% 42%,#e9e7e2 0%,#e2dfd9 62%,#d9d6cf 100%);border:1px solid #d0cdc6;
+    box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--border),0 24px 32px -16px rgba(26,26,24,.22),inset 0 2px 14px rgba(26,26,24,.05)}
   .hub-col{display:contents}
   .tile{position:static;transform:translateZ(0)!important;flex:0 0 24%;order:2;margin-bottom:6px}   /* seven tiles: 4 + 3, not 3 + 3 + a lonely one */
-  .hub-figure{position:relative;left:auto;top:auto;transform:translateZ(40px);order:0;flex:0 0 100%;width:auto;height:calc(var(--figh) * 1.2)}
-  .hub-circle{top:calc(var(--figh) * .06 + var(--figh) * .5)}
+  .hub-figure{position:relative;left:auto;top:auto;transform:translateZ(40px);transform-style:preserve-3d;order:1;flex:0 0 100%;width:auto;height:calc(var(--figh) * 1.2);margin-top:6px}
   .tile .ic{width:60px;height:60px;border-radius:18px}
   .cal-grid{gap:2px}
   .cal-day{border-radius:7px}
@@ -947,7 +951,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v61</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v62</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1044,7 +1048,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v61');
+console.log('Atlas v62');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
