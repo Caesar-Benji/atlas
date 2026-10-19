@@ -100,7 +100,9 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 
 /* ---------- Section masthead (v50 shape): title, one status line, one primary action, the engraving at the side ----------
    Forms never live here; the action opens a sheet or the live room. Sections adopt this one at a time, Gym first. */
-.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.mast-ctl{flex:0 0 100%;display:flex;justify-content:flex-end;margin-top:-6px}
+.mast-ctl.scope-pick{margin-left:0}
 .mast-txt{min-width:0;flex:1}
 .mast h2{font-size:32px;letter-spacing:-.03em;line-height:1}
 .mast-sub{color:var(--muted);font-size:14px;margin-top:8px;min-height:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -112,6 +114,12 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 /* lead numbers: the two or three figures that matter today, boxed because they are the one thing that is */
 .lead{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;margin-bottom:26px}
 .lead .mstat{display:flex;flex-direction:column}
+.lead.four{grid-template-columns:repeat(4,1fr)}
+.mstat.act{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%;transition:border-color var(--t-hover) ease}
+@media(hover:hover) and (pointer:fine){ .mstat.act:hover{border-color:var(--accent)} }
+.mstat .v.warn{color:var(--red)}
+.mstat .progress-track{margin-top:auto;padding-top:0;height:6px}
+.mstat .bar{margin-top:10px}
 .lead .week{margin-top:auto;padding-top:10px}
 .lead .week .dot{height:26px;font-size:10.5px;border-radius:7px;margin-top:3px}
 .lead .week .dot svg{width:12px;height:12px}
@@ -141,6 +149,15 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 .lrow .chev{color:var(--muted);display:flex;flex:none}
 .lrow .exi{width:34px;height:34px;flex:none}
 .lrow .pill{margin-left:6px}
+.lrow .m .cat{color:var(--cc);font-weight:600}
+.sec-note{font-size:12.5px;color:var(--muted);margin:4px 0 8px}
+.lrow .r b.refund{color:var(--green)}
+.lrow select{width:auto;max-width:170px;font-size:13px;padding:7px 9px}
+.lrow .mer-ico{width:36px;height:36px}
+.lrow .tap-tag{margin-left:5px}
+.sheet.wide{max-width:760px}
+.sheet-body .form-grid{margin-bottom:0}
+.sheet-body form+form{margin-top:12px}
 /* the session sheet: one workout in full, with the secondary actions that used to crowd every row */
 .wo-sheet .sheet-head .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
 .wo-ex{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-top:1px solid var(--border)}
@@ -166,6 +183,9 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
   .mast-art{height:84px;align-self:flex-start}
   .lead{grid-template-columns:1fr 1fr;gap:10px}
   .lead .mstat:first-child{grid-column:1/-1}
+  .lead.four{grid-template-columns:1fr 1fr}
+  .lead.four .mstat:first-child{grid-column:auto}
+  .mast-ctl{justify-content:flex-start;margin-top:-2px}
   .lrow{gap:10px;padding:11px 4px}
   .lrow:not(.static) .r span{display:none}
   .lead .mstat .s{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -880,7 +900,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v50</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v51</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -977,7 +997,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v50');
+console.log('Atlas v51');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1416,10 +1436,10 @@ async function toggleEvent(id, done){
   if(error){ if(e){ e.done = !done; renderEvList(); } err(error); }
 }
 async function delRow(table, id, view){
-  if(!await ask({title: 'Delete this ' + table.replace(/s$/, '') + '?', body: 'This cannot be undone.', ok: 'Delete', danger: true})) return;
+  if(!await ask({title: 'Delete this ' + table.replace(/s$/, '') + '?', body: 'This cannot be undone.', ok: 'Delete', danger: true})) return false;
   const {error} = await sb.from(table).delete().eq('id', id);
-  if(error) return err(error);
-  window._moneyKeep = true; views[view]();
+  if(error){ err(error); return false; }
+  window._moneyKeep = true; views[view](); return true;
 }
 
 /* ================= GYM ================= */
@@ -2739,62 +2759,38 @@ views.money = async function(){
   const keepY = window._moneyKeep ? window.scrollY : null; window._moneyKeep = false;
   const month = window._moneyMonth || todayStr().slice(0,7);
   window._moneyMonth = month;
-  const scope = window._moneyScope || 'month';
-  const ed = window._editEx;
+  const scope = window._moneyScope || 'month', year = scope === 'year';
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Money</h2><img src="hero-money.png" alt="" onerror="this.remove()">
-      <div class="scope-pick">
-        <button class="${scope==='month'?'on':''}" type="button" onclick="window._moneyScope='month';views.money()">Month</button>
-        <button class="${scope==='year'?'on':''}" type="button" onclick="window._moneyScope='year';views.money()">All time</button>
-        <input type="month" value="${month}" ${scope==='year'?'disabled':''}
+    <div class="mast">
+      <div class="mast-txt"><h2>Money</h2><div class="mast-sub" id="moSub">Loading…</div>
+        <div class="mast-acts"><button class="btn" type="button" onclick="expenseSheet()">Add expense</button>
+          <button class="btn-ghost" type="button" onclick="importSheet()">Import statement</button></div></div>
+      <img class="mast-art" src="hero-money.png" alt="" onerror="this.remove()">
+      <div class="mast-ctl scope-pick">
+        <button class="${!year?'on':''}" type="button" onclick="window._moneyScope='month';views.money()">Month</button>
+        <button class="${year?'on':''}" type="button" onclick="window._moneyScope='year';views.money()">All time</button>
+        <input type="month" value="${month}" ${year?'disabled':''} aria-label="Month"
           onchange="window._moneyMonth=this.value||todayStr().slice(0,7);views.money()">
-      </div></div>
-
-    <div class="stat-row" id="moStats"></div>
-    <div class="card" style="margin-bottom:16px"><h3>Lessons learned</h3><div id="moInsights"><div class="empty">Reading your history…</div></div></div>
-    <div class="card" style="margin-bottom:16px"><h3>Monthly commitments — <span id="fxTotal" style="color:var(--text)"></span></h3>
-      <div class="list" id="moFixed"><div class="empty">Loading…</div></div></div>
-    <div class="grid cols2" style="margin-bottom:16px">
-      <div class="card"><h3>Where it goes — <span id="moTotal" style="color:var(--text)"></span></h3>
-        <div class="chart-box"><canvas id="catChart"></canvas></div><div id="catLegend" class="cat-legend"></div></div>
-      <div class="card"><h3>Month by month</h3><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
+      </div>
     </div>
-    <div class="card" style="margin-bottom:16px" id="moOtherCard"><h3>Uncategorised — <span id="othTotal" style="color:var(--text)"></span></h3>
-      <div id="moOther"></div></div>
-    <div class="card" style="margin-bottom:16px"><h3>Monthly budget</h3><div id="budgetBar"></div>
-      <form onsubmit="submitGuard(event, saveBudget)"><div class="form-grid" style="margin:10px 0 0">
-        <div><label class="lbl" for="budgetIn">Budget per month (₪) — your spending target</label><input id="budgetIn" type="number" inputmode="decimal" enterkeyhint="done" min="0" step="1" placeholder="e.g. 9000"></div>
-        <div style="display:flex;align-items:flex-end"><button class="btn-ghost" type="submit">Save budget</button></div>
-      </div></form>
-      <div class="chart-box" style="height:190px;margin-top:12px"><canvas id="burnChart"></canvas></div></div>
-    <div class="card" style="margin-bottom:16px"><h3>Subscriptions — <span id="subTotal" style="color:var(--text)"></span></h3>
-      <div class="list" id="subList" style="margin-bottom:14px"><div class="empty">Loading…</div></div>
-      <form onsubmit="submitGuard(event, addSub)"><div class="form-grid">
-        <div><label class="lbl" for="subPreset">Service</label><select id="subPreset">${Object.keys(SUBS).map(s=>`<option>${s}</option>`).join('')}</select></div>
-        <div><label class="lbl" for="subName">Custom name (only for "Other")</label><input id="subName" placeholder="e.g. Gym membership"></div>
-        <div><label class="lbl" for="subAmount">Price per month (₪)</label><input id="subAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
-        <div><label class="lbl" for="subDay">Billing day of month (1–28)</label><input id="subDay" type="number" inputmode="numeric" enterkeyhint="done" min="1" max="28" value="1"></div>
-      </div><button class="btn" type="submit">Add subscription</button></form></div>
-    <div class="card" style="margin-bottom:16px"><h3>${ed?'Edit expense':'Add expense'}</h3>
-      <form onsubmit="submitGuard(event, addExpense)"><div class="form-grid">
-        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" inputmode="decimal" placeholder="0.00" step="0.01" value="${ed?+ed.amount:''}"></div>
-        <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c=>`<option${ed?.category===c?' selected':''}>${c}</option>`).join('')}</select></div>
-        <div><label class="lbl" for="exDesc">Description — what was it for?</label><input id="exDesc" placeholder="e.g. Weekly groceries" enterkeyhint="done" value="${ed?esc(ed.description||''):''}"></div>
-        <div><label class="lbl" for="exDate">Date of purchase</label><input id="exDate" type="date" value="${ed?ed.spent_at:todayStr()}"></div>
-      </div><div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" type="submit">${ed?'Update expense':'Add expense'}</button>
-        ${ed?'<button class="btn-ghost" type="button" onclick="window._editEx=null;views.money()">Cancel</button>':''}
-      </div></form></div>
-    <div class="card" style="margin-bottom:16px"><h3>Import statement (PDF)</h3>
-      <div class="empty" style="cursor:pointer"
-        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''"
-        ondrop="event.preventDefault();this.style.borderColor='';handleStatement(event.dataTransfer.files)"
-        onclick="pdfFile.click()">Drop your Cal / Diners / MAX monthly statement PDF here, or click to choose.<br>Every charge is read with its date; ones you already logged (same date + amount) are skipped, and you confirm before anything is added.</div>
-      <input id="pdfFile" type="file" accept="application/pdf" multiple style="display:none" onchange="handleStatement(this.files);this.value=''">
-      <div id="importPreview"></div></div>
-    <div class="card"><h3 class="h3-row"><span id="listTitle">Spending</span>
-      <button class="btn-ghost" type="button" title="Download as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></h3>
-      <div class="list" id="exList"><div class="empty">Loading…</div></div></div>`;
+    <div class="lead four" id="moLead"></div>
+    <div class="sec hidden" id="moOtherCard"><div class="sec-h"><h3>Uncategorised</h3><span class="n" id="othTotal"></span></div><div class="ledger" id="moOther"></div></div>
+    <div class="grid cols2" style="margin-bottom:12px">
+      <div class="sec"><div class="sec-h"><h3>Where it goes</h3><span class="n" id="moTotal"></span></div>
+        <div class="chart-box"><canvas id="catChart"></canvas></div><div id="catLegend" class="cat-legend"></div></div>
+      <div class="sec"><div class="sec-h"><h3>${year ? 'Month by month' : 'Pace'}</h3><span class="n" id="paceN"></span></div>
+        <div class="chart-box"><canvas id="${year ? 'trendChart' : 'burnChart'}"></canvas></div></div>
+    </div>
+    <div class="sec"><div class="sec-h"><h3 id="listTitle">Spending</h3><span class="n" id="listN"></span>
+        <button class="btn-ghost" type="button" title="Download as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></div>
+      <div class="ledger" id="exList"><div class="empty">Loading…</div></div></div>
+    <div class="grid cols2" style="margin-bottom:12px">
+      <div class="sec"><div class="sec-h"><h3>Patterns</h3></div><div id="moInsights"><div class="empty">Reading your history…</div></div></div>
+      ${year ? '' : `<div class="sec"><div class="sec-h"><h3>Month by month</h3></div><div class="chart-box"><canvas id="trendChart"></canvas></div></div>`}
+    </div>
+    <div class="sec"><div class="sec-h"><h3>Recurring</h3><span class="n" id="fxTotal"></span>
+        <button class="btn-ghost" type="button" onclick="subSheet()">Add subscription</button></div>
+      <div class="ledger" id="moFixed"><div class="empty">Loading…</div></div></div>`;
 
   const [allq, st, subs, rules] = await Promise.all([
     fetchAll(() => sb.from('expenses').select('*').order('spent_at', {ascending: false}).order('created_at', {ascending: false})),
@@ -2807,28 +2803,42 @@ views.money = async function(){
   const bad = [allq, st, subs].find(r => r.error);
   if(bad){ err(bad.error); document.getElementById('exList').innerHTML = `<div class="empty">Couldn't load — ${esc(bad.error.message)}</div>`; return; }
 
-  const all = allq.data || [];
+  const all = allq.data || [], budget = +(st.data?.monthly_budget || 0);
+  window._subs = subs.data || []; window._budget = budget;
   const from = month + '-01';
   const to = new Date(new Date(from+'T00:00').getFullYear(), new Date(from+'T00:00').getMonth()+1, 1).toLocaleDateString('en-CA');
-  const shown = scope === 'year' ? all : all.filter(x => x.spent_at >= from && x.spent_at < to);
+  const shown = year ? all : all.filter(x => x.spent_at >= from && x.spent_at < to);
   window._monthExpenses = shown;
-  const total = shown.reduce((s,x) => s + +x.amount, 0);
   // the donut only has positive slices, so its heading is the positive total too
-  document.getElementById('moTotal').textContent = NIS(shown.reduce((s,x) => s + Math.max(0, +x.amount), 0));
-  document.getElementById('listTitle').textContent = scope === 'year'
-    ? `All spending — ${plural(shown.length, 'charge')}` : `${new Date(from+'T00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'})} — ${plural(shown.length, 'charge')}`;
+  document.getElementById('moTotal').textContent = NIS0(shown.reduce((s,x) => s + Math.max(0, +x.amount), 0));
+  document.getElementById('listTitle').textContent = year ? 'All spending' : new Date(from+'T00:00').toLocaleDateString('en-GB', {month: 'long', year: 'numeric'});
+  document.getElementById('listN').textContent = plural(shown.length, 'charge');
 
-  renderMoStats(all, shown, scope, month);
+  renderMoLead(all, shown, scope, month, budget);
   renderInsights(all);
-  renderFixed(all);
+  renderRecurring(all, window._subs);
   renderOtherFix(shown);
   renderExpenseList(shown);
-  renderSubs(subs.data || []);
-  renderBudget(shown, +(st.data?.monthly_budget || 0), month, scope);
   drawCatChart(shown);
   drawTrendChart(all);
+  if(!year){
+    drawBurnChart(shown, budget, month);
+    const proj = projectMonth(shown, month), n = document.getElementById('paceN');
+    if(n) n.textContent = proj ? 'on pace for ' + NIS0(proj) : budget ? 'against a ' + NIS0(budget) + ' budget' : '';
+  }
   if(keepY != null) window.scrollTo(0, keepY);
 };
+/* whole shekels for headlines; the charge list keeps its agorot */
+const NIS0 = n => '₪' + Math.round(+n || 0).toLocaleString('en-GB');
+const nisTick = v => '₪' + (Math.abs(v) >= 1e6 ? +(v / 1e6).toFixed(1) + 'M' : Math.abs(v) >= 1000 ? +(v / 1000).toFixed(1) + 'k' : v);
+/* straight-line projection of the running month, the same arithmetic the pace chart draws */
+function projectMonth(shown, month){
+  if(month !== todayStr().slice(0,7)) return null;
+  const [Y, M] = month.split('-').map(Number), dim = new Date(Y, M, 0).getDate(), day = +todayStr().slice(8,10);
+  if(day < 2 || day >= dim) return null;
+  return shown.reduce((s,x) => s + +x.amount, 0) / day * dim;
+}
+
 /* Months that aren't fully covered by the data distort averages and trends:
    the current month is always partial, and the first month of history usually is too. */
 function completeMonths(months, all){
@@ -2842,32 +2852,44 @@ function statTile(label, value, sub, tone){
   return `<div class="mstat"><div class="lbl">${label}</div><div class="v">${value}</div>
     <div class="s${tone?' '+tone:''}">${sub || ''}</div></div>`;
 }
-function renderMoStats(all, shown, scope, month){
-  const el = document.getElementById('moStats'); if(!el) return;
-  // net of refunds, the same basis as the month total and the budget bar
+function renderMoLead(all, shown, scope, month, budget){
+  const el = document.getElementById('moLead'), sub = document.getElementById('moSub'); if(!el) return;
+  // net of refunds, the same basis as the month total and the budget tile
   const byMonth = {};
   all.forEach(x => { const m = x.spent_at.slice(0,7); byMonth[m] = (byMonth[m]||0) + +x.amount; });
-  const ms = Object.keys(byMonth).sort();
-  const full = completeMonths(ms, all);
+  const ms = Object.keys(byMonth).sort(), full = completeMonths(ms, all);
   const avg = full.length ? full.reduce((s,m) => s + byMonth[m], 0) / full.length : 0;
   const cur = shown.reduce((s,x) => s + +x.amount, 0);
+  const year = scope === 'year', partial = !year && month === todayStr().slice(0,7);
+  const mName = new Date(month+'-01T00:00').toLocaleDateString('en-GB', {month: 'long'});
   const prevM = (() => { const d = new Date(month+'-01T00:00'); d.setMonth(d.getMonth()-1); return d.toLocaleDateString('en-CA').slice(0,7); })();
-  const prev = byMonth[prevM] || 0;
-  const d = prev ? Math.round((cur - prev)/prev*100) : null;
+  const prevName = new Date(prevM+'-01T00:00').toLocaleDateString('en-GB', {month: 'short'});
+  const prev = byMonth[prevM] || 0, d = prev ? Math.round((cur - prev) / prev * 100) : null;
   const byCat = {}; shown.forEach(x => byCat[x.category] = (byCat[x.category]||0) + +x.amount);
   const top = Object.entries(byCat).sort((a,b) => b[1]-a[1])[0];
-  const partial = scope !== 'year' && month === todayStr().slice(0,7);
-  el.innerHTML = [
-    statTile(scope==='year' ? 'All time' : (partial ? 'This month so far' : 'That month'), NIS(cur),
-      scope==='year' ? plural(ms.length, 'month') + ' of history'
-        : (partial ? `day ${new Date().getDate()} — month still running`
-           : (d===null ? '' : `${d>0?'▲':'▼'} ${Math.abs(d)}% vs ${new Date(prevM+'-01T00:00').toLocaleDateString('en-GB',{month:'short'})}`)),
-      (scope==='year'||partial||d===null) ? '' : (d>0 ? 'warn' : 'good')),
-    statTile('Average month', NIS(avg), full.length ? `over ${full.length} full month${full.length === 1 ? '' : 's'}` : 'no full month yet'),
-    statTile('Charges', shown.length, scope==='year' ? `${Object.keys(byCat).length} categories` : (partial ? 'this month' : 'that month')),
-    statTile('Biggest slice', top ? top[0] : '—', top ? `${NIS(top[1])} · ${pct(top[1], cur)}%` : ''),
-  ].join('');
+  const proj = partial ? projectMonth(shown, month) : null;
+  const tiles = [];
+  if(year) tiles.push(statTile('All time', NIS0(cur), `${plural(ms.length, 'month')} of history · ${plural(shown.length, 'charge')}`));
+  else tiles.push(statTile(partial ? mName + ' so far' : mName, NIS0(cur),
+    partial ? `day ${new Date().getDate()}${proj ? ' · on pace for ' + NIS0(proj) : ''}`
+            : d === null ? plural(shown.length, 'charge') : `${d > 0 ? '▲' : '▼'} ${Math.abs(d)}% vs ${prevName}`,
+    (partial || d === null) ? '' : (d > 0 ? 'warn' : 'good')));
+  if(!year){
+    const left = budget - cur, over = budget > 0 && left < 0, k = budget > 0 ? Math.min(100, cur / budget * 100) : 0;
+    tiles.push(`<button class="mstat act" type="button" onclick="budgetSheet()" title="Set the monthly budget"><div class="lbl">Budget</div>
+      <div class="v${over ? ' warn' : ''}">${budget > 0 ? (over ? NIS0(-left) + ' over' : NIS0(left) + ' left') : 'Not set'}</div>
+      <div class="s">${budget > 0 ? 'of ' + NIS0(budget) + ' · ' + pctInt(k) + '% spent' : 'Tap to set a monthly target'}</div>
+      ${budget > 0 ? `<div class="progress-track bar"><div class="progress-fill" style="width:${k}%${over ? ';background:var(--red)' : ''}"></div></div>` : ''}</button>`);
+  }
+  tiles.push(statTile('Average month', NIS0(avg), full.length ? `over ${plural(full.length, 'full month')}` : 'no full month yet'));
+  tiles.push(statTile('Biggest slice', top ? top[0] : '—', top ? `${NIS0(top[1])} · ${pct(top[1], cur)}%` : 'nothing in this period'));
+  el.innerHTML = tiles.join('');
+  if(sub) sub.textContent = year ? `${NIS0(cur)} over ${plural(ms.length, 'month')} · ${plural(shown.length, 'charge')}`
+    : partial ? [`${NIS0(cur)} so far in ${mName}`, proj ? `on pace for ${NIS0(proj)}` : '',
+                 budget > 0 ? (cur > budget ? NIS0(cur - budget) + ' over budget' : NIS0(budget - cur) + ' left of ' + NIS0(budget)) : ''].filter(Boolean).join(' · ')
+    : `${NIS0(cur)} in ${mName} · ${plural(shown.length, 'charge')}${d !== null ? ` · ${d > 0 ? 'up' : 'down'} ${Math.abs(d)}% on ${prevName}` : ''}`;
 }
+
 function renderInsights(all){
   const el = document.getElementById('moInsights'); if(!el) return;
   const ins = moneyInsights(all);
@@ -2876,20 +2898,27 @@ function renderInsights(all){
     <div><div class="t">${i.t}</div><div class="b">${i.b}</div></div></div>`).join('')
     : '<div class="empty">Log a few more months and patterns will show up here</div>';
 }
-function renderFixed(all){
+function renderRecurring(all, subRows){
   const el = document.getElementById('moFixed'); if(!el) return;
-  const fx = fixedCommitments(all);
-  const tot = fx.reduce((s,f) => s + f.avg, 0);
+  // a subscription typed in by hand and the same merchant detected from taps are one thing, not two rows
+  const names = subRows.map(s => subName(s).toLowerCase());
+  const fx = fixedCommitments(all).filter(f => { const n = (f.name || '').toLowerCase(); return !names.some(m => n.includes(m) || m.includes(n)); });
+  const per = subRows.reduce((s,r) => s + +r.amount, 0) + fx.reduce((s,f) => s + f.avg, 0);
   const t = document.getElementById('fxTotal');
-  if(t) t.textContent = fx.length ? `${NIS(tot)}/month · ${NIS(tot*12)}/year` : 'none detected';
-  el.innerHTML = fx.length ? fx.map(f => `<div class="row">
+  if(t) t.textContent = per ? `${NIS0(per)} a month · ${NIS0(per * 12)} a year` : '';
+  const subs = subRows.map(s => { const nc = nextCharge(s.billing_day);
+    return `<button class="lrow" type="button" onclick="subSheet('${s.id}')">${subLogo(s)}
+      <span class="body"><span class="t">${bidi(subName(s))}</span>
+        <span class="m">Subscription · renews ${nc.date.toLocaleDateString('en-GB', {day: 'numeric', month: 'short'})}${nc.days === 0 ? ' (today)' : ' (in ' + nc.days + 'd)'}</span></span>
+      <span class="r"><b>${NIS(s.amount)}</b><span>per month</span></span><span class="chev">${ICO.chevR}</span></button>`; });
+  const det = fx.map(f => `<div class="lrow static">
       <span class="mer-ico" style="color:${catColor(f.cat)}">${merIcon(f.name, f.cat)}</span>
-      <div class="grow"><div class="title">${bidi(f.name)}</div>
-        <div class="sub">${f.cat} · seen in ${plural(f.months, 'month')} · last ${fmtDate(f.last)}</div></div>
-      <div style="text-align:right"><div class="title">${NIS(f.avg)}</div><div class="sub">${NIS(f.avg*12)}/yr</div></div>
-    </div>`).join('')
-    : '<div class="empty">Nothing bills you on a steady monthly cycle yet</div>';
+      <span class="body"><span class="t">${bidi(f.name)}</span>
+        <span class="m">${f.cat} · seen in ${plural(f.months, 'month')} · last ${fmtDate(f.last)}</span></span>
+      <span class="r"><b>${NIS0(f.avg)}</b><span>per month</span></span></div>`);
+  el.innerHTML = [...subs, ...det].join('') || '<div class="empty">Nothing bills you on a steady cycle yet</div>';
 }
+
 function renderOtherFix(shown){
   const card = document.getElementById('moOtherCard'); if(!card) return;
   const oth = shown.filter(x => x.category === 'Other' && x.merchant_key);
@@ -2900,11 +2929,11 @@ function renderOtherFix(shown){
   card.classList.remove('hidden');
   document.getElementById('othTotal').textContent = `${NIS(oth.reduce((s,x)=>s+ +x.amount,0))} across ${Object.keys(by).length} merchants`;
   document.getElementById('moOther').innerHTML =
-    `<div class="sub" style="margin-bottom:10px">Pick a category once and every charge from that merchant follows — now and on future taps.</div>` +
-    list.map(([k, v]) => `<div class="row oth">
+    `<div class="sec-note">Pick a category once and every charge from that merchant follows, now and on future taps.</div>` +
+    list.map(([k, v]) => `<div class="lrow static">
       <span class="mer-ico">${merIcon(v.name, 'Other')}</span>
-      <div class="grow"><div class="title">${bidi(v.name)}</div><div class="sub">${v.n} charge${v.n===1?'':'s'} · ${NIS(v.s)}</div></div>
-      <select onchange="bulkCategorise('${esc(k)}', this.value)">
+      <span class="body"><span class="t">${bidi(v.name)}</span><span class="m">${plural(v.n, 'charge')} · ${NIS(v.s)}</span></span>
+      <select aria-label="Category for ${esc(v.name)}" onchange="bulkCategorise('${esc(k)}', this.value)">
         <option value="">Set category…</option>${CATS.filter(c=>c!=='Other').map(c=>`<option>${c}</option>`).join('')}</select>
     </div>`).join('');
 }
@@ -2924,45 +2953,88 @@ function renderExpenseList(shown, upTo){
   window._exShown = shown;
   const more = shown.length - upTo;
   el.innerHTML = (shown.length ? shown.slice(0, upTo).map(x => {
-    const col = catColor(x.category);
-    return `<div class="row ex" style="--cc:${col}">
-      <span class="mer-ico" style="color:${col}">${merIcon(x.description || x.merchant, x.category)}</span>
-      <div class="grow"><div class="title">${+x.amount < 0 ? '<span style="color:var(--green)">+' + NIS(Math.abs(x.amount)).slice(1) + '</span>' : NIS(x.amount)}
-        <span class="pill cat" style="--cc:${col}">${esc(x.category)}</span>
-        ${x.source === 'applepay' ? '<span class="tap-tag" title="Captured from an Apple Pay tap">'+ICO.tap+'tap</span>' : ''}</div>
-        <div class="sub"><span class="desc" onclick="this.classList.toggle('open')" title="${esc(x.description || x.merchant || '')}">${bidi(x.description || x.merchant || 'No description')}</span><span class="when"><span class="dot">·</span> ${fmtDate(x.spent_at)}</span></div></div>
-      <div class="acts">${x.merchant_key && window._ruleKeys && window._ruleKeys.has(x.merchant_key) ? `<button class="icon-btn" type="button" title="Forget the learned category for this merchant" onclick="forgetMerchant('${esc(x.merchant_key)}')">${ICO.forget}</button>` : ''}
-      <button class="icon-btn" title="Edit expense" onclick="editExpense('${x.id}')">${ICO.edit}</button>
-      <button class="icon-btn danger" title="Delete expense" onclick="delRow('expenses','${x.id}','money')">${ICO.x}</button></div></div>`;
+    const col = catColor(x.category), name = x.description || x.merchant || '';
+    return `<button class="lrow" type="button" style="--cc:${col}" onclick="expenseSheet('${x.id}')">
+      <span class="mer-ico" style="color:${col}">${merIcon(name, x.category)}</span>
+      <span class="body"><span class="t">${name ? bidi(name) : '<span class="untitled">No description</span>'}</span>
+        <span class="m"><span class="cat">${esc(x.category)}</span> · ${fmtDate(x.spent_at)}${x.source === 'applepay' ? '<span class="tap-tag" title="Captured from an Apple Pay tap">' + ICO.tap + 'tap</span>' : ''}</span></span>
+      <span class="r"><b${+x.amount < 0 ? ' class="refund"' : ''}>${+x.amount < 0 ? '+' + NIS(Math.abs(x.amount)) : NIS(x.amount)}</b></span>
+      <span class="chev">${ICO.chevR}</span></button>`;
   }).join('') : '<div class="empty">Nothing here for this period</div>')
-  + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:4px" onclick="renderExpenseList(window._exShown, ${upTo + EX_PAGE})">Show ${Math.min(more, EX_PAGE)} more · ${more} left</button>` : '');
+  + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="renderExpenseList(window._exShown, ${upTo + EX_PAGE})">Show ${Math.min(more, EX_PAGE)} more · ${more} left</button>` : '');
 }
-function renderSubs(subRows){
-  const m = subRows.reduce((s,r) => s + +r.amount, 0);
-  const t = document.getElementById('subTotal'); if(t) t.textContent = NIS(m) + '/month';
-  const el = document.getElementById('subList'); if(!el) return;
-  el.innerHTML = subRows.length ? subRows.map(s => {
+
+/* ---------- sheets: every Money form lives in one of these, never on the page ---------- */
+function openSheet(o){
+  if(document.getElementById('appBg')) return false;
+  document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="appBg" onclick="if(event.target===this)closeSheet()">
+    <div class="sheet wo-sheet${o.cls ? ' ' + o.cls : ''}" role="dialog" aria-label="${esc_(o.label || o.title)}">
+      <div class="sheet-head"><div class="top"><div style="flex:1;min-width:0"><h3>${o.title}</h3>${o.sub ? `<div class="sub">${o.sub}</div>` : ''}</div>
+        <button class="icon-btn" type="button" aria-label="Close" onclick="closeSheet()">${ICO.x}</button></div></div>
+      <div class="sheet-body">${o.body}</div>
+      ${o.foot ? `<div class="sheet-foot">${o.foot}</div>` : ''}</div></div>`);
+  document.addEventListener('keydown', sheetEsc);
+  if(o.focus) setTimeout(() => document.getElementById(o.focus)?.focus(), 60);
+  return true;
+}
+function sheetEsc(e){ if(e.key === 'Escape') closeSheet(); }
+function closeSheet(){ document.removeEventListener('keydown', sheetEsc); window._editEx = null; sheetClose(document.getElementById('appBg')); }
+/* one sheet reads, edits and adds an expense */
+function expenseSheet(id){
+  const x = id ? (window._monthExpenses || []).find(x => x.id === id) : null;
+  if(id && !x) return;
+  window._editEx = x;
+  const rule = x && x.merchant_key && window._ruleKeys && window._ruleKeys.has(x.merchant_key);
+  const src = !x ? '' : x.source === 'applepay' ? 'Apple Pay tap' : x.source === 'pdf' ? 'From a statement' : 'Entered by hand';
+  openSheet({title: x ? 'Expense' : 'Add expense', focus: x ? '' : 'exAmount',
+    sub: x ? [src, x.merchant && x.merchant !== x.description ? bidi(x.merchant) : '', rule ? 'category learned for this merchant' : ''].filter(Boolean).join(' · ') : 'A negative amount is a refund',
+    body: `<form id="exForm" onsubmit="submitGuard(event, addExpense)"><div class="form-grid">
+        <div><label class="lbl" for="exAmount">Amount (₪)</label><input id="exAmount" type="number" inputmode="decimal" placeholder="0.00" step="0.01" value="${x ? +x.amount : ''}"></div>
+        <div><label class="lbl" for="exCat">Category</label><select id="exCat">${CATS.map(c => `<option${(x ? x.category : 'Food') === c ? ' selected' : ''}>${c}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="exDesc">Description</label><input id="exDesc" placeholder="e.g. Weekly groceries" enterkeyhint="done" value="${x ? esc(x.description || '') : ''}"></div>
+        <div><label class="lbl" for="exDate">Date</label><input id="exDate" type="date" value="${x ? x.spent_at : todayStr()}"></div>
+      </div></form>`,
+    foot: `<span class="n">${x ? `<button class="linkish danger" type="button" onclick="moDel('expenses','${x.id}')">Delete</button>${rule ? ` &nbsp;·&nbsp; <button class="linkish" type="button" onclick="forgetMerchant('${esc(x.merchant_key)}')">Forget rule</button>` : ''}` : ''}</span>
+      <button class="btn" type="submit" form="exForm">${x ? 'Save' : 'Add expense'}</button>`});
+}
+function importSheet(){
+  openSheet({title: 'Import a statement', sub: 'Cal, Diners or MAX monthly PDF', cls: 'wide',
+    body: `<div class="empty" style="cursor:pointer"
+        ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor=''"
+        ondrop="event.preventDefault();this.style.borderColor='';handleStatement(event.dataTransfer.files)"
+        onclick="pdfFile.click()">Drop the PDF here, or tap to choose.<br>Every charge is read with its date; ones already logged (same date and amount) are skipped, and you confirm before anything is added.</div>
+      <input id="pdfFile" type="file" accept="application/pdf" multiple style="display:none" onchange="handleStatement(this.files);this.value=''">
+      <div id="importPreview"></div>`});
+}
+function budgetSheet(){
+  const b = window._budget || 0;
+  openSheet({title: 'Monthly budget', sub: 'The Budget tile and the pace line measure the month against it', focus: 'budgetIn',
+    body: `<form id="bdForm" onsubmit="submitGuard(event, saveBudget)"><label class="lbl" for="budgetIn">Budget per month (₪)</label>
+      <input id="budgetIn" type="number" inputmode="decimal" enterkeyhint="done" min="0" step="1" placeholder="e.g. 9000" value="${b || ''}"></form>`,
+    foot: `<span class="n">${b ? 'Set it to 0 to remove the budget' : ''}</span><button class="btn" type="submit" form="bdForm">Save</button>`});
+}
+function subSheet(id){
+  const s = id ? (window._subs || []).find(s => s.id === id) : null;
+  if(id && !s) return;
+  if(s){
     const nc = nextCharge(s.billing_day);
-    return `<div class="row">${subLogo(s)}<div class="grow"><div class="title">${bidi(subName(s))}</div>
-      <div class="sub">${NIS(s.amount)}/mo · renews ${nc.date.toLocaleDateString('en-GB',{day:'numeric',month:'short'})} ${nc.days===0?'(today)':'(in '+nc.days+'d)'}</div></div>
-      <button class="icon-btn danger" title="Remove subscription" onclick="delRow('subscriptions','${s.id}','money')">${ICO.x}</button></div>`;
-  }).join('') : '<div class="empty">No subscriptions yet — add Netflix, Spotify and friends below</div>';
-}
-function renderBudget(shown, budget, month, scope){
-  const el = document.getElementById('budgetBar'); if(!el) return;
-  const total = shown.reduce((s,x) => s + +x.amount, 0);
-  if(scope === 'year'){ el.innerHTML = '<div class="empty">Switch to a single month to track it against your budget</div>'; return; }
-  if(budget > 0){
-    const bi = document.getElementById('budgetIn'); if(bi) bi.value = budget;
-    el.innerHTML = `<div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,total/budget*100)}%${total>budget?';background:var(--red)':''}"></div></div>
-      <div style="font-size:12.5px;color:var(--muted);margin-top:6px">${NIS(total)} spent · ${total>budget?'<span style="color:var(--red)">'+NIS(total-budget)+' over budget</span>':NIS(budget-total)+' remaining'} of ${NIS(budget)}</div>`;
-  } else el.innerHTML = '<div class="empty">Set a budget below to track spending against it</div>';
-  drawBurnChart(shown, budget, month);
-  if(window._projSpend != null && budget > 0){
-    const over = window._projSpend > budget;
-    el.insertAdjacentHTML('beforeend', `<div style="font-size:12.5px;margin-top:6px;color:${over?'var(--red)':'var(--muted)'}">On pace for ${NIS(window._projSpend)} by month end${over?' — '+NIS(window._projSpend-budget)+' over':''}</div>`);
+    openSheet({title: bidi(subName(s)), label: subName(s), sub: `${NIS(s.amount)} a month · ${NIS0(s.amount * 12)} a year`,
+      body: `<div class="wo-ex">${subLogo(s)}<div><div class="t">Next charge</div>
+        <div class="m">${nc.date.toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'})} · ${nc.days === 0 ? 'today' : 'in ' + plural(nc.days, 'day')}</div></div></div>`,
+      foot: `<span class="n"><button class="linkish danger" type="button" onclick="moDel('subscriptions','${s.id}')">Remove subscription</button></span>`});
+    return;
   }
+  openSheet({title: 'Add subscription', sub: 'Shown under Recurring with its next renewal',
+    body: `<form id="subForm" onsubmit="submitGuard(event, addSub)"><div class="form-grid">
+        <div><label class="lbl" for="subPreset">Service</label><select id="subPreset">${Object.keys(SUBS).map(s => `<option>${s}</option>`).join('')}</select></div>
+        <div><label class="lbl" for="subName">Custom name (for "Other")</label><input id="subName" placeholder="e.g. Gym membership"></div>
+        <div><label class="lbl" for="subAmount">Price per month (₪)</label><input id="subAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div>
+        <div><label class="lbl" for="subDay">Billing day (1–28)</label><input id="subDay" type="number" inputmode="numeric" enterkeyhint="done" min="1" max="28" value="1"></div>
+      </div></form>`,
+    foot: `<span class="n"></span><button class="btn" type="submit" form="subForm">Add subscription</button>`});
 }
+async function moDel(table, id){ if(await delRow(table, id, 'money')) closeSheet(); }
+
 function drawCatChart(shown){
   const byCat = {};
   shown.forEach(x => { if(+x.amount > 0) byCat[x.category] = (byCat[x.category]||0) + +x.amount; });
@@ -2987,7 +3059,7 @@ function drawTrendChart(all){
       datasets:[{data: ms.map(m=>byMonth[m]), backgroundColor:'#4a4741', borderRadius:4, borderSkipped:false}]},
     options:{maintainAspectRatio:false,
       plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+NIS(c.parsed.y ?? c.parsed)}}},
-      scales:{y:{beginAtZero:true, grid:{color:'#e3e0da'}, ticks:{callback:v=>'₪'+(v>=1000?(v/1000)+'k':v)}},
+      scales:{y:{beginAtZero:true, grid:{color:'#e3e0da'}, ticks:{callback:nisTick}},
               x:{grid:{display:false}}}}});
   const el = document.getElementById('trendChart');
   if(el && avg) el.parentElement.setAttribute('title', `12-month average ${NIS(avg)}`);
@@ -3086,7 +3158,7 @@ async function handleStatement(files){
             : `<select id="impcat${i}" title="Category — fix the guess before importing" style="width:auto;display:inline-block;padding:3px 6px;font-size:12px;margin-left:6px">${CATS.map(c => `<option${c === t.category ? ' selected' : ''}>${c}</option>`).join('')}</select>`}</div>
         <div class="sub">${esc(t.description)} · ${fmtDate(t.spent_at)}</div></div>
       </div>`).join('') + `</div>
-      ${news ? `<button class="btn" style="margin-top:12px" onclick="importParsed(this)">Add ${news} expenses</button>` : ''}`;
+      ${news ? `<button class="btn" type="button" style="margin-top:12px" onclick="importParsed(this)">Add ${news} expenses</button>` : ''}`;
   }catch(e){ err(e); pv.innerHTML = '<div class="empty">Could not read this PDF — ' + esc(e.message || e) + '</div>'; }
 }
 async function importParsed(btn){
@@ -3102,7 +3174,7 @@ async function importParsed(btn){
     const m = rows[rows.length - 1].spent_at.slice(0, 7);
     window._moneyMonth = m;
     toast(rows.length + ' expenses imported to ' + new Date(m + '-01T00:00').toLocaleDateString('en-GB', {month: 'long', year: 'numeric'}));
-    views.money();
+    closeSheet(); views.money();
   }catch(e){ err(e); }
   finally{ if(btn) btn.disabled = false; }
 }
@@ -3124,9 +3196,9 @@ function drawBurnChart(rows, budget, month){
   } else window._projSpend = null;
   if(budget > 0) datasets.push({label: 'Ideal pace to budget', data: Array.from({length: dim}, (_,i) => +(budget*(i+1)/dim).toFixed(0)),
     borderColor: '#8a6b22', borderDash: [5,4], pointRadius: 0, borderWidth: 1.5, fill: false});
-  mkChart('burnChart', {type: 'line', data: {labels: Array.from({length: dim}, (_,i) => i+1), datasets},
+  mkChart('burnChart', {type: 'line', data: {labels: rows.length ? Array.from({length: dim}, (_,i) => i+1) : [], datasets}, emptyText: 'The first charge of the month starts the line',
     options: {maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {labels: {boxWidth: 18}}}, scales: {y: {beginAtZero: true}}}});
+      plugins: {legend: {labels: {boxWidth: 18, boxHeight: 2}}}, scales: {y: {beginAtZero: true, ticks: {callback: nisTick}}}}});
 }
 async function addExpense(){
   const amount = +exAmount.value; if(!amount) return toast('Enter an amount (negative for a refund)');
@@ -3144,7 +3216,7 @@ async function addExpense(){
   let learned = '';
   if(was && was.merchant_key) learned = await learnMerchant(was.merchant_key, row.category, row.description, was);
   if(ed){ window._editEx = null; toast('Expense updated' + learned); } else toast('Expense added');
-  views.money();
+  closeSheet(); window._moneyKeep = true; views.money();
 }
 /* An Apple Pay tap arrives with a raw terminal string ("SHUFERSAL DEAL 1234") and no
    category. The first time Benji fixes one, remember the choice against the normalised
@@ -3172,19 +3244,15 @@ async function learnMerchant(key, category, description, before){
 async function forgetMerchant(key){
   if(!await ask({title: 'Forget this merchant rule?', body: 'Future taps there will come in as Other again.', ok: 'Forget'})) return;
   const {error} = await sb.from('merchant_rules').delete().eq('merchant_key', key);
-  error ? err(error) : (toast('Rule forgotten'), window._moneyKeep = true, views.money());
+  error ? err(error) : (toast('Rule forgotten'), closeSheet(), window._moneyKeep = true, views.money());
 }
-function editExpense(id){
-  const x = (window._monthExpenses || []).find(x => x.id === id); if(!x) return;
-  window._editEx = x;
-  views.money(); window.scrollTo({top: 0, behavior: 'smooth'});
-}
+function editExpense(id){ expenseSheet(id); }
 async function addSub(){
   const preset = subPreset.value, amount = +subAmount.value;
   if(!(amount > 0)) return toast('Enter the monthly price');
   const name = preset === 'Other' ? (subName.value.trim() || 'Subscription') : preset;
   const {error} = await sb.from('subscriptions').insert({name, domain: SUBS[preset] || null, amount, billing_day: Math.min(28, Math.max(1, +subDay.value || 1))});
-  error ? err(error) : (toast('Subscription added'), window._moneyKeep = true, views.money());
+  error ? err(error) : (toast('Subscription added'), closeSheet(), window._moneyKeep = true, views.money());
 }
 async function saveBudget(){
   const raw = budgetIn.value.trim();
@@ -3195,7 +3263,7 @@ async function saveBudget(){
   if(eU) return err(eU);
   if(!u?.user) return toast('Session expired — please sign in again');
   const {error} = await sb.from('user_settings').upsert({user_id: u.user.id, monthly_budget: v, updated_at: new Date().toISOString()});
-  error ? err(error) : (toast('Budget saved'), window._moneyKeep = true, views.money());
+  error ? err(error) : (toast('Budget saved'), closeSheet(), window._moneyKeep = true, views.money());
 }
 function exportCsv(){
   const rows = window._monthExpenses || [];
