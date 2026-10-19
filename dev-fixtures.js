@@ -29,10 +29,15 @@
   /* demo: the tidy, flattering dataset a screenshot would use */
   DATA.demo = (() => {
     const wo = [], sets = [];
+    const KD = ['A', 'B', 'A', 'B', 'legs', 'A', 'B', 'A'];
+    const EXS = {A: [['Bench Press', 4, 8, 70], ['Incline Bench Press', 3, 10, 50], ['Cable Fly', 3, 12, 20], ['Dumbbell Shoulder Press', 3, 10, 22.5], ['Triceps Pushdown', 3, 12, 25]],
+      B: [['Lat Pulldown', 3, 10, 60], ['Seated Cable Row', 3, 10, 55], ['Pull-Up', 3, 8, 0], ['Face Pull', 3, 15, 25], ['Cable Curl', 3, 12, 30]],
+      legs: [['Squat', 4, 6, 100], ['Leg Press', 3, 10, 160], ['Leg Extension', 3, 12, 45], ['Calf Raise', 4, 12, 60]]};
     for(let i = 0; i < 8; i++){
-      const w = {id: id(), workout_date: D(-i * 3), notes: i % 2 ? 'Push day' : 'Pull day', created_at: T(-i*3)};
+      const kind = KD[i];
+      const w = {id: id(), workout_date: D(-i * 3), notes: i === 0 ? 'Felt strong' : null, kind: i < 6 ? kind : null, created_at: T(-i*3)};   // the two oldest have no stored type: inferred
       wo.push(w);
-      [['Bench Press', 4, 8, 70], ['Incline Bench Press', 3, 10, 50], ['Lat Pulldown', 3, 10, 60], ['Overhead Press', 3, 8, 40], ['Squat', 4, 6, 100]]
+      EXS[kind]
         .forEach(([ex, s, r, kg], k) => sets.push({id: id(), workout_id: w.id, exercise: ex, sets: s, reps: r, weight_kg: kg + (8 - i) * 2.5 * (k % 2), set_number: k + 1, created_at: T(-i*3, '18:0' + k)}));
     }
     const ex = [];
@@ -271,7 +276,8 @@
     auth: {
       getSession: () => Promise.resolve({data: {session: live}, error: null}),
       getUser: () => Promise.resolve({data: {user: live && live.user}, error: null}),
-      onAuthStateChange: cb => { authCb = cb; setTimeout(() => cb(live ? 'SIGNED_IN' : 'INITIAL_SESSION', live), 0); return {data: {subscription: {unsubscribe(){}}}}; },
+      // like supabase-js: INITIAL_SESSION fires first and carries the persisted session, or null
+      onAuthStateChange: cb => { authCb = cb; setTimeout(() => cb('INITIAL_SESSION', live), 0); return {data: {subscription: {unsubscribe(){}}}}; },
       signOut: () => { location.href = location.pathname; return Promise.resolve({error: null}); },
       signInWithPassword: () => { live = SESSION; setTimeout(() => authCb && authCb('SIGNED_IN', SESSION), 0); return Promise.resolve({data: {session: SESSION}, error: null}); },
       signUp: () => Promise.resolve({data: {}, error: null}),

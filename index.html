@@ -164,6 +164,19 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 .lrow .bar .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);opacity:.55;border-radius:1px}
 .lrow .r .pill{display:inline-block;margin:5px 0 0}
 input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-color:var(--accent);cursor:pointer}
+/* start sheet: one option per workout type, the template it would load written out */
+.kind-opt{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;color:inherit;font:inherit;cursor:pointer;transition:border-color var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
+.kind-opt+.kind-opt{margin-top:8px}
+.kind-opt:active{transform:scale(.99)}
+@media(hover:hover) and (pointer:fine){ .kind-opt:hover{border-color:var(--accent)} }
+.kind-opt .k{width:46px;height:46px;border-radius:13px;background:var(--grad);color:var(--on-ink);font-weight:700;font-size:17px;letter-spacing:-.02em;display:flex;align-items:center;justify-content:center;flex:none}
+.kind-opt .k.legs{font-size:12px}
+.kind-opt .body{flex:1;min-width:0}
+.kind-opt .t{display:block;font-weight:600;font-size:14.5px}
+.kind-opt .t small{font-weight:500;color:var(--muted);font-size:12.5px;margin-left:6px}
+.kind-opt .m{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;color:var(--text);margin-top:3px;line-height:1.35}
+.kind-opt .m2{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.kind-opt .pill{flex:none;align-self:flex-start}
 .lrow .checkbox{margin-left:4px}
 /* dose rows: the row is the checkbox */
 .lrow.tick{cursor:pointer;-webkit-user-select:none;user-select:none}
@@ -221,13 +234,12 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
    tileIn is opacity-only on purpose: a transform keyframe would clobber that placement. */
 #hub{min-height:100vh;display:flex;flex-direction:column;padding:28px 34px 22px;max-width:1320px;margin:0 auto;width:100%}
 .hub-top{display:flex;align-items:center;justify-content:space-between;gap:16px;color:var(--muted);font-size:14px;font-weight:600}
-.hub-top .hub-date{font-weight:500}
-.hub-top .hub-date::before{content:'·';margin:0 8px;opacity:.6}
+.hub-hello .hub-date{color:var(--muted);font-size:15px;font-weight:500;margin-top:6px}
 .hub-meta{display:flex;align-items:center;gap:10px}
 /* the greeting sits beside the figure, in the free upper-right of the orbit */
 .hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--R) * .4067 - 132px);white-space:nowrap;animation:tileIn 400ms var(--ease-out) 60ms both}
 .hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
-.hub-status{color:var(--muted);font-size:14px;margin-top:9px;min-height:18px;display:flex;align-items:center;gap:7px}
+.hub-status{color:var(--muted);font-size:14px;margin-top:10px;min-height:18px;display:flex;align-items:center;gap:7px}
 .hub-status svg{width:15px;height:15px;flex:none}
 .hub-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0 16px}
 .hub-orbit{--figh:clamp(250px,min(calc(100vh - 430px),calc(96vw - 300px)),620px);--D:calc(var(--figh) * .90);--R:calc(var(--D) / 2 + 64px + var(--figh) * .07);
@@ -406,8 +418,7 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .tab{padding:8px 10px;font-size:13px}
   #hub{padding:20px 16px 14px}
   .hub-top{font-size:13px;align-items:flex-start}
-  .hub-top .hub-date{display:block;margin-top:2px}
-  .hub-top .hub-date::before{content:none}
+  .hub-hello .hub-date{font-size:13.5px;margin-top:4px}
   .hub-hello{position:static;white-space:normal;text-align:center;order:1;flex:0 0 100%;margin:-4px 0 4px}
   .hub-greet{font-size:27px}
   .hub-status{justify-content:center;font-size:13px}
@@ -893,9 +904,8 @@ main.wide{max-width:1500px}
   <!-- ---------- HUB (home) ---------- -->
   <section id="hub" class="hidden">
     <div class="hub-top">
-      <div><span id="hubDay">Good morning</span><span class="hub-date" id="hubDate"></span></div>
+      <div></div>
       <div class="hub-meta">
-        <span id="hubClock"></span>
         <button class="icon-btn" id="signOutHub" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
       </div>
     </div>
@@ -903,7 +913,8 @@ main.wide{max-width:1500px}
      <div class="hub-orbit">
       <div class="hub-circle"></div>
       <div class="hub-hello">
-        <div class="hub-greet" id="hubGreet">Hello, Benji</div>
+        <div class="hub-greet" id="hubGreet">Good evening Benji</div>
+        <div class="hub-date" id="hubDate"></div>
         <div class="hub-status" id="hubStatus"></div>
       </div>
       <div class="hub-col left">
@@ -923,7 +934,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v56</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v57</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1020,7 +1031,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v56');
+console.log('Atlas v57');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1093,8 +1104,8 @@ sb.auth.onAuthStateChange((ev, session) => {
     return;
   }
   if(window._recovering) return;
-  // the intro opens the app: a cold load with nobody signed in plays it over the login page
-  if(ev === 'INITIAL_SESSION' && !session) atlasIntro();
+  // the intro opens the app on every cold load, over the login page or the hub; a tap or any key skips it
+  if(ev === 'INITIAL_SESSION') atlasIntro();
   document.getElementById('authScreen').classList.toggle('hidden', !!session);
   document.getElementById('app').classList.toggle('hidden', !session);
   // only route on real sign-in — TOKEN_REFRESHED fires hourly and must not wipe forms mid-typing
@@ -1143,13 +1154,12 @@ function go(tab){
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 document.getElementById('homeBtn').addEventListener('click', () => go('home'));
 
-/* hub chrome: greeting, date, clock */
+/* hub chrome: one greeting with the date under it */
 function renderHub(){
   const h = new Date().getHours();
-  document.getElementById('hubDay').textContent = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('hubGreet').textContent = (h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + ' Benji';
   document.getElementById('hubDate').textContent =
     new Date().toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long'});
-  tickClock();
   hubStatus();
 }
 /* one quiet line under the greeting: when you last trained, and what today holds */
@@ -1173,11 +1183,6 @@ async function hubStatus(){
   parts.push(n ? plural(n, 'event') + ' today' : 'Nothing scheduled today');
   el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>${parts.join(' · ')}`;
 }
-function tickClock(){
-  const el = document.getElementById('hubClock');
-  if(el) el.textContent = new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
-}
-setInterval(tickClock, 1000);
 
 /* ================= SCHEDULE ================= */
 views.schedule = async function(){
@@ -1740,7 +1745,7 @@ views.gym = async function(){
   const [wos, sets, allWos] = await Promise.all([
     sb.from('workouts').select('*').order('workout_date', {ascending: false}).limit(20),
     fetchAll(() => sb.from('workout_sets').select('*').order('created_at')),
-    fetchAll(() => sb.from('workouts').select('id,workout_date').order('workout_date')),
+    fetchAll(() => sb.from('workouts').select('id,workout_date,kind').order('workout_date')),
   ]);
   if(stale(seq)) return;
   const bad = [wos, sets, allWos].find(r => r.error);
@@ -1753,6 +1758,8 @@ views.gym = async function(){
   window._allSets = sets.data || [];
   window._gymWos = wos.data || [];
   window._woDates = Object.fromEntries((allWos.data || []).map(w => [w.id, w.workout_date]));
+  window._woKinds = Object.fromEntries((allWos.data || []).filter(w => w.kind).map(w => [w.id, w.kind]));
+  window._kindInf = {};
   renderSession(); liveRender(); renderWeek(); renderLead(); renderHistory(); renderPRs();
   const exercises = [...new Set(window._allSets.map(s => exCanon(s.exercise)))].sort();
   const sel = document.getElementById('exSelect');
@@ -1774,7 +1781,7 @@ function renderSession(){
     else {
       const days = Math.round((new Date(todayStr()) - new Date(last.workout_date)) / 864e5);
       sub.innerHTML = (days === 0 ? 'Trained today' : days === 1 ? 'Trained yesterday' : `Last trained ${fmtDays(days, true)} ago`)
-        + (last.notes ? ' · ' + esc(short(last.notes)) : '') + ' · ' + plural(woStats(last.id).n, 'exercise');
+        + ' · ' + esc(short(kindTitle(last.notes, woKind(last.id)))) + ' · ' + plural(woStats(last.id).n, 'exercise') + ' · up next ' + KINDS[nextKind()].title;
     }
     acts.innerHTML = `<button class="btn" type="button" onclick="startSession()">Start workout</button>
       ${last ? `<button class="btn-ghost" type="button" onclick="repeatWorkout('${last.id}')">Repeat last</button>` : ''}`;
@@ -1806,8 +1813,10 @@ function renderSession(){
       </div>
       <div class="grow"><div class="sub" id="sessTotals"></div></div>
     </div>
+    <div style="margin-bottom:12px"><span class="lbl">Type</span><div class="seg">${['A', 'B', 'legs', ''].map(k =>
+      `<button type="button" class="${(d.kind || '') === k ? 'on' : ''}" onclick="gymDraft.kind='${k}'||null;draftSave();renderSession()">${k ? KINDS[k].label : 'None'}</button>`).join('')}</div></div>
     <div style="margin-bottom:12px"><label class="lbl" for="woNotes">Notes (optional)</label>
-      <input id="woNotes" placeholder="e.g. Push day, felt strong" enterkeyhint="done"
+      <input id="woNotes" placeholder="e.g. Felt strong, shoulder niggle" enterkeyhint="done"
         value="${esc(d.notes || '')}" oninput="gymDraft.notes=this.value;draftSave()"></div>
     <div id="exList" style="margin-bottom:12px"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap" class="gym-acts">
@@ -2095,11 +2104,77 @@ function restTick(){
 /* ---------- session lifecycle ---------- */
 /* Start workout only opens the picker; the session clock begins when Start is pressed */
 const savedRest = () => { try{ return Math.max(15, Math.min(600, +localStorage.getItem('atlas_gym_rest') || 90)); }catch(e){ return 90; } };
-const newDraft = () => ({date: todayStr(), notes: '', items: [], started: null, rest: savedRest()});
-function startSession(){
-  gymDraft = newDraft();
-  _exOpen = 0; draftSave(); renderSession(); openPicker();
+const newDraft = () => ({date: todayStr(), notes: '', items: [], started: null, kind: null, rest: savedRest()});
+
+/* ---------- workout types ----------
+   Every session is A (push), B (pull) or Legs. The type is stored in workouts.kind from v57 on;
+   older sessions are classified from their exercises. A type's template is what its last few
+   sessions had in common, in the order of the most recent one, prefilled with the last numbers. */
+const KINDS = {
+  A:    {label: 'A', title: 'Workout A', hint: 'push · chest, shoulders, triceps', def: ['Bench Press', 'Incline Bench Press', 'Cable Fly', 'Dumbbell Shoulder Press', 'Lateral Raise', 'Triceps Pushdown']},
+  B:    {label: 'B', title: 'Workout B', hint: 'pull · back, biceps', def: ['Lat Pulldown', 'Seated Cable Row', 'Pull-Up', 'Face Pull', 'Cable Curl', 'Hammer Curl']},
+  legs: {label: 'Legs', title: 'Legs', hint: 'quads, hamstrings, calves', def: ['Squat', 'Leg Press', 'Leg Extension', 'Leg Curl', 'Calf Raise']},
+};
+const kindTitle = (notes, kind) => (notes || '').trim() || (kind && KINDS[kind] ? KINDS[kind].title : 'Workout');
+/* which side of the split an exercise belongs to */
+function exSide(name){
+  const n = exCanon(name), g = (EX_BY_NAME[n] || [])[1];
+  if(g === 'Legs') return 'legs';
+  if(g === 'Chest' || g === 'Shoulders') return 'push';
+  if(g === 'Back') return 'pull';
+  if(g === 'Arms') return /curl/i.test(n) ? 'pull' : 'push';
+  return null;
 }
+function inferKind(rows){
+  const c = {push: 0, pull: 0, legs: 0};
+  rows.forEach(r => { const k = exSide(r.exercise); if(k) c[k]++; });
+  const tot = c.push + c.pull + c.legs; if(!tot) return null;
+  if(c.legs >= tot / 2) return 'legs';
+  return c.push > c.pull ? 'A' : c.pull > c.push ? 'B' : null;
+}
+function woKind(id){
+  const k = (window._woKinds || {})[id]; if(k) return k;
+  const c = window._kindInf || (window._kindInf = {});
+  if(!(id in c)) c[id] = inferKind((window._allSets || []).filter(s => s.workout_id === id));
+  return c[id];
+}
+function kindTemplate(kind){
+  const dateOf = window._woDates || {};
+  const ids = Object.keys(dateOf).filter(id => woKind(id) === kind).sort((a, b) => dateOf[b].localeCompare(dateOf[a])).slice(0, 4);
+  const byWo = ids.map(id => (window._allSets || []).filter(s => s.workout_id === id)
+    .sort((a, b) => (a.set_number || 0) - (b.set_number || 0) || (a.created_at || '').localeCompare(b.created_at || '')).map(s => exCanon(s.exercise)));
+  let names;
+  if(ids.length){
+    const freq = {}; byWo.forEach(l => new Set(l).forEach(n => freq[n] = (freq[n] || 0) + 1));
+    const need = Math.ceil(ids.length / 2);
+    names = [...new Set(byWo[0])];                                                       // the latest session sets the order
+    Object.keys(freq).filter(n => freq[n] >= need && !names.includes(n)).sort((a, b) => freq[b] - freq[a]).forEach(n => names.push(n));
+    if(ids.length >= 3){ const core = names.filter(n => freq[n] >= need); if(core.length) names = core; }   // one-offs drop out once there is history
+  } else names = KINDS[kind].def;
+  const items = names.map(n => { const l = lastFor(n);
+    return l ? {ex: n, sets: l.sets, reps: l.reps, kg: l.kg, done: 0} : isCardio(n) ? {ex: n, sets: 1, reps: 30, kg: 0, done: 0} : {ex: n, sets: 3, reps: 10, kg: 0, done: 0}; });
+  return {items, n: ids.length, last: ids.length ? dateOf[ids[0]] : null};
+}
+/* the type that has waited longest (never done counts as longest) */
+function nextKind(){
+  const dateOf = window._woDates || {}, last = {};
+  Object.keys(dateOf).forEach(id => { const k = woKind(id); if(k && (!last[k] || dateOf[id] > last[k])) last[k] = dateOf[id]; });
+  return Object.keys(KINDS).sort((a, b) => (last[a] || '').localeCompare(last[b] || ''))[0];
+}
+function kindSheet(){
+  const next = nextKind();
+  const opts = Object.keys(KINDS).map(k => { const t = kindTemplate(k), K = KINDS[k];
+    return `<button class="kind-opt" type="button" onclick="startKind('${k}')"><span class="k${k === 'legs' ? ' legs' : ''}">${K.label}</span>
+      <span class="body"><span class="t">${K.title}<small>${K.hint}</small></span>
+        <span class="m">${t.items.map(i => esc(i.ex)).join(', ')}</span>
+        <span class="m2">${t.n ? `${plural(t.items.length, 'exercise')} · from your last ${plural(t.n, 'session')} · last done ${fmtDate(t.last)}` : 'a suggested list — no sessions of this type yet'}</span></span>
+      ${k === next ? '<span class="pill green">Up next</span>' : ''}</button>`; }).join('');
+  openSheet({title: 'Start workout', sub: 'Pick the type. The exercises come from what you did last time; you can still change them before you start.',
+    body: opts, foot: `<span class="n">Or build the session from scratch</span><button class="btn-ghost" type="button" onclick="startFree()">Free pick</button>`});
+}
+function startKind(k){ closeSheet(); gymDraft = {...newDraft(), kind: k, items: kindTemplate(k).items}; _exOpen = 0; draftSave(); renderSession(); openPicker(); }
+function startFree(){ closeSheet(); gymDraft = newDraft(); _exOpen = 0; draftSave(); renderSession(); openPicker(); }
+function startSession(){ kindSheet(); }
 function beginSession(){
   if(!gymDraft) return;
   if(!gymDraft.items.length) return toast('Pick at least one exercise first');
@@ -2152,7 +2227,7 @@ function liveOpen(){
 }
 function liveRender(){
   if(!liveOpenNow() || !gymDraft) return;
-  document.getElementById('liveTitle').textContent = (gymDraft.notes || '').trim() || 'Workout';
+  document.getElementById('liveTitle').textContent = kindTitle(gymDraft.notes, gymDraft.kind);
   document.getElementById('liveDate').textContent = fmtDate(gymDraft.date) + ' · started ' + new Date(gymDraft.started).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
   renderExList(); liveStats(); restPaint(); paintTick();
 }
@@ -2268,8 +2343,9 @@ async function finishSession(){
         if(eC) return err(eC);
         if(clash && clash.length) return toast('A workout already exists on ' + fmtDate(d.date) + ' — edit that one instead');
       }
-      const {error} = await sb.from('workouts').update({workout_date: d.date, notes}).eq('id', d.id);
-      if(error) return err(error);
+      let up = await sb.from('workouts').update({workout_date: d.date, notes, kind: d.kind || null}).eq('id', d.id);
+      if(up.error && /kind/.test(up.error.message || '')) up = await sb.from('workouts').update({workout_date: d.date, notes}).eq('id', d.id);
+      if(up.error) return err(up.error);
       // insert replacements first, then drop the old rows by id — a failed insert never loses data
       const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: d.id, set_number: i + 1})));
       if(e2) return err(e2);
@@ -2292,15 +2368,17 @@ async function finishSession(){
       const patch = {};
       if(notes && notes !== existing.notes) patch.notes = existing.notes ? existing.notes + ' · ' + notes : notes;
       if(duration) patch.duration_min = (+existing.duration_min || 0) + duration;
+      if(d.kind && !existing.kind) patch.kind = d.kind;
       if(Object.keys(patch).length){
         let up = await sb.from('workouts').update(patch).eq('id', woId);
-        if(up.error && /duration_min/.test(up.error.message || '') && patch.notes){ delete patch.duration_min; up = await sb.from('workouts').update(patch).eq('id', woId); }
-        if(up.error && !/duration_min/.test(up.error.message || '')) return err(up.error);
+        // newer columns: a database without them saves the rest
+        if(up.error && /duration_min|kind/.test(up.error.message || '')){ delete patch.duration_min; delete patch.kind; up = Object.keys(patch).length ? await sb.from('workouts').update(patch).eq('id', woId) : {}; }
+        if(up.error) return err(up.error);
       }
     } else {
       // duration_min is a newer column: if this database doesn't have it yet, save without it
-      let ins = await sb.from('workouts').insert({workout_date: d.date, notes, duration_min: duration}).select().single();
-      if(ins.error && /duration_min/.test(ins.error.message || '')) ins = await sb.from('workouts').insert({workout_date: d.date, notes}).select().single();
+      let ins = await sb.from('workouts').insert({workout_date: d.date, notes, duration_min: duration, kind: d.kind || null}).select().single();
+      if(ins.error && /duration_min|kind/.test(ins.error.message || '')) ins = await sb.from('workouts').insert({workout_date: d.date, notes}).select().single();
       if(ins.error) return err(ins.error);
       woId = ins.data.id;
     }
@@ -2326,7 +2404,7 @@ async function editWorkout(id){
   if(await draftBusy()) return;
   restStop();
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
-  gymDraft = {id, origDate: w.workout_date, date: w.workout_date, notes: w.notes || '',
+  gymDraft = {id, origDate: w.workout_date, date: w.workout_date, notes: w.notes || '', kind: woKind(id),
     oldSetIds: ss.map(s => s.id),
     items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0, done: 0}))};
   _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
@@ -2337,7 +2415,7 @@ async function repeatWorkout(id){
   woClose();
   if(await draftBusy()) return;
   restStop();
-  gymDraft = {...newDraft(),
+  gymDraft = {...newDraft(), kind: woKind(id),
     items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0, done: 0}))};
   _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
   toast('Loaded ' + ss.length + ' exercise' + (ss.length === 1 ? '' : 's') + ' — press Start when you begin');
@@ -2362,7 +2440,7 @@ function openPicker(){
     <div class="sheet-bg" id="pickBg" onclick="if(event.target===this)closePicker()">
       <div class="sheet" role="dialog" aria-label="${wait ? 'Choose exercises' : 'Add exercise'}">
         <div class="sheet-head">
-          <div class="top"><h3>${wait ? 'Choose exercises' : 'Add exercise'}</h3>
+          <div class="top"><h3>${wait ? (gymDraft && gymDraft.kind ? KINDS[gymDraft.kind].title + ' · exercises' : 'Choose exercises') : 'Add exercise'}</h3>
             <button class="icon-btn" type="button" title="Close" onclick="closePicker()">${ICO.x}</button></div>
           <input id="pickQ" placeholder="Search exercises…" autocomplete="off" enterkeyhint="search" oninput="_pickQ=this.value;paintPicker()">
           <div class="seg" id="pickSeg"></div>
@@ -2468,7 +2546,7 @@ function renderLead(){
     else {
       const days = Math.round((new Date(todayStr()) - new Date(last.workout_date)) / 864e5), st = woStats(last.id);
       L.textContent = days === 0 ? 'Today' : days === 1 ? 'Yesterday' : fmtDays(days, true) + ' ago';
-      Ls.textContent = [short(last.notes, 32), plural(st.n, 'exercise'), st.vol ? kgFmt(st.vol) : ''].filter(Boolean).join(' · ');
+      Ls.textContent = [short(kindTitle(last.notes, woKind(last.id)), 32), plural(st.n, 'exercise'), st.vol ? kgFmt(st.vol) : ''].filter(Boolean).join(' · ');
     }
   }
   const M = document.getElementById('leadMonth'), Ms = document.getElementById('leadMonthSub'), Ml = document.getElementById('leadMonthLbl');
@@ -2493,7 +2571,7 @@ function renderHistory(){
     const sub = [st.sets ? plural(st.sets, 'set') : '', w.duration_min ? w.duration_min + ' min' : ''].filter(Boolean).join(' · ');
     return `<button class="lrow" type="button" onclick="woSheet('${w.id}')" aria-label="${esc(fmtDate(w.workout_date))}${w.notes ? ', ' + esc(w.notes) : ''}">
       <span class="when"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-GB', {month: 'short'})}</span></span>
-      <span class="body"><span class="t">${titleOf(w.notes, 'workout')}</span><span class="m">${names}</span></span>
+      <span class="body"><span class="t">${esc(kindTitle(w.notes, woKind(w.id)))}${(w.notes || '').trim() && woKind(w.id) ? `<span class="pill grey">${KINDS[woKind(w.id)].label}</span>` : ''}</span><span class="m">${names}</span></span>
       <span class="r"><b>${st.vol ? kgFmt(st.vol) : plural(st.n, 'exercise')}</b>${sub ? `<span>${sub}</span>` : ''}</span>
       <span class="chev">${ICO.chevR}</span></button>`;
   }).join('') : '<div class="empty">No workouts yet — press Start workout to log the first</div>';
@@ -2524,7 +2602,7 @@ function woSheet(id){
   const when = new Date(w.workout_date + 'T00:00').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
   document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="woBg" onclick="if(event.target===this)woClose()">
     <div class="sheet wo-sheet" role="dialog" aria-label="Workout ${esc(fmtDate(w.workout_date))}">
-      <div class="sheet-head"><div class="top"><div style="flex:1;min-width:0"><h3>${titleOf(w.notes, 'workout')}</h3><div class="sub">${when} · ${meta}</div></div>
+      <div class="sheet-head"><div class="top"><div style="flex:1;min-width:0"><h3>${esc(kindTitle(w.notes, woKind(w.id)))}</h3><div class="sub">${when}${(w.notes || '').trim() && woKind(w.id) ? ' · ' + KINDS[woKind(w.id)].title : ''} · ${meta}</div></div>
         <button class="icon-btn" type="button" aria-label="Close" onclick="woClose()">${ICO.x}</button></div></div>
       <div class="sheet-body">${rows}</div>
       <div class="sheet-foot"><span class="n"><button class="linkish danger" type="button" onclick="delWorkout('${w.id}')">Delete</button></span>
@@ -6215,7 +6293,7 @@ function aiDebris(){
   }));
 }
 function atlasIntro(){
-  if(AI || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  if(AI) return;
   const wrap = document.createElement('div');
   wrap.id = 'atlasIntro'; wrap.setAttribute('role', 'img'); wrap.setAttribute('aria-label', 'Intro: Atlas holds the hill against a line of robots');
   wrap.innerHTML = `<canvas></canvas><button type="button" class="ai-skip">Skip</button>`;
