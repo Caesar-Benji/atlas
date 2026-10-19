@@ -152,6 +152,13 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 .lrow .pill{margin-left:6px}
 .lrow .m .cat{color:var(--cc);font-weight:600}
 .lrow.done .t{text-decoration:line-through;color:var(--muted)}
+/* goal rows: no leading column; the bar under the text is the timeline, the marker is where today falls */
+.lrow.goal{grid-template-columns:minmax(0,1fr) auto auto}
+.lrow .bar{display:block;position:relative;margin-top:9px;height:6px;background:var(--surface2);border-radius:99px;overflow:visible;max-width:520px}
+.lrow .bar .fill{display:block;height:100%;border-radius:99px;background:var(--grad)}
+.lrow .bar .mark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--text);opacity:.55;border-radius:1px}
+.lrow .r .pill{display:inline-block;margin:5px 0 0}
+input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-color:var(--accent);cursor:pointer}
 .lrow .checkbox{margin-left:4px}
 /* dose rows: the row is the checkbox */
 .lrow.tick{cursor:pointer;-webkit-user-select:none;user-select:none}
@@ -198,7 +205,7 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
   .lead.last-wide .mstat:last-child{grid-column:1/-1}
   .mast-ctl{justify-content:flex-start;margin-top:-2px}
   .lrow{gap:10px;padding:11px 4px}
-  .lrow:not(.static) .r span{display:none}
+  .lrow:not(.static) .r > span:not(.pill){display:none}   /* the second line under an amount goes; a status pill stays */
   .lead .mstat .s{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
 
@@ -911,7 +918,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v52</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v53</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1008,7 +1015,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v52');
+console.log('Atlas v53');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -3026,7 +3033,7 @@ function openSheet(o){
   return true;
 }
 function sheetEsc(e){ if(e.key === 'Escape') closeSheet(); }
-function closeSheet(){ document.removeEventListener('keydown', sheetEsc); window._editEx = null; window._editEv = null; sheetClose(document.getElementById('appBg')); }
+function closeSheet(){ document.removeEventListener('keydown', sheetEsc); window._editEx = window._editEv = window._editGo = window._editCh = null; sheetClose(document.getElementById('appBg')); }
 /* one sheet reads, edits and adds an expense */
 function expenseSheet(id){
   const x = id ? (window._monthExpenses || []).find(x => x.id === id) : null;
@@ -3327,86 +3334,94 @@ function exportCsv(){
 /* ================= GOALS ================= */
 views.goals = async function(){
   const seq = renderStart();
-  const ed = window._editGo;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Goals</h2><img src="hero-goals.png" alt="" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit goal' : 'New goal'}</h3>
-      <form onsubmit="submitGuard(event, addGoal)">
-      <div class="form-grid">
-        <div style="grid-column:span 2"><label class="lbl" for="goTitle">Goal — what do you want to achieve?</label><input id="goTitle" placeholder="e.g. Read 12 books this year" enterkeyhint="done" value="${ed ? esc(ed.title) : ''}"></div>
-        <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date" value="${ed ? (ed.target_date || '') : ''}"></div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" type="submit">${ed ? 'Update goal' : 'Add goal'}</button>
-        ${ed ? '<button class="btn-ghost" type="button" onclick="window._editGo=null;views.goals()">Cancel</button>' : ''}
-      </div>
-      </form>
+    <div class="mast">
+      <div class="mast-txt"><h2>Goals</h2><div class="mast-sub" id="goSub">Loading…</div>
+        <div class="mast-acts"><button class="btn" type="button" onclick="goalSheet()">New goal</button></div></div>
+      <img class="mast-art" src="hero-goals.png" alt="" onerror="this.remove()">
     </div>
-    <div class="card" style="margin-bottom:16px"><h3>Timeline — progress vs time elapsed (the dark marker is where you should be today)</h3>
-      <div class="list" id="goTimeline"></div></div>
-    <div class="list" id="goList"><div class="empty">Loading…</div></div>`;
+    <div class="lead" id="goLead"></div>
+    <div class="sec"><div class="sec-h"><h3>Active</h3><span class="n">the marker on each bar is where today falls between start and target</span></div>
+      <div class="ledger" id="goList"><div class="empty">Loading…</div></div></div>
+    <div class="sec hidden" id="goDoneSec"><div class="sec-h"><h3>Completed</h3></div><div class="ledger" id="goDone"></div></div>`;
   const {data, error} = await sb.from('goals').select('*').order('created_at');
   if(stale(seq)) return;
   if(error) return err(error);
-  window._goals = data;
-  const timed = data.filter(g => g.target_date && g.status !== 'done');
-  const prog = g => Math.max(0, Math.min(100, +g.progress || 0));   // a bar is 0–100; a stray 142 or null must not paint full
-  document.getElementById('goTimeline').innerHTML = timed.length ? timed.map(g => {
-    const start = new Date(g.created_at), end = new Date(g.target_date + 'T23:59'), now = new Date();
-    const elapsed = Math.max(0, Math.min(100, (now - start) / Math.max(1, end - start) * 100));
-    const overdue = now > end, behind = !overdue && prog(g) < elapsed - 5;
-    const pill = overdue ? '<span class="pill red">Past target</span>' : behind ? '<span class="pill amber">Behind pace</span>' : '<span class="pill green">On track</span>';
-    const left = Math.max(0, Math.ceil((end - now) / 864e5));
-    return `<div style="padding:6px 2px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-        <div class="grow" style="flex:1;font-weight:600;font-size:13.5px;overflow-wrap:anywhere">${titleOf(g.title, 'goal')}</div>
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap">${overdue ? 'target ' + fmtDate(g.target_date) : fmtDays(left) + ' left'}</span>${pill}
-      </div>
-      <div class="progress-track" style="position:relative">
-        <div class="progress-fill" style="width:${prog(g)}%${overdue || behind ? ';background:' + (overdue ? 'var(--red)' : 'var(--amber)') : ''}"></div>
-        <div title="Time elapsed" style="position:absolute;top:0;bottom:0;left:${elapsed}%;width:2px;background:var(--text);opacity:.55"></div>
-      </div></div>`;
-  }).join('') : '<div class="empty">Give your goals target dates to see them on the timeline</div>';
-  document.getElementById('goList').innerHTML = data.length ? data.map(g => `
-    <div class="card" style="padding:16px 20px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <div class="grow" style="flex:1"><div class="title" style="font-weight:600;${g.status==='done'?'text-decoration:line-through;color:var(--muted)':''}">${titleOf(g.title, 'goal')}</div>
-        <div class="sub" style="font-size:12.5px;color:var(--muted)">${g.target_date ? 'Target: ' + fmtDate(g.target_date) : ''} ${g.status==='done' ? '· Completed' : ''}</div></div>
-        <span style="font-weight:700;font-size:14px">${prog(g)}%</span>
-        ${g.status !== 'done' ? `<button class="btn-ghost" type="button" onclick="setGoal('${g.id}',${Math.min(100, prog(g) + 10)})">+10%</button>` : ''}
-        <button class="icon-btn" type="button" title="Edit goal" onclick="editGoal('${g.id}')">${ICO.edit}</button>
-        <button class="icon-btn danger" type="button" title="Delete goal" onclick="delRow('goals','${g.id}','goals')">${ICO.x}</button>
-      </div>
-      <div title="Tap the bar to set progress" style="padding:9px 0;margin:-9px 0;cursor:pointer" onclick="barSetGoal(event,'${g.id}')">
-        <div class="progress-track"><div class="progress-fill" style="width:${prog(g)}%"></div></div>
-      </div>
-    </div>`).join('') : '<div class="empty">No goals yet — dream big</div>';
+  window._goals = data || [];
+  renderGoals();
 };
+const goalProg = g => Math.max(0, Math.min(100, +g.progress || 0));   // a bar is 0–100; a stray 142 or null must not paint full
+/* where a goal stands against its target date */
+function goalPace(g){
+  if(!g.target_date || g.status === 'done') return null;
+  const start = new Date(g.created_at), end = new Date(g.target_date + 'T23:59'), now = new Date();
+  const elapsed = Math.max(0, Math.min(100, (now - start) / Math.max(1, end - start) * 100));
+  const overdue = now > end, behind = !overdue && goalProg(g) < elapsed - 5;
+  return {elapsed, overdue, behind, left: Math.max(0, Math.ceil((end - now) / 864e5))};
+}
+function goalRow(g){
+  const pr = goalProg(g), done = g.status === 'done', pc = goalPace(g);
+  const pill = !pc ? '' : pc.overdue ? '<span class="pill red">Past target</span>' : pc.behind ? '<span class="pill amber">Behind pace</span>' : '<span class="pill green">On track</span>';
+  const col = pc && (pc.overdue || pc.behind) ? `;background:${pc.overdue ? 'var(--red)' : 'var(--amber)'}` : '';
+  const m = done ? 'Completed' : g.target_date ? `Target ${fmtDate(g.target_date)} · ${pc.overdue ? 'passed' : fmtDays(pc.left, true) + ' left'}` : 'No target date';
+  return `<div class="lrow goal${done ? ' done' : ''}" role="button" tabindex="0" onclick="goalSheet('${g.id}')" onkeydown="if(event.key==='Enter'){goalSheet('${g.id}')}">
+    <span class="body"><span class="t">${titleOf(g.title, 'goal')}</span><span class="m">${m}</span>
+      ${done ? '' : `<span class="bar"><span class="fill" style="width:${pr}%${col}"></span>${pc ? `<i class="mark" title="Today" style="left:${pc.elapsed}%"></i>` : ''}</span>`}</span>
+    <span class="r"><b>${pr}%</b>${pill}</span><span class="chev">${ICO.chevR}</span></div>`;
+}
+function renderGoals(){
+  const el = document.getElementById('goList'), lead = document.getElementById('goLead'), sub = document.getElementById('goSub'); if(!el) return;
+  const all = window._goals || [], active = all.filter(g => g.status !== 'done'), done = all.filter(g => g.status === 'done');
+  el.innerHTML = active.length ? active.map(goalRow).join('') : '<div class="empty">No active goals — press New goal to set one</div>';
+  const ds = document.getElementById('goDoneSec'); ds.classList.toggle('hidden', !done.length);
+  document.getElementById('goDone').innerHTML = done.map(goalRow).join('');
+  const behind = active.filter(g => { const pc = goalPace(g); return pc && (pc.behind || pc.overdue); }).length;
+  const avg = active.length ? Math.round(active.reduce((a, g) => a + goalProg(g), 0) / active.length) : 0;
+  const next = active.filter(g => g.target_date).sort((a, b) => a.target_date.localeCompare(b.target_date))[0];
+  lead.innerHTML = [
+    statTile('Active', plural(active.length, 'goal'), active.length ? `${avg}% done on average` : 'nothing in progress'),
+    statTile('Next target', next ? esc(short(next.title, 26)) : '—', next ? (goalPace(next).overdue ? 'passed ' + fmtDate(next.target_date) : fmtDays(goalPace(next).left, true) + ' left · ' + fmtDate(next.target_date)) : 'no dated goals'),
+    statTile('Completed', plural(done.length, 'goal'), done.length ? 'well done' : 'none yet'),
+  ].join('');
+  sub.textContent = all.length ? [plural(active.length, 'active goal'), behind ? behind + ' behind pace' : active.length ? 'all on track' : '', done.length ? plural(done.length, 'completed') : ''].filter(Boolean).join(' · ') : 'No goals yet — dream big';
+}
+/* one sheet reads, edits and adds a goal; progress is a slider here, not a button on the row */
+function goalSheet(id){
+  const g = id ? (window._goals || []).find(x => x.id === id) : null;
+  if(id && !g) return;
+  window._editGo = g;
+  const pr = g ? goalProg(g) : 0, done = g && g.status === 'done';
+  openSheet({title: g ? 'Goal' : 'New goal', focus: g ? '' : 'goTitle',
+    sub: g ? [g.target_date ? 'Target ' + fmtDate(g.target_date) : 'No target date', done ? 'completed' : pr + '% done'].join(' · ') : 'A target date puts it on the timeline',
+    body: `<form id="goForm" onsubmit="submitGuard(event, addGoal)"><div class="form-grid">
+        <div style="grid-column:1/-1"><label class="lbl" for="goTitle">What do you want to achieve?</label>
+          <input id="goTitle" placeholder="e.g. Read 12 books this year" enterkeyhint="done" value="${g ? esc(g.title) : ''}"></div>
+        <div><label class="lbl" for="goDate">Target date (optional)</label><input id="goDate" type="date" value="${g ? (g.target_date || '') : ''}"></div>
+        ${g ? `<div><label class="lbl" for="goProg">Progress · <b id="goProgV">${pr}%</b></label>
+          <input id="goProg" type="range" min="0" max="100" step="5" value="${pr}" oninput="document.getElementById('goProgV').textContent=this.value+'%'"></div>` : ''}
+      </div></form>`,
+    foot: `<span class="n">${g ? `<button class="linkish danger" type="button" onclick="sheetDel('goals','${g.id}','goals')">Delete</button>` : ''}</span>
+      ${g && !done ? `<button class="btn-ghost" type="button" onclick="setGoal('${g.id}',100)">Mark complete</button>` : ''}
+      <button class="btn" type="submit" form="goForm">${g ? 'Save' : 'Add goal'}</button>`});
+}
+async function sheetDel(table, id, view){ if(await delRow(table, id, view)) closeSheet(); }
 async function addGoal(){
   const title = goTitle.value.trim(); if(!title) return toast('Name your goal');
   const ed = window._editGo, patch = {title, target_date: goDate.value || null};
+  const pr = document.getElementById('goProg');
+  if(ed && pr){ patch.progress = +pr.value; patch.status = patch.progress >= 100 ? 'done' : 'active'; }
   const {error} = ed
     ? await sb.from('goals').update(patch).eq('id', ed.id)
     : await sb.from('goals').insert(patch);
   if(error) return err(error);
   if(ed){ window._editGo = null; toast('Goal updated'); } else toast('Goal added');
-  views.goals();
+  closeSheet(); views.goals();
 }
-function editGoal(id){
-  const g = (window._goals || []).find(x => x.id === id); if(!g) return;
-  window._editGo = g;
-  views.goals(); window.scrollTo({top: 0, behavior: 'smooth'});
-}
+function editGoal(id){ goalSheet(id); }
 async function setGoal(id, progress){
   const {error} = await sb.from('goals').update({progress, status: progress >= 100 ? 'done' : 'active'}).eq('id', id);
-  error ? err(error) : views.goals();
-}
-// tap anywhere on a goal's progress bar to set progress to that position (snaps to 5%)
-function barSetGoal(e, id){
-  const r = e.currentTarget.querySelector('.progress-track').getBoundingClientRect();
-  const pct = Math.max(0, Math.min(100, Math.round((e.clientX - r.left) / r.width * 20) * 5));
-  toast('Progress set to ' + pct + '%');
-  setGoal(id, pct);
+  if(error) return err(error);
+  closeSheet(); views.goals();
 }
 
 /* ================= CHORES ================= */
@@ -3423,38 +3438,57 @@ function chorePill(c){
 }
 views.chores = async function(){
   const seq = renderStart();
-  const ed = window._editCh;
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Chores</h2><img src="hero-chores.png" alt="" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px"><h3>${ed ? 'Edit chore' : 'Add chore'}</h3>
-      <form onsubmit="submitGuard(event, addChore)">
-      <div class="form-grid">
-        <div style="grid-column:span 2"><label class="lbl" for="chName">Chore name</label><input id="chName" placeholder="e.g. Run vacuum cleaner" value="${ed ? esc(ed.name) : ''}"></div>
-        <div><label class="lbl" for="chFreq">Repeat every (days)</label><input id="chFreq" type="number" inputmode="numeric" enterkeyhint="done" placeholder="7" min="1" value="${ed ? ed.frequency_days : 7}"></div>
-      </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" type="submit">${ed ? 'Update chore' : 'Add chore'}</button>
-        ${ed ? '<button class="btn-ghost" type="button" onclick="window._editCh=null;views.chores()">Cancel</button>' : ''}
-      </div>
-      </form>
+    <div class="mast">
+      <div class="mast-txt"><h2>Chores</h2><div class="mast-sub" id="chSub">Loading…</div>
+        <div class="mast-acts"><button class="btn" type="button" onclick="choreSheet()">Add chore</button></div></div>
+      <img class="mast-art" src="hero-chores.png" alt="" onerror="this.remove()">
     </div>
-    <div class="card"><h3>All chores</h3><div class="list" id="chList"><div class="empty">Loading…</div></div></div>`;
+    <div class="lead" id="chLead"></div>
+    <div class="sec"><div class="sec-h"><h3>All chores</h3><span class="n">soonest first · tick one off when it's done</span></div>
+      <div class="ledger" id="chList"><div class="empty">Loading…</div></div></div>`;
   const {data, error} = await sb.from('chores').select('*');
   if(stale(seq)) return;
   if(error) return err(error);
-  window._chores = data;
+  window._chores = data || [];
   renderChores();
 };
 function renderChores(){
   const el = document.getElementById('chList'); if(!el) return;
-  const data = [...(window._chores || [])].sort((a,b) => choreDueDays(a) - choreDueDays(b));
-  el.innerHTML = data.length ? data.map(c => `
-    <div class="row"><div class="grow"><div class="title">${titleOf(c.name, 'chore')}</div>
-      <div class="sub">every ${fmtDays(c.frequency_days)} · last: ${c.last_done ? fmtDate(c.last_done) : 'never'}</div></div>
-      <div class="acts">${chorePill(c)}
-      <button class="btn-ghost" type="button" onclick="doneChore('${c.id}')">Done</button>
-      <button class="icon-btn" title="Edit chore" onclick="editChore('${c.id}')">${ICO.edit}</button>
-      <button class="icon-btn danger" title="Delete chore" onclick="delRow('chores','${c.id}','chores')">${ICO.x}</button></div></div>`).join('') : '<div class="empty">No chores yet</div>';
+  const data = [...(window._chores || [])].sort((a,b) => choreDueDays(a) - choreDueDays(b)), today = todayStr();
+  el.innerHTML = data.length ? data.map(c => { const doneToday = c.last_done === today;
+    return `<div class="lrow" role="button" tabindex="0" onclick="choreSheet('${c.id}')" onkeydown="if(event.key==='Enter'){choreSheet('${c.id}')}">
+      <button class="checkbox${doneToday ? ' checked' : ''}" type="button" title="${doneToday ? 'Done today' : 'Mark done today'}" aria-label="${doneToday ? 'Done today' : 'Mark done today'}" onclick="event.stopPropagation();${doneToday ? '' : `doneChore('${c.id}')`}">${doneToday ? ICO.tickSm : ''}</button>
+      <span class="body"><span class="t">${titleOf(c.name, 'chore')}</span>
+        <span class="m">every ${fmtDays(c.frequency_days)} · last ${c.last_done ? (doneToday ? 'today' : fmtDate(c.last_done)) : 'never'}</span></span>
+      <span class="r">${chorePill(c)}</span><span class="chev">${ICO.chevR}</span></div>`; }).join('')
+    : '<div class="empty">No chores yet — press Add chore to start the list</div>';
+  // lead tiles and the status line
+  const lead = document.getElementById('chLead'), sub = document.getElementById('chSub');
+  const late = data.filter(c => choreDueDays(c) < 0), due = data.filter(c => choreDueDays(c) === 0), week = data.filter(c => { const d = choreDueDays(c); return d > 0 && d <= 7; });
+  const next = data.find(c => choreDueDays(c) > 0);
+  if(lead) lead.innerHTML = [
+    statTile('Overdue', late.length, late.length ? esc(short(late[0].name, 26)) + (late.length > 1 ? ' and ' + (late.length - 1) + ' more' : '') : 'nothing slipped', late.length ? 'warn' : 'good'),
+    statTile('Due today', due.length, due.length ? esc(short(due[0].name, 26)) + (due.length > 1 ? ' and ' + (due.length - 1) + ' more' : '') : 'nothing due', due.length ? 'warn' : ''),
+    statTile('Next 7 days', week.length, next ? esc(short(next.name, 22)) + ' in ' + fmtDays(choreDueDays(next), true) : 'nothing coming up'),
+  ].join('');
+  if(sub) sub.textContent = !data.length ? 'No chores yet' : [late.length ? plural(late.length, 'chore') + ' overdue' : '', due.length ? due.length + ' due today' : '',
+    !late.length && !due.length ? 'All caught up' : '', next ? 'next ' + short(next.name, 30) + ' in ' + fmtDays(choreDueDays(next), true) : ''].filter(Boolean).join(' · ');
+}
+/* one sheet reads, edits and adds a chore */
+function choreSheet(id){
+  const c = id ? (window._chores || []).find(x => x.id === id) : null;
+  if(id && !c) return;
+  window._editCh = c;
+  openSheet({title: c ? 'Chore' : 'Add chore', focus: c ? '' : 'chName',
+    sub: c ? `Every ${fmtDays(c.frequency_days, true)} · last done ${c.last_done ? fmtDate(c.last_done) : 'never'}` : 'It comes back due on its own cycle',
+    body: `<form id="chForm" onsubmit="submitGuard(event, addChore)"><div class="form-grid">
+        <div style="grid-column:1/-1"><label class="lbl" for="chName">Chore</label><input id="chName" placeholder="e.g. Run the vacuum" value="${c ? esc(c.name) : ''}"></div>
+        <div><label class="lbl" for="chFreq">Repeat every (days)</label><input id="chFreq" type="number" inputmode="numeric" enterkeyhint="done" placeholder="7" min="1" value="${c ? c.frequency_days : 7}"></div>
+      </div></form>`,
+    foot: `<span class="n">${c ? `<button class="linkish danger" type="button" onclick="sheetDel('chores','${c.id}','chores')">Delete</button>` : ''}</span>
+      ${c && c.last_done !== todayStr() ? `<button class="btn-ghost" type="button" onclick="closeSheet();doneChore('${c.id}')">Done today</button>` : ''}
+      <button class="btn" type="submit" form="chForm">${c ? 'Save' : 'Add chore'}</button>`});
 }
 async function addChore(){
   const name = chName.value.trim(); if(!name) return toast('Name the chore');
@@ -3465,15 +3499,11 @@ async function addChore(){
     : await sb.from('chores').insert({name, frequency_days});
   if(error) return err(error);
   if(ed){ window._editCh = null; toast('Chore updated'); } else toast('Chore added');
-  views.chores();
+  closeSheet(); views.chores();
 }
-function editChore(id){
-  const c = (window._chores || []).find(x => x.id === id); if(!c) return;
-  window._editCh = c;
-  views.chores(); window.scrollTo({top: 0, behavior: 'smooth'});
-}
+function editChore(id){ choreSheet(id); }
 async function doneChore(id){
-  // optimistic: update local state and just the list, so the add-chore form isn't wiped
+  // optimistic: update local state and just the list
   const c = (window._chores || []).find(x => x.id === id);
   const prev = c ? c.last_done : null;
   if(c){ c.last_done = todayStr(); renderChores(); }
