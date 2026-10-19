@@ -804,7 +804,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v45</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v46</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -901,7 +901,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v45');
+console.log('Atlas v46');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -1382,6 +1382,7 @@ const EX_CAT = [
 ['Pull-Up','Back'],
 ['Deadlift','Back'],
 ['Face Pull','Back'],
+['Iso-Lateral Row','Back'],
 // ---- Legs ----
 ['Squat','Legs'],
 ['Front Squat','Legs'],
@@ -1413,6 +1414,7 @@ const EX_CAT = [
 ['Hanging Leg Raise','Core'],
 ['Cable Crunch','Core'],
 ['Russian Twist','Core'],
+['Ab Crunch Machine','Core'],
 // ---- Cardio ----
 ['Treadmill','Cardio'],
 ['Cycling','Cardio'],
@@ -1428,7 +1430,8 @@ const EX_ALIAS = {'lat pulldaowns':'Lat Pulldown','lat pulldowns':'Lat Pulldown'
   'cable - chest':'Cable Fly','stabding cable':'Cable Fly','standing cable':'Cable Fly','shoulder cable':'Cable Lateral Raise',
   'seated cable':'Seated Cable Row','calf raises':'Calf Raise','leg extension':'Leg Extension',
   'incline bench':'Incline Bench Press','bicep curl':'Dumbbell Curl','tricep pushdown':'Triceps Pushdown',
-  'lunges':'Lunge','pull up':'Pull-Up','push up':'Push-Up'};
+  'lunges':'Lunge','pull up':'Pull-Up','push up':'Push-Up',
+  'iso lateral row':'Iso-Lateral Row','hammer strength row':'Iso-Lateral Row','ab crunch':'Ab Crunch Machine','ab machine':'Ab Crunch Machine','abdominal crunch':'Ab Crunch Machine'};
 function exCanon(name){
   const n = (name || '').trim();
   if(EX_BY_NAME[n]) return n;
