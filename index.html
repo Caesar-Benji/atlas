@@ -923,7 +923,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v55</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v56</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1020,7 +1020,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v55');
+console.log('Atlas v56');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1448,8 +1448,9 @@ function calPick(ds){
   renderCalendar(); renderEvList();
   if(intakePlan() && !window._intakeEdit) renderIntake();   // an open setup/edit form keeps what was typed
 }
-function renderEvList(){
-  const sel = window._selDate;
+const EV_PAGE = 40;
+function renderEvList(upTo){
+  const sel = window._selDate; upTo = upTo || EV_PAGE;
   const evs = (window._events||[]).filter(e => {
     const ds = new Date(e.starts_at).toLocaleDateString('en-CA');
     return sel ? ds === sel : new Date(e.starts_at) >= new Date(Date.now() - 864e5);
@@ -1457,11 +1458,13 @@ function renderEvList(){
   const t = document.getElementById('evListTitle'), back = document.getElementById('evListBack');
   if(t) t.textContent = sel ? fmtDate(sel) : 'Upcoming';
   if(back) back.classList.toggle('hidden', !sel);
-  document.getElementById('evList').innerHTML = evs.length ? evs.map(e => `
+  const more = evs.length - upTo;
+  document.getElementById('evList').innerHTML = (evs.length ? evs.slice(0, upTo).map(e => `
     <div class="lrow${e.done ? ' done' : ''}" role="button" tabindex="0" onclick="eventSheet('${e.id}')" onkeydown="if(event.key==='Enter'){eventSheet('${e.id}')}">
       <button class="checkbox${e.done ? ' checked' : ''}" type="button" title="${e.done ? 'Mark not done' : 'Mark done'}" aria-label="${e.done ? 'Mark not done' : 'Mark done'}" onclick="event.stopPropagation();toggleEvent('${e.id}',${!e.done})">${e.done ? ICO.tickSm : ''}</button>
       <span class="body"><span class="t">${titleOf(e.title)}</span><span class="m">${fmtDT(e.starts_at)}</span></span>
-      <span class="chev">${ICO.chevR}</span></div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`;
+      <span class="chev">${ICO.chevR}</span></div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`)
+    + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="renderEvList(${upTo + EV_PAGE})">Show ${Math.min(more, EV_PAGE)} more · ${more} left</button>` : '');
 }
 /* one sheet reads, edits and adds an event */
 function eventSheet(id){
