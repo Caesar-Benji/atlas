@@ -5491,7 +5491,7 @@ function hd3Export(){
 const AI_INK = '#1c1b19', AI_PAPER = '#f3f2ef';
 const AI_SRC = 'hero-atlas-rifle.png?v=49';
 /* landmarks in image pixels: suppressor tip, hips (rotation centre), ejection port, barrel angle */
-const AI_IMG = {w: 762, h: 1121, muzzle: [754, 180], pivot: [340, 520], port: [478, 156], axis: 2.5};
+const AI_IMG = {w: 762, h: 1121, muzzle: [754, 180], pivot: [340, 520], port: [478, 156], feet: 1114, axis: 2.5};
 const AI_T = {reveal: [0, 1.15], enter: .7, shots: [2.3, 2.85, 3.4], title: 4.05, out: 5.5, end: 6.1};
 let AI = null;
 
@@ -5527,11 +5527,14 @@ function aiHatch(x, rnd, pts, gap, ang, j = .8){
   x.stroke(); x.restore();
 }
 
-/* ---------- composition: one landscape and one portrait stage ---------- */
+/* ---------- composition: one landscape and one portrait stage ----------
+   Atlas stands full-length on flat ground; the robots walk in along the same ground, built to his
+   size so the line of fire (level, from the suppressor) meets them at the visor. */
 function aiLayout(W, H){
   const land = W / H >= .95;
-  const L = land ? {sw: 1600, sh: 1000, F: 900, fx: 150, fy: 60, rot: 17, hr: 230, ts: [230, 470, 700], title: [1190, 215, 128]}
-                 : {sw: 800, sh: 1600, F: 760, fx: -185, fy: 110, rot: 32, hr: 170, ts: [170, 330, 480], title: [330, 1400, 100]};
+  const L = land ? {sw: 1600, sh: 1000, F: 640, fx: 110, fy: 230, ts: [290, 610, 930], title: [1190, 170, 128]}
+                 : {sw: 800, sh: 1600, F: 480, fx: 0, fy: 560, ts: [175, 350, 525], title: [330, 1400, 100]};
+  L.rot = 0;
   L.k = L.F / AI_IMG.h;
   L.scale = Math.min(W / L.sw, H / L.sh); L.ox = (W - L.sw * L.scale) / 2; L.oy = (H - L.sh * L.scale) / 2;
   L.piv = [L.fx + AI_IMG.pivot[0] * L.k, L.fy + AI_IMG.pivot[1] * L.k];
@@ -5540,14 +5543,13 @@ function aiLayout(W, H){
     return [L.piv[0] + lx * Math.cos(a) - ly * Math.sin(a) + dx, L.piv[1] + lx * Math.sin(a) + ly * Math.cos(a) + dy];
   };
   L.M = L.toStage(...AI_IMG.muzzle);
-  const aim = (AI_IMG.axis + L.rot) * Math.PI / 180;
-  L.d = [Math.cos(aim), Math.sin(aim)];
-  L.chest = L.hr * .6;
+  L.d = [1, 0];                                                               // level line of fire
+  const feetY = L.fy + AI_IMG.feet * L.k;                                     // where his sandals meet the ground
+  L.chest = feetY - L.M[1];                                                   // robots: feet on the ground, visor on the line of fire
+  L.hr = L.chest / .86;
   L.at = t => [L.M[0] + L.d[0] * t, L.M[1] + L.d[1] * t];                     // a point on the line of fire
-  L.feet = t => { const p = L.at(t); return [p[0], p[1] + L.chest]; };     // the slope the robots climb
-  // the slope the robots climb, easing into a flat crest under Atlas so it never cuts across him
-  const slope = L.d[1] / L.d[0], xk = L.M[0], b = L.hr * 1.2, yk = L.M[1] + L.chest;
-  L.groundY = x => { if(x >= xk) return yk + (x - xk) * slope; const u = xk - x; return u < b ? yk - slope * (u - u * u / (2 * b)) : yk - slope * b / 2; };
+  L.feet = t => { const p = L.at(t); return [p[0], p[1] + L.chest]; };
+  L.groundY = () => feetY;
   return L;
 }
 
@@ -5557,7 +5559,7 @@ function aiRobot(x, rnd, R, phase, kind, s){
   const part = (pts, gap, ang, cross) => {
     x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1])); x.closePath();
     x.fillStyle = AI_PAPER; x.fill();
-    if(gap){ x.lineWidth = lw * .42; aiHatch(x, rnd, pts, gap * s, ang, .4); if(cross) aiHatch(x, rnd, pts, gap * s * 1.3, ang + 1.2, .4); x.lineWidth = lw; }
+    if(gap){ const g = gap * s * Math.min(1, Math.sqrt(260 / s)); x.lineWidth = lw * .42; aiHatch(x, rnd, pts, g, ang, .4); if(cross) aiHatch(x, rnd, pts, g * 1.3, ang + 1.2, .4); x.lineWidth = lw; }
     x.beginPath(); aiPoly(x, rnd, pts, .9); x.stroke();
   };
   const tube = (a, b, w, gap) => {   // a limb segment as a shaded quad
@@ -5687,7 +5689,7 @@ function aiFrame(t){
   let kick = 0, kr = 0;
   AI_T.shots.forEach(s => { const a = t - s; if(a > 0 && a < .22){ const e = a < .05 ? a / .05 : 1 - (a - .05) / .17; kick += e * 10; kr += e * 1.6; } });
   const raise = Math.min(1, Math.max(0, (t - 1.7) / .45)), lower = Math.min(1, Math.max(0, (t - 3.85) / .6));
-  const rot = L.rot + (1 - raise) * 7 + lower * 3 - kr, br = R0(1);
+  const rot = L.rot + (1 - raise) * 2.5 + lower * 1 - kr, br = R0(1);
   const jit = [(br() - .5) * 1.2, (br() - .5) * 1.2], bj = (br() - .5) * .2;
   x.save();
   x.translate(L.piv[0] - L.d[0] * kick + jit[0], L.piv[1] - L.d[1] * kick + jit[1]); x.rotate((rot + bj) * Math.PI / 180);
@@ -5703,8 +5705,8 @@ function aiFrame(t){
   x.restore();
   const Mnow = L.toStage(...AI_IMG.muzzle, rot, -L.d[0] * kick, -L.d[1] * kick), ang = (AI_IMG.axis + rot) * Math.PI / 180;
 
-  // the hill Atlas stands behind: paper fill hides his waist, engraved contour lines below the crest
-  const gx0 = L.fx - 80, gx1 = L.sw + 60, crest = [[gx0, L.groundY(gx0)], [gx1, L.groundY(gx1)]];
+  // the ground he stands on: paper fill below the line, engraved contour hatching, grass along it
+  const gx0 = -60, gx1 = L.sw + 60, crest = [[gx0, L.groundY(gx0)], [gx1, L.groundY(gx1)]];
   const hillDraw = Math.min(1, Math.max(0, (t - .25) / .8));
   x.save();
   x.beginPath(); for(let sx = gx0; sx <= gx1; sx += 20) x.lineTo(sx, L.groundY(sx)); x.lineTo(gx1, L.sh + 400); x.lineTo(gx0, L.sh + 400); x.closePath();
@@ -5754,22 +5756,23 @@ function aiFrame(t){
       x.lineWidth = 2.3; aiRobot(x, R0(300 + i), R, phase, i, s);
     } else {
       const c = L.at(tAt);
-      if(age < 1.6) aiBlast(x, R0(400 + i), c, age, s / 150);
+      if(age < 1.6) aiBlast(x, R0(400 + i), c, age, Math.min(L.F / 300, s / 150));
+      const sd = Math.min(s, 330);
       AI.debris[i].forEach(d => {
         let px = c[0] + d.vx * age, py = c[1] + d.vy * age + 700 * age * age, a = d.va * age;
         const gy = L.groundY(px) - 3;
         if(py > gy){ py = gy; a = d.va * .3; }
         x.save(); x.globalAlpha = Math.max(0, 1 - Math.max(0, age - 1.6) / .5); x.translate(px, py); x.rotate(a); x.lineWidth = 1.8;
         x.beginPath(); const r = R0(500 + i * 20 + d.id);
-        if(d.kind === 'gear'){ aiCircle(x, r, 0, 0, d.r * s, 1); for(let k = 0; k < 8; k++){ const q = k / 8 * 6.28; aiLine(x, r, Math.cos(q) * d.r * s, Math.sin(q) * d.r * s, Math.cos(q) * d.r * s * 1.35, Math.sin(q) * d.r * s * 1.35, .5, 1); } }
-        else aiPoly(x, r, [[-d.w * s / 2, -d.h * s / 2], [d.w * s / 2, -d.h * s / 2], [d.w * s / 2, d.h * s / 2], [-d.w * s / 2, d.h * s / 2]], 1);
+        if(d.kind === 'gear'){ aiCircle(x, r, 0, 0, d.r * sd, 1); for(let k = 0; k < 8; k++){ const q = k / 8 * 6.28; aiLine(x, r, Math.cos(q) * d.r * sd, Math.sin(q) * d.r * sd, Math.cos(q) * d.r * sd * 1.35, Math.sin(q) * d.r * sd * 1.35, .5, 1); } }
+        else aiPoly(x, r, [[-d.w * sd / 2, -d.h * sd / 2], [d.w * sd / 2, -d.h * sd / 2], [d.w * sd / 2, d.h * sd / 2], [-d.w * sd / 2, d.h * sd / 2]], 1);
         x.stroke(); x.restore();
       });
     }
   });
 
   // the robots fire first: one bolt over his shoulder, one into the crest beside him
-  [[1, 1.82, L.toStage(640, 60), false], [2, 2.02, [L.piv[0] + L.hr * .9, L.groundY(L.piv[0] + L.hr * .9)], true]].forEach(([i, ft, tg, hit]) => {
+  [[1, 1.82, L.toStage(600, 10), false], [2, 2.02, [L.piv[0] + L.F * .42, L.groundY(L.piv[0] + L.F * .42)], true]].forEach(([i, ft, tg, hit]) => {
     const a = t - ft; if(a < 0 || a > .8 || t >= AI_T.shots[i]) return;
     const s = L.hr * (i === 1 ? 1.04 : 1), C = aiCannon(L.feet(robotAt(i, ft)), s, i);
     const dx = tg[0] - C[0], dy = tg[1] - C[1], fl = .2;
