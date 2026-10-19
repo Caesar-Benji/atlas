@@ -923,7 +923,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v54</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v55</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1020,7 +1020,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v54');
+console.log('Atlas v55');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1055,10 +1055,17 @@ document.getElementById('authForm').addEventListener('submit', async e => {
 });
 ['signOutBtn','signOutHub'].forEach(id => document.getElementById(id).addEventListener('click', () => sb.auth.signOut()));
 async function forgotPassword(){
-  const email = authEmail.value.trim() || (prompt('Enter your account email') || '').trim();
+  const typed = authEmail.value.trim();
+  if(typed) return sendReset(typed);
+  openSheet({title: 'Reset password', sub: 'We email a link that lets you choose a new one', focus: 'fpEmail',
+    body: `<form id="fpForm" onsubmit="submitGuard(event, () => sendReset(document.getElementById('fpEmail').value.trim()))"><label class="lbl" for="fpEmail">Account email</label><input id="fpEmail" type="email" autocomplete="email" placeholder="you@example.com" required></form>`,
+    foot: `<span class="n"></span><button class="btn" type="submit" form="fpForm">Send link</button>`});
+}
+async function sendReset(email){
   if(!email) return toast('Enter your email first');
   const {error} = await sb.auth.resetPasswordForEmail(email);
-  error ? err(error) : toast('Password reset email sent to ' + email);
+  if(error) return err(error);
+  closeSheet(); toast('Password reset email sent to ' + email);
 }
 
 /* password reset: the email link lands here with a recovery session and PASSWORD_RECOVERY fires.
@@ -4089,7 +4096,10 @@ function hdRenderPref(){ try{ return localStorage.getItem('atlas_house_render') 
 views.house = async function(){
   const seq = renderStart();
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>House</h2><img src="hero-house.png" alt="" onerror="this.remove()"></div>
+    <div class="mast">
+      <div class="mast-txt"><h2>House</h2><div class="mast-sub" id="hdSub">Loading…</div>
+        <div class="mast-acts"><button class="btn" type="button" onclick="hdNewSheet()">New plan</button></div></div>
+    </div>
     <div id="hdBody"><div class="empty">Loading…</div></div>`;
   if(hdPending()) await hdFlush();   // write pending edits first, so the reload below can't return the old row
   const {data, error} = await sb.from('floor_plans').select('*').order('created_at');
@@ -4108,17 +4118,24 @@ views.house = async function(){
   if(!HD.cur){ hdEmpty(); return; }
   hdLayout();
 };
+/* the status line: which plan is open, its size and what's in it */
+function hdSubLine(){
+  const el = document.getElementById('hdSub'); if(!el || !HD) return;
+  const p = HD.cur;
+  if(!p){ el.textContent = 'No plans yet'; return; }
+  const d = p.data, n = HD.plans.length;
+  el.textContent = [short(p.name, 40), `${hdM(d.W)} × ${hdM(d.H)} m`, plural(d.rooms.length, 'room'), d.items.length ? plural(d.items.length, 'item') : '', n > 1 ? plural(n, 'plan') : ''].filter(Boolean).join(' · ');
+}
 
 function hdEmpty(){
+  hdSubLine();
   document.getElementById('hdBody').innerHTML = `
-    <div class="card hd-start">
-      <h3>Design your apartment</h3>
-      <p class="hd-hint">Set the outer size, then add rooms, doors, windows and furniture from the top-down view. Everything is in centimetres and saves as you go.</p>
-      ${hdNewForm()}
-    </div>`;
+    <div class="sec"><div class="sec-h"><h3>Floor plans</h3></div>
+      <div class="empty">Set the outer size, then add rooms, doors, windows and furniture from the top-down view. Everything is in centimetres and saves as you go.
+        <div style="margin-top:12px"><button class="btn-ghost" type="button" onclick="hdNewSheet()">Design your apartment</button></div></div></div>`;
 }
 function hdNewForm(){
-  return `<form onsubmit="submitGuard(event, hdCreate)">
+  return `<form id="hdNForm" onsubmit="submitGuard(event, hdCreate)">
     <div class="form-grid">
       <div><label class="lbl" for="hdNName">Plan name</label><input id="hdNName" value="${HD && HD.plans.length ? 'Plan ' + (HD.plans.length + 1) : 'My apartment'}" maxlength="60"></div>
       <div><label class="lbl" for="hdNW">Width (m)</label><input id="hdNW" type="number" inputmode="decimal" step="0.05" min="2" max="60" value="10"></div>
@@ -4126,7 +4143,6 @@ function hdNewForm(){
       <div><label class="lbl" for="hdNT">Start with</label><select id="hdNT">
         <option value="3">3 rooms (living, 2 bedrooms)</option><option value="2">2 rooms (living, bedroom)</option><option value="0">Empty outline</option></select></div>
     </div>
-    <button class="btn" type="submit">Create plan</button>
   </form>`;
 }
 /* starter layouts: a quick split of the outline so there is something to drag around */
@@ -4158,7 +4174,7 @@ async function hdCreate(){
   const data = hdStarter(W, H, +document.getElementById('hdNT').value);
   const {data: row, error} = await sb.from('floor_plans').insert({name, data}).select().single();
   if(error) return err(error);
-  sheetClose(document.querySelector('.sheet-bg'));
+  closeSheet();
   HD.plans.push({...row, data: hdNormalise(row.data)});
   hdOpen(row.id);
   toast('Plan created');
@@ -4171,19 +4187,24 @@ function hdOpen(id){
   hdLayout();
 }
 function hdNewSheet(){
-  const bg = document.createElement('div'); bg.className = 'sheet-bg';
-  bg.innerHTML = `<div class="sheet" style="max-width:560px"><div class="sheet-head"><div class="top"><h3>New plan</h3>
-    <button class="icon-btn" type="button" aria-label="Close" onclick="sheetClose(this.closest('.sheet-bg'))">${ICO.x}</button></div></div>
-    <div class="sheet-body">${hdNewForm()}</div></div>`;
-  bg.addEventListener('click', e => { if(e.target === bg) sheetClose(bg); });
-  document.body.appendChild(bg);
+  if(!HD) return;
+  openSheet({title: 'New plan', sub: 'The outer size now; rooms, doors and furniture on the plan itself', focus: 'hdNName',
+    body: hdNewForm(), foot: `<span class="n"></span><button class="btn" type="submit" form="hdNForm">Create plan</button>`});
+}
+function hdRenameSheet(){
+  const p = HD && HD.cur; if(!p) return;
+  openSheet({title: 'Rename plan', focus: 'hdRnName',
+    body: `<form id="hdRnForm" onsubmit="submitGuard(event, hdRename)"><label class="lbl" for="hdRnName">Plan name</label><input id="hdRnName" value="${esc(p.name)}" maxlength="60"></form>`,
+    foot: `<span class="n"></span><button class="btn" type="submit" form="hdRnForm">Save</button>`});
+}
+function hdRename(){
+  const p = HD && HD.cur, n = (document.getElementById('hdRnName')?.value || '').trim();
+  if(!p || !n) return toast('Give the plan a name');
+  p.name = n; hdSave(); closeSheet(); hdLayout();
 }
 async function hdPlanAction(act){
   const p = HD.cur;
-  if(act === 'rename'){
-    const n = (prompt('Rename plan', p.name) || '').trim(); if(!n) return;
-    p.name = n; hdSave(); hdLayout(); return;
-  }
+  if(act === 'rename'){ hdRenameSheet(); return; }
   if(act === 'dup'){
     const {data: row, error} = await sb.from('floor_plans').insert({name: p.name + ' (copy)', data: p.data}).select().single();
     if(error) return err(error);
@@ -4450,7 +4471,6 @@ function hdLayout(){
   body.innerHTML = `
     <div class="hd-bar">
       <select id="hdPlanSel" aria-label="Plan" onchange="hdOpen(this.value)">${HD.plans.map(p => `<option value="${p.id}" ${p.id === HD.cur.id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
-      <button class="btn-ghost" type="button" onclick="hdNewSheet()">New plan</button>
       <span class="hd-sep"></span>
       <button class="hd-ib hd-add-m" type="button" onclick="hdLibSheet()" title="Add">${HD_I.add}<span>Add</span></button>
       <button class="hd-ib" id="hdUndo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" onclick="hdUndo()">${HD_I.undo}</button>
@@ -4484,6 +4504,7 @@ function hdLayout(){
       </div>
       <aside class="card hd-insp" id="hdInsp"></aside>
     </div>`;
+  hdSubLine();
   const svg = document.getElementById('hdSvg');
   HD.gKey = HD.iKey = null;
   hdStageSize();
