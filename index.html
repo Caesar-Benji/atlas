@@ -237,7 +237,8 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .hub-hello .hub-date{color:var(--muted);font-size:15px;font-weight:500;margin-top:6px}
 .hub-meta{display:flex;align-items:center;gap:10px}
 /* the greeting sits beside the figure, in the free upper-right of the orbit */
-.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);top:calc(50% - var(--R) * .4067 - 132px);white-space:nowrap;animation:tileIn 400ms var(--ease-out) 60ms both}
+/* anchored by its bottom edge, 34px above the House tile (whose centre is R*.4067 above the middle, 34px to its top): more lines grow upward, never into the tile */
+.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);bottom:calc(50% + var(--R) * .4067 + 68px);white-space:nowrap;animation:tileIn 400ms var(--ease-out) 60ms both}
 .hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .hub-status{color:var(--muted);font-size:14px;margin-top:10px;min-height:18px;display:flex;align-items:center;gap:7px}
 .hub-status svg{width:15px;height:15px;flex:none}
@@ -934,7 +935,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v57</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v58</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1031,7 +1032,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v57');
+console.log('Atlas v58');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
