@@ -238,29 +238,37 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .hub-meta{display:flex;align-items:center;gap:10px}
 /* the greeting sits beside the figure, in the free upper-right of the orbit */
 /* anchored by its bottom edge, 34px above the House tile (whose centre is R*.4067 above the middle, 34px to its top): more lines grow upward, never into the tile */
-.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);bottom:calc(50% + var(--R) * .4067 + 68px);white-space:nowrap;animation:tileIn 400ms var(--ease-out) 60ms both}
+.hub-hello{position:absolute;left:calc(50% + var(--D) / 2 + var(--figh) * .03);bottom:calc(50% + var(--R) * .4067 + 68px);white-space:nowrap;transform:translateZ(30px);animation:tileIn 400ms var(--ease-out) 60ms both}
 .hub-greet{font-size:clamp(28px,3.4vw,44px);font-weight:700;letter-spacing:-.03em;line-height:1.05}
 .hub-status{color:var(--muted);font-size:14px;margin-top:10px;min-height:18px;display:flex;align-items:center;gap:7px}
 .hub-status svg{width:15px;height:15px;flex:none}
-.hub-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0 16px}
+/* ---------- depth: the hub is a shallow 3D stage ----------
+   The disc sits a little behind the page, the figure in front of it with a cast shadow, the tiles and
+   the greeting nearest the viewer. One rotation on the orbit (toward the pointer on desktop, a slow sway on
+   touch) turns those depths into parallax; nothing else moves, so the stillness of the page survives. */
+.hub-stage{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 0 16px;perspective:1500px}
+#hub{overflow-x:clip}
 .hub-orbit{--figh:clamp(250px,min(calc(100vh - 430px),calc(96vw - 300px)),620px);--D:calc(var(--figh) * .90);--R:calc(var(--D) / 2 + 64px + var(--figh) * .07);
-  position:relative;width:calc(var(--R) * 2 + 104px);height:calc(var(--R) * 2 + 104px)}
+  position:relative;width:calc(var(--R) * 2 + 104px);height:calc(var(--R) * 2 + 104px);
+  transform-style:preserve-3d;transform:rotateX(calc(var(--py,0) * -3deg)) rotateY(calc(var(--px,0) * 4deg));transition:transform 1100ms var(--ease-out)}
 /* the disc is the figure's stage: a shade darker than the page with a soft vignette, so it reads as a shape and not a hairline */
-.hub-circle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:var(--D);height:var(--D);border-radius:50%;background:radial-gradient(circle at 50% 42%,#e9e7e2 0%,#e2dfd9 62%,#d9d6cf 100%);border:1px solid #d0cdc6;box-shadow:0 0 0 9px var(--bg),0 0 0 10px var(--border),inset 0 2px 14px rgba(26,26,24,.05)}
+.hub-circle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translateZ(-40px);width:var(--D);height:var(--D);border-radius:50%;background:radial-gradient(circle at 50% 42%,#e9e7e2 0%,#e2dfd9 62%,#d9d6cf 100%);border:1px solid #d0cdc6;box-shadow:0 0 0 9px var(--bg),0 0 0 10px var(--border),inset 0 2px 14px rgba(26,26,24,.05)}
+/* the disc stands on the page: a soft pool of shadow under its lower edge */
+.hub-circle::after{content:'';position:absolute;left:8%;right:8%;bottom:-7%;height:14%;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,rgba(26,26,24,.16),rgba(26,26,24,.05) 55%,transparent 72%);filter:blur(5px);z-index:-1}
 .hub-col{display:contents}
 .tile{position:absolute;left:50%;top:50%;gap:10px;
-  transform:translate(-50%,-50%) translate(calc(var(--R) * var(--tx)),calc(var(--R) * var(--ty)));
+  transform:translate(-50%,-50%) translate(calc(var(--R) * var(--tx)),calc(var(--R) * var(--ty))) translateZ(90px);
   display:flex;flex-direction:column;align-items:center;gap:8px;background:transparent;border:none;padding:0;
   animation:tileIn 300ms var(--ease-out) both}
 /* the hub is seen many times a day, so the tiles only breathe: a short fade, 40ms apart, and nothing moves */
-.tile .ic{width:68px;height:68px;border-radius:21px;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);color:var(--accent);display:flex;align-items:center;justify-content:center;transition:background-color var(--t-hover) ease,color var(--t-hover) ease,border-color var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
+.tile .ic{width:68px;height:68px;border-radius:21px;background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 2px rgba(26,26,24,.06),0 16px 26px -16px rgba(26,26,24,.3);color:var(--accent);display:flex;align-items:center;justify-content:center;transition:background-color var(--t-hover) ease,color var(--t-hover) ease,border-color var(--t-hover) ease,box-shadow var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
 .tile svg{width:26px;height:26px}
 .tile b{font-size:13px;font-weight:600;color:var(--accent2);transition:color var(--t-hover) ease;text-shadow:0 0 6px var(--bg),0 0 3px var(--bg)}
 .tile:focus-visible .ic{background:var(--grad);border-color:var(--accent);color:var(--on-ink)}
 .tile:focus-visible b{color:var(--text)}
 .tile:active .ic{transform:scale(.96)}
 @media(hover:hover) and (pointer:fine){
-  .tile:hover .ic{background:var(--grad);border-color:var(--accent);color:var(--on-ink);transform:translateY(-3px)}
+  .tile:hover .ic{background:var(--grad);border-color:var(--accent);color:var(--on-ink);transform:translateY(-3px);box-shadow:0 2px 3px rgba(26,26,24,.08),0 24px 32px -16px rgba(26,26,24,.38)}
   .tile:hover b{color:var(--text)}
   .tile:active .ic{transform:translateY(-1px) scale(.97)}
 }
@@ -273,11 +281,14 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .hub-col.right .tile:nth-child(3){animation-delay:180ms}
 /* the figure is taller than the disc: head above its rim, body fading out below it */
 /* pointer-events:none — the figure's box overlaps the tiles beside it; clicks must fall through to them */
-.hub-figure{pointer-events:none;position:absolute;left:50%;top:calc(50% - var(--figh) * .63);transform:translateX(-50%);display:flex;align-items:flex-start;justify-content:center;width:calc(var(--figh) * 1.02);height:calc(var(--figh) * 1.36)}
-.hub-figure img{position:relative;height:100%;object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn 500ms var(--ease-out) both;
+.hub-figure{pointer-events:none;position:absolute;left:50%;top:calc(50% - var(--figh) * .63);transform:translateX(-50%) translateZ(50px);display:flex;align-items:flex-start;justify-content:center;width:calc(var(--figh) * 1.02);height:calc(var(--figh) * 1.36)}
+.hub-figure img{position:relative;height:100%;object-fit:contain;filter:grayscale(1) contrast(1.06);animation:figIn 500ms var(--ease-out) both;   /* no drop-shadow here: with the mask inside the 3D layer Chromium clips it to the box */
   -webkit-mask-image:linear-gradient(to bottom,#000 84%,transparent 99%);mask-image:linear-gradient(to bottom,#000 84%,transparent 99%)}
 .hub-foot{display:flex;justify-content:center;font-size:10px;color:var(--muted)}
 @keyframes tileIn{from{opacity:0}to{opacity:1}}
+/* touch has no pointer to follow: the stage sways on its own, slowly */
+@keyframes hubSway{from{transform:rotateX(1.6deg) rotateY(-2.4deg)}to{transform:rotateX(-1.6deg) rotateY(2.4deg)}}
+@media(hover:none){ .hub-orbit{animation:hubSway 14s ease-in-out infinite alternate;transition:none} }
 @keyframes figIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 /* ---------- Section shell (top bar + main) ---------- */
@@ -428,8 +439,8 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .hub-orbit{--figh:clamp(210px,34vh,320px);width:100%;height:auto;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:18px 0;padding-top:calc(var(--figh) * .06)}
   .hub-circle{top:calc(var(--figh) / 2);width:calc(var(--figh) * .95);height:calc(var(--figh) * .95);box-shadow:0 0 0 7px var(--bg),0 0 0 8px var(--border)}
   .hub-col{display:contents}
-  .tile{position:static;transform:none!important;flex:0 0 24%;order:2;margin-bottom:6px}   /* seven tiles: 4 + 3, not 3 + 3 + a lonely one */
-  .hub-figure{position:relative;left:auto;top:auto;transform:none;order:0;flex:0 0 100%;width:auto;height:calc(var(--figh) * 1.2)}
+  .tile{position:static;transform:translateZ(0)!important;flex:0 0 24%;order:2;margin-bottom:6px}   /* seven tiles: 4 + 3, not 3 + 3 + a lonely one */
+  .hub-figure{position:relative;left:auto;top:auto;transform:translateZ(40px);order:0;flex:0 0 100%;width:auto;height:calc(var(--figh) * 1.2)}
   .hub-circle{top:calc(var(--figh) * .06 + var(--figh) * .5)}
   .tile .ic{width:60px;height:60px;border-radius:18px}
   .cal-grid{gap:2px}
@@ -852,6 +863,7 @@ main.wide{max-width:1500px}
   .logo path{animation:none!important;stroke-dashoffset:0}
   .auth-hero,.auth-card{animation:fadeUp 300ms ease both}
   .tile,.hub-hello{animation-duration:200ms;animation-delay:0ms!important}
+  .hub-orbit{transform:none!important;animation:none!important}
   .hub-figure img{animation:tileIn 300ms ease both}
   main.view-in{animation:tileIn 150ms ease both}
   .sheet,.sheet-bg{animation:fadeIn 200ms ease both!important;transition:opacity 200ms ease!important}
@@ -935,7 +947,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v60</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v61</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1032,7 +1044,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v60');
+console.log('Atlas v61');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1155,6 +1167,15 @@ function go(tab){
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 document.getElementById('homeBtn').addEventListener('click', () => go('home'));
 
+/* desktop: the stage leans toward the pointer; a frame at a time, eased by the CSS transition */
+(function(){
+  const hub = document.getElementById('hub'), orb = hub && hub.querySelector('.hub-orbit');
+  if(!orb || !(window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches)) return;
+  let px = 0, py = 0, raf = 0;
+  const paint = () => { raf = 0; orb.style.setProperty('--px', px.toFixed(3)); orb.style.setProperty('--py', py.toFixed(3)); };
+  hub.addEventListener('pointermove', e => { px = (e.clientX / innerWidth - .5) * 2; py = (e.clientY / innerHeight - .5) * 2; if(!raf) raf = requestAnimationFrame(paint); });
+  hub.addEventListener('pointerleave', () => { px = py = 0; if(!raf) raf = requestAnimationFrame(paint); });
+})();
 /* hub chrome: one greeting with the date under it */
 function renderHub(){
   const h = new Date().getHours();
