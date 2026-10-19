@@ -450,6 +450,97 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
   .wheel-row.on{font-size:18px}
 }
 
+/* ---------- live workout: a full-screen room of its own while a session runs ----------
+   The gym page stays underneath (z 50 < the picker sheet's 60, so Add exercise opens on top). */
+.live{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;animation:liveIn 320ms var(--ease-out) both;transition:opacity var(--t-sheet) var(--ease-out),transform var(--t-sheet) var(--ease-out)}
+.live.closing{opacity:0;transform:translateY(14px);pointer-events:none}
+@keyframes liveIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.live-head{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--surface);border-bottom:1px solid var(--border);flex:none}
+.live-head .ttl{flex:1;min-width:0;text-align:center}
+.live-head .ttl b{display:block;font-size:13px;font-weight:700;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.live-head .ttl span{display:block;font-size:11px;color:var(--muted);margin-top:1px}
+.live-head .btn{padding:8px 15px;font-size:13px}
+.live-head .icon-btn{width:38px;height:38px}
+.live-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(28px + env(safe-area-inset-bottom))}
+.live-col{max-width:640px;margin:0 auto}
+.live-clock{text-align:center;padding:6px 0 14px}
+.live-clock .t{font-size:60px;font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;color:var(--text)}
+.live-clock .t small{font-size:30px;font-weight:600;color:var(--muted);letter-spacing:-.03em}
+.live-clock .sub{font-size:12.5px;color:var(--muted);margin-top:7px}
+/* rest: the one thing you glance at between sets, so it gets the biggest surface after the clock */
+.live-rest{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);transition:border-color var(--t-hover) ease}
+.live-rest.run{border-color:var(--accent)}
+.live-rest.ding{animation:restDing .5s ease 3}
+.live-rest .ring{width:56px;height:56px;position:relative;flex:none}
+.live-rest .ring svg{width:56px;height:56px;transform:rotate(-90deg)}
+.live-rest .ring .bg{stroke:var(--border)}
+.live-rest .ring .fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .5s linear}
+.live-rest .ring .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent)}
+.live-rest .ring .ic svg{width:18px;height:18px;transform:none}
+.live-rest .mid{min-width:0}
+.live-rest .lbl{margin-bottom:0}
+.live-rest .t{font-size:28px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.live-rest .hint{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-rest .acts{display:flex;gap:6px;flex:none}
+.live-rest .acts .btn-ghost{padding:8px 11px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.live-rest .acts .btn{padding:8px 14px;font-size:13px}
+.live-sec{display:flex;align-items:baseline;gap:10px;margin:0 0 9px}
+.live-sec h3{margin:0;flex:1}
+.live-sec span{font-size:12px;color:var(--muted)}
+/* exercise cards in the live room: the targets line expands into the wheels, the set dots are always there */
+.live .ex-card{padding:12px}
+.live .ex-card.up{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.live .ex-card.done{opacity:.72}
+.live .ex-card.done .ex-ico{background:var(--accent);border-color:var(--accent)}
+.live .ex-card.done .ex-ico img{filter:invert(1) brightness(1.6)}
+.ex-foot{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-width:0}
+.set-dots{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
+.set-dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;padding:0;transition:background-color var(--t-hover) ease,border-color var(--t-hover) ease,color var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
+.set-dots button:active{transform:scale(.9)}
+.set-dots button.on{background:var(--accent);border-color:var(--accent);color:var(--on-ink)}
+.set-dots button.next{border-color:var(--accent);border-style:dashed}
+.set-dots button svg{width:13px;height:13px}
+.set-dots button.extra{border-style:dashed}
+.ex-foot .btn{padding:9px 15px;font-size:13px;white-space:nowrap;flex:none}
+.ex-foot .btn-ghost{padding:8px 13px;font-size:12.5px;white-space:nowrap;flex:none}
+.ex-foot .n{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.live .ex-steps{margin-top:2px}
+.live-add{margin-top:12px;width:100%;padding:13px;font-size:14px;border-style:dashed}
+.live-foot{margin-top:26px;text-align:center}
+.live-foot .linkish{font-size:12.5px;color:var(--muted)}
+/* resume banner on the gym page while the room is minimised */
+.sess-live{display:flex;align-items:center;gap:14px}
+.sess-live .pulse{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none;animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(74,106,68,.45)}60%{box-shadow:0 0 0 7px rgba(74,106,68,0)}}
+/* in-app confirm: replaces the browser's confirm() */
+.ask{max-width:400px}
+.ask .sheet-body{padding:20px 20px 6px}
+.ask h3{margin:0 0 6px;font-size:17px}
+.ask p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.5}
+.ask .sheet-foot{border-top:none;padding-top:8px;justify-content:flex-end;gap:8px}
+.ask .sheet-foot .btn{min-width:0}
+.btn.danger{background:var(--red)}
+.fin-list{display:flex;flex-direction:column;gap:6px;margin:12px 0 4px}
+.fin-row{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:7px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)}
+.fin-row img{width:28px;height:28px;object-fit:contain;flex:none}
+.fin-row .grow{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fin-row b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.fin-row.skip{opacity:.6}.fin-row.skip .grow{text-decoration:line-through}
+.fin-row .linkish{font-size:12px;color:var(--accent);white-space:nowrap;text-decoration:underline;text-underline-offset:2px}
+.fin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.fin-stats div{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:9px 10px;text-align:center}
+.fin-stats b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.fin-stats span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+@media(max-width:560px){
+  .live-clock .t{font-size:54px}
+  .live-rest{gap:10px;padding:11px 12px}
+  .live-rest .t{font-size:24px}
+  .live-rest .acts .btn-ghost{padding:8px 9px}
+  .ex-foot{flex-wrap:wrap}
+  .ex-foot .btn{flex:1}
+}
+@media(max-width:380px){ .live-clock .t{font-size:48px} .set-dots button{width:28px;height:28px} }
+
 /* ================= MONEY ================= */
 .scope-pick{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap}
 .scope-pick button{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:99px;padding:6px 13px;font-size:12.5px;font-weight:600;transition:background-color var(--t-hover) ease,color var(--t-hover) ease,border-color var(--t-hover) ease}
@@ -629,7 +720,11 @@ main.wide{max-width:1500px}
   main.view-in{animation:tileIn 150ms ease both}
   .sheet,.sheet-bg{animation:fadeIn 200ms ease both!important;transition:opacity 200ms ease!important}
   .sheet-bg.closing .sheet{transform:none}
-  .rest.ding{animation-iteration-count:1}
+  .rest.ding,.live-rest.ding{animation-iteration-count:1}
+  .live{animation:fadeIn 200ms ease both;transition:opacity 200ms ease}
+  .live.closing{transform:none}
+  .sess-live .pulse{animation:none}
+  .set-dots button:active{transform:none}
   .btn,.btn-ghost,.icon-btn,.checkbox,.pick,.tile .ic,.hd-ib{transition-property:color,background-color,border-color,opacity}
   .btn:active,.btn-ghost:active,.icon-btn:active,.checkbox:active,.pick:active,.tile:active .ic,.hd-ib:active,.tile:hover .ic{transform:none}
   @keyframes fadeUp{from{opacity:0}to{opacity:1}}
@@ -709,7 +804,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v44</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v45</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -806,7 +901,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v44');
+console.log('Atlas v45');
 
 // ---------- login hero video ----------
 // Plays the catch once, then holds the last frame with a slow float.
@@ -911,6 +1006,7 @@ window.addEventListener('hashchange', () => { const t = location.hash.slice(1) |
    Every other tab hides the hub and swaps in the section shell (top bar + #main). */
 function go(tab){
   if(tab !== 'home' && !views[tab]) tab = 'home';
+  if(typeof liveOpenNow === 'function' && liveOpenNow()) liveClose(true);   // the back button minimises the workout room
   window._curTab = tab;
   location.hash = tab;
   const home = tab === 'home';
@@ -1154,7 +1250,7 @@ async function intakeSavePlan(){
     toast(had ? 'Program saved' : 'Program started');
 }
 async function intakeEnd(){
-  if(!confirm('End the program? The days you already ticked are kept.')) return;
+  if(!await ask({title: 'End the program?', body: 'The days you already ticked are kept.', ok: 'End program', danger: true})) return;
   if(await intakeWritePlan(null)) toast('Program ended');
 }
 /* Ticks are optimistic, and writes for one day go out one at a time in tap order, each sending the
@@ -1259,7 +1355,7 @@ async function toggleEvent(id, done){
   if(error){ if(e){ e.done = !done; renderEvList(); } err(error); }
 }
 async function delRow(table, id, view){
-  if(!confirm('Delete this ' + table.replace(/s$/, '') + '? This cannot be undone.')) return;
+  if(!await ask({title: 'Delete this ' + table.replace(/s$/, '') + '?', body: 'This cannot be undone.', ok: 'Delete', danger: true})) return;
   const {error} = await sb.from(table).delete().eq('id', id);
   if(error) return err(error);
   window._moneyKeep = true; views[view]();
@@ -1377,6 +1473,7 @@ const ICO = {
   tap:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M9 11V6a2 2 0 014 0v7M13 9a2 2 0 014 0v5a6 6 0 01-6 6h-1a6 6 0 01-6-6v-1a2 2 0 014 0"/></svg>',
   forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1M4 4l16 16"/></svg>',
   pause:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>',
+  chevD:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>',
 };
 const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 2});   // quarter-kilo plates: 8.75, not 8.8
 function exSum(it){ return isCardio(it.ex) ? 0 : (+it.sets || 0) * (+it.reps || 0) * (+it.kg || 0); }
@@ -1421,6 +1518,8 @@ views.gym = async function(){
     </div>
     <div class="card"><h3>History</h3><div class="list" id="woList"><div class="empty">Loading…</div></div></div>`;
   renderSession();
+  // a running session reopens its room unless it was minimised on purpose this visit
+  if(gymDraft && gymDraft.started && !gymDraft.id && !_liveMin) liveOpen();
   const [wos, sets, allWos] = await Promise.all([
     sb.from('workouts').select('*').order('workout_date', {ascending: false}).limit(20),
     fetchAll(() => sb.from('workout_sets').select('*').order('created_at')),
@@ -1437,7 +1536,7 @@ views.gym = async function(){
   window._allSets = sets.data || [];
   window._gymWos = wos.data || [];
   window._woDates = Object.fromEntries((allWos.data || []).map(w => [w.id, w.workout_date]));
-  renderSession(); renderWeek(); renderHistory(); renderPRs();
+  renderSession(); liveRender(); renderWeek(); renderHistory(); renderPRs();
   const exercises = [...new Set(window._allSets.map(s => exCanon(s.exercise)))].sort();
   const sel = document.getElementById('exSelect');
   sel.innerHTML = exercises.map(e => `<option>${esc(e)}</option>`).join('') || '<option>—</option>';
@@ -1463,7 +1562,23 @@ function renderSession(){
     return;
   }
   const wait = draftPending();
-  const title = d.id ? 'Editing ' + fmtDate(d.date) : wait ? 'New workout' : 'Session in progress';
+  // a running session lives in the live room; the page only keeps a way back in
+  if(!d.id && !wait){
+    const n = d.items.length, done = draftDone();
+    c.innerHTML = `<h3>Session in progress</h3>
+      <div class="gym-top sess-live">
+        <span class="pulse"></span>
+        <div class="grow"><div class="big"><span id="sessElapsed">0:00</span></div>
+          <div class="sub">${plural(n, 'exercise')} · ${done} of ${draftSets()} sets done${d.notes ? ' · ' + esc(d.notes) : ''}</div></div>
+        <div class="gym-acts">
+          <button class="btn ico" type="button" onclick="liveOpen()">${ICO.play}Resume</button>
+          <button class="btn-ghost" type="button" onclick="finishSheet()">Finish</button>
+        </div>
+      </div>`;
+    startTick();
+    return;
+  }
+  const title = d.id ? 'Editing ' + fmtDate(d.date) : 'New workout';
   c.innerHTML = `<h3>${title}</h3>
     <div class="gym-top" style="margin-bottom:12px">
       <div class="grow">
@@ -1471,7 +1586,6 @@ function renderSession(){
         <input id="woDate" type="date" style="width:auto" value="${d.date}" onchange="gymDraft.date=this.value;draftSave()">
       </div>
       <div class="grow"><div class="sub" id="sessTotals"></div></div>
-      ${wait ? '' : '<div class="rest" id="restChip"></div>'}
     </div>
     <div style="margin-bottom:12px"><label class="lbl" for="woNotes">Notes (optional)</label>
       <input id="woNotes" placeholder="e.g. Push day, felt strong" enterkeyhint="done"
@@ -1486,19 +1600,30 @@ function renderSession(){
     </div>`;
   renderExList(); sessTotals(); restPaint(); startTick();
 }
+/* the same cards serve the pending/edit card (#exList) and the live room (#liveList);
+   only the live room tracks sets as they happen */
+const exDone = it => Math.max(0, +it.done || 0);
+const exPlanned = it => Math.max(1, +it.sets || 1);
+const exFinished = it => isCardio(it.ex) ? exDone(it) >= 1 : exDone(it) >= exPlanned(it);
+function draftDone(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + Math.min(exDone(it), isCardio(it.ex) ? 1 : 1e9), 0); }
+function draftDoneVol(){ return (gymDraft ? gymDraft.items : []).reduce((a, it) => a + (isCardio(it.ex) ? 0 : exDone(it) * (+it.reps || 0) * (+it.kg || 0)), 0); }
+/* the exercise you're on: first one with sets still to do */
+function exUpNext(){ return (gymDraft ? gymDraft.items : []).findIndex(it => !exFinished(it)); }
 function renderExList(){
-  const el = document.getElementById('exList'); if(!el) return;
+  const el = document.getElementById('liveList') || document.getElementById('exList'); if(!el) return;
+  const live = el.id === 'liveList';
   const items = gymDraft ? gymDraft.items : [];
-  if(!items.length){ el.innerHTML = '<div class="empty">No exercises yet — tap <b>+ Add exercise</b> to pick from the library</div>'; return; }
+  if(!items.length){ el.innerHTML = `<div class="empty">No exercises yet — tap <b>${live ? 'Add exercise' : '+ Add exercise'}</b> to pick from the library</div>`; return; }
   if(_exOpen >= items.length) _exOpen = items.length - 1;
+  const up = live ? exUpNext() : -1;
   el.innerHTML = items.map((it, i) => {
-    const open = i === _exOpen, cardio = isCardio(it.ex), l = open && lastFor(it.ex);
-    return `<div class="ex-card${open ? ' open' : ''}">
+    const open = i === _exOpen, cardio = isCardio(it.ex), l = lastFor(it.ex), fin = live && exFinished(it);
+    const lastTxt = l ? 'Last ' + fmtDate(l.date) + ': ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this';
+    return `<div class="ex-card${open ? ' open' : ''}${i === up ? ' up' : ''}${fin ? ' done' : ''}">
       <button class="ex-head" type="button" aria-expanded="${open}" onclick="exToggle(${i})">
         <span class="ex-ico">${exIcon(it.ex)}</span>
         <span class="ex-body"><span class="ex-name">${esc(it.ex)}</span>
-          <span class="ex-last">${!open ? '<b>' + setLabel(it) + '</b>'
-            : l ? 'Last ' + fmtDate(l.date) + ': ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this'}</span></span>
+          <span class="ex-last">${live ? '<b>' + setLabel(it) + '</b> · ' + lastTxt : !open ? '<b>' + setLabel(it) + '</b>' : lastTxt}</span></span>
         <span class="ex-chev">${ICO.chevR}</span>
       </button>
       <button class="icon-btn danger" type="button" title="Remove ${esc(it.ex)}" onclick="exDel(${i})">${ICO.x}</button>
@@ -1506,16 +1631,60 @@ function renderExList(){
         ${cardio
           ? wheel(i, 'reps', 'Minutes') + wheel(i, 'kg', 'Km')
           : wheel(i, 'sets', 'Sets') + wheel(i, 'reps', 'Reps') + wheel(i, 'kg', 'Kg')}
-      </div>`}</div>`;
+      </div>`}
+      ${live ? exFoot(it, i) : ''}</div>`;
   }).join('');
-  wheelsInit();
+  wheelsInit(el);
+}
+/* one dot per planned set; done ones fill, the next one is dashed; extra sets grow the row */
+function exFoot(it, i){
+  if(isCardio(it.ex)){
+    const d = exDone(it);
+    return `<div class="ex-foot"><span class="n">${d ? 'Logged' : 'Not logged yet'}</span>
+      ${d ? `<button class="btn-ghost" type="button" onclick="unlogSet(${i})">Undo</button>`
+          : `<button class="btn ico" type="button" onclick="logSet(${i})">${ICO.tickSm}Done</button>`}</div>`;
+  }
+  const n = exPlanned(it), d = exDone(it), total = Math.max(n, d);
+  let dots = '';
+  for(let k = 0; k < total; k++)
+    dots += `<button type="button" class="${k < d ? 'on' : k === d ? 'next' : ''}${k >= n ? ' extra' : ''}" title="Set ${k + 1}"
+      onclick="setDots(${i},${k < d ? (k === d - 1 ? k : k + 1) : k + 1})">${k < d ? ICO.tickSm : k + 1}</button>`;
+  return `<div class="ex-foot"><div class="set-dots">${dots}</div>
+    ${d >= n
+      ? `<button class="btn-ghost" type="button" onclick="logSet(${i})">+1 set</button>`
+      : `<button class="btn ico" type="button" onclick="logSet(${i})">${ICO.tickSm}Set ${d + 1} done</button>`}</div>`;
+}
+/* tap an empty dot to jump ahead to it, the last filled one to untick it, an earlier filled one to roll back to it */
+function setDots(i, n){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  it.done = Math.max(0, n); draftSave(); gymRepaint();
+}
+function logSet(i){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  it.done = exDone(it) + 1;
+  if(!isCardio(it.ex) && it.done > exPlanned(it)) it.sets = it.done;   // an extra set counts
+  draftSave();
+  // the room moves on by itself: the rest clock starts, the card you were on folds up
+  if(_exOpen === i) _exOpen = -1;
+  const all = gymDraft.items.every(exFinished);
+  if(!all && gymDraft.autoRest !== false){ restStart(gymDraft.rest || 90); try{ window._ac && window._ac.resume(); }catch(e){} }
+  gymRepaint();
+  if(all) toast('All sets done — Finish when you\'re ready');
+}
+function unlogSet(i){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  it.done = Math.max(0, exDone(it) - 1); draftSave(); gymRepaint();
 }
 function exToggle(i){ _exOpen = _exOpen === i ? -1 : i; renderExList(); }
-function exDel(i){
+async function exDel(i){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  if(exDone(it) && !await ask({title: 'Remove ' + it.ex + '?', body: plural(exDone(it), 'set has', 'sets have') + ' been logged for it this session.', ok: 'Remove', danger: true})) return;
   gymDraft.items.splice(i, 1); draftSave();
   if(i < _exOpen) _exOpen--;
-  renderExList(); sessTotals();
+  gymRepaint();
 }
+/* repaint whichever surface is showing the draft */
+function gymRepaint(){ renderExList(); sessTotals(); liveStats(); restPaint(); }
 
 /* ---------- scroll wheels ----------
    Each number is a snap-scrolling column; whichever row rests in the middle band is the value.
@@ -1547,8 +1716,8 @@ function wheel(i, k, label){
   return `<div class="wheel"><div class="lbl">${label}</div><div class="wheel-win${k === 'kg' ? ' two' : ''}">${cols}</div></div>`;
 }
 const wheelH = el => (el._rows[0] && el._rows[0].offsetHeight) || 34;
-function wheelsInit(){
-  document.querySelectorAll('#exList .wheel-col').forEach(el => {
+function wheelsInit(root){
+  (root || document).querySelectorAll('.wheel-col').forEach(el => {
     el._rows = el.querySelectorAll('.wheel-row'); el._n = +el.dataset.at;
     el.scrollTop = el._n * wheelH(el);
     el.addEventListener('wheel', wheelNotch, {passive: false});
@@ -1597,19 +1766,72 @@ function sessTotals(){
 }
 /* self-clearing tickers: the router replaces #main without telling us */
 function startTick(){ clearInterval(_gymTick); _gymTick = setInterval(paintTick, 1000); paintTick(); }
+const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+const elapsedSec = () => gymDraft && gymDraft.started ? Math.max(0, Math.floor((Date.now() - gymDraft.started) / 1000)) : 0;
 function paintTick(){
-  const el = document.getElementById('sessElapsed');
-  if(!el){ clearInterval(_gymTick); _gymTick = null; return; }
-  if(!gymDraft || !gymDraft.started || gymDraft.id){ el.textContent = draftPending() ? 'Not started · ' : ''; return; }
-  const s = Math.max(0, Math.floor((Date.now() - gymDraft.started) / 1000));
-  el.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' · ';
+  const el = document.getElementById('sessElapsed'), lc = document.getElementById('liveClock');
+  if(!el && !lc){ clearInterval(_gymTick); _gymTick = null; return; }
+  if(el){
+    if(!gymDraft || !gymDraft.started || gymDraft.id) el.textContent = draftPending() ? 'Not started · ' : '';
+    else el.textContent = mmss(elapsedSec()) + (el.closest('.sess-live') ? '' : ' · ');
+  }
+  if(lc){
+    const s = elapsedSec(), h = Math.floor(s / 3600);
+    lc.innerHTML = h ? `${h}<small>h</small> ${mmss(s - h * 3600)}` : mmss(s);
+  }
 }
 
 /* ---------- rest timer ---------- */
 /* the timer stores an end timestamp, not a countdown: iOS suspends intervals while the
-   phone is locked, and a tick-based counter would come back frozen where it was */
-const restLeft = () => _rest ? Math.max(0, Math.ceil((_rest.end - Date.now()) / 1000)) : 90;
-function restStart(sec){ _rest = {end: Date.now() + sec * 1000, h: setInterval(restTick, 500)}; }
+   phone is locked, and a tick-based counter would come back frozen where it was.
+   The end time also goes into the draft so a reload mid-rest picks the countdown back up. */
+const restLen = () => (gymDraft && gymDraft.rest) || 90;
+const restLeft = () => _rest ? Math.max(0, Math.ceil((_rest.end - Date.now()) / 1000)) : restLen();
+function restStart(sec){
+  if(_rest) clearInterval(_rest.h);
+  _rest = {end: Date.now() + sec * 1000, total: sec, h: setInterval(restTick, 500)};
+  if(gymDraft){ gymDraft.restEnd = _rest.end; gymDraft.restTotal = sec; draftSave(); }
+}
+function restResume(){
+  if(_rest || !gymDraft || !gymDraft.restEnd) return;
+  if(gymDraft.restEnd > Date.now()) _rest = {end: gymDraft.restEnd, total: gymDraft.restTotal || restLen(), h: setInterval(restTick, 500)};
+  else { delete gymDraft.restEnd; draftSave(); }
+}
+function restStop(){ if(_rest){ clearInterval(_rest.h); _rest = null; } if(gymDraft && gymDraft.restEnd){ delete gymDraft.restEnd; draftSave(); } }
+/* while resting, ±15 nudges this countdown; when idle it sets the length every rest starts
+   with, which is kept per session and remembered for the next one */
+function restAdjust(d){
+  if(_rest){
+    _rest.end = Math.max(Date.now() + 1000, _rest.end + d * 1000); _rest.total = Math.max(5, (_rest.total || restLen()) + d);
+    if(gymDraft){ gymDraft.restEnd = _rest.end; gymDraft.restTotal = _rest.total; draftSave(); }
+  } else if(gymDraft){
+    gymDraft.rest = Math.max(15, Math.min(600, restLen() + d));
+    try{ localStorage.setItem('atlas_gym_rest', gymDraft.rest); }catch(e){}
+    draftSave();
+  }
+  restPaint();
+}
+const RING_C = 2 * Math.PI * 25;
+function restRing(){
+  const left = restLeft(), total = _rest ? (_rest.total || restLen()) : restLen();
+  const frac = _rest ? Math.max(0, Math.min(1, left / total)) : 1;
+  return `<div class="ring"><svg viewBox="0 0 56 56" fill="none" stroke-width="4">
+      <circle class="bg" cx="28" cy="28" r="25"/>
+      <circle class="fg" cx="28" cy="28" r="25" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - frac)).toFixed(1)}"/></svg>
+    <span class="ic">${_rest ? ICO.pause : ICO.play}</span></div>`;
+}
+function liveRestPaint(){
+  const c = document.getElementById('liveRest'); if(!c) return;
+  const left = restLeft();
+  c.className = 'live-rest' + (_rest ? ' run' : '');
+  c.innerHTML = `<button class="ringbtn" type="button" title="${_rest ? 'Stop rest' : 'Start rest'}" onclick="restToggle()" style="background:none;border:none;padding:0">${restRing()}</button>
+    <div class="mid"><div class="lbl">${_rest ? 'Resting' : 'Rest'}</div><div class="t">${mmss(left)}</div>
+      <div class="hint">${_rest ? 'Next set when it rings' : 'Starts by itself after each set'}</div></div>
+    <div class="acts">
+      <button class="btn-ghost" type="button" title="15 seconds less" onclick="restAdjust(-15)">−15</button>
+      <button class="btn-ghost" type="button" title="15 seconds more" onclick="restAdjust(15)">+15</button>
+    </div>`;
+}
 function restDing(){
   try{ navigator.vibrate && navigator.vibrate([200, 100, 200]); }catch(e){}
   try{
@@ -1619,26 +1841,29 @@ function restDing(){
       o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .18); });
   }catch(e){}
 }
+/* the rest clock paints wherever it is shown: the live room (#liveRest) or the compact chip (#restChip) */
 function restPaint(){
-  const c = document.getElementById('restChip');
-  if(!c){ if(_rest){ clearInterval(_rest.h); _rest = null; } return; }
+  liveRestPaint();
+  const c = document.getElementById('restChip'); if(!c) return;
   const left = restLeft();
   c.className = 'rest' + (_rest ? ' run' : '');
-  c.innerHTML = `<span class="t">${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}</span>
+  c.innerHTML = `<span class="t">${mmss(left)}</span>
     <button class="icon-btn" type="button" title="${_rest ? 'Stop' : 'Start'} rest timer" onclick="restToggle()">${_rest ? ICO.pause : ICO.play}</button>
     <button class="icon-btn" type="button" title="Add 30 seconds" onclick="restPlus()">+30</button>`;
 }
 function restToggle(){
-  if(_rest){ clearInterval(_rest.h); _rest = null; }
-  else { restStart(90); try{ window._ac && window._ac.resume(); }catch(e){} }
+  if(_rest) restStop();
+  else { restStart(restLen()); try{ window._ac && window._ac.resume(); }catch(e){} }
   restPaint();
 }
-function restPlus(){ if(_rest) _rest.end += 30000; else restStart(120); restPaint(); }
+function restPlus(){ if(_rest) restAdjust(30); else restStart(restLen() + 30); restPaint(); }
 function restTick(){
-  if(!document.getElementById('restChip')){ clearInterval(_rest.h); _rest = null; return; }
+  if(!_rest) return;
+  // nothing on screen and no running session → let the interval go; a running session keeps counting even minimised
+  if(!document.getElementById('restChip') && !document.getElementById('liveRest') && !(gymDraft && gymDraft.started && !gymDraft.id)){ restStop(); return; }
   if(restLeft() <= 0){
-    clearInterval(_rest.h); _rest = null; restPaint();
-    const c = document.getElementById('restChip');
+    restStop(); restPaint();
+    const c = document.getElementById('liveRest') || document.getElementById('restChip');
     if(c){ c.classList.add('ding'); setTimeout(() => c.classList.remove('ding'), 1600); }
     restDing(); toast('Rest over — next set');
     return;
@@ -1648,39 +1873,172 @@ function restTick(){
 
 /* ---------- session lifecycle ---------- */
 /* Start workout only opens the picker; the session clock begins when Start is pressed */
+const savedRest = () => { try{ return Math.max(15, Math.min(600, +localStorage.getItem('atlas_gym_rest') || 90)); }catch(e){ return 90; } };
+const newDraft = () => ({date: todayStr(), notes: '', items: [], started: null, rest: savedRest()});
 function startSession(){
-  gymDraft = {date: todayStr(), notes: '', items: [], started: null};
+  gymDraft = newDraft();
   _exOpen = 0; draftSave(); renderSession(); openPicker();
 }
 function beginSession(){
   if(!gymDraft) return;
   if(!gymDraft.items.length) return toast('Pick at least one exercise first');
-  gymDraft.started = Date.now(); _exOpen = 0; draftSave();
+  gymDraft.started = Date.now(); gymDraft.items.forEach(it => { it.done = 0; }); _exOpen = -1; draftSave();
   document.removeEventListener('keydown', pickEsc);
   sheetClose(document.getElementById('pickBg'));
-  renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
-  toast('Workout started');
+  renderSession(); liveOpen();
 }
 function addEx(name){
-  if(!gymDraft) gymDraft = {date: todayStr(), notes: '', items: [], started: null};
+  if(!gymDraft) gymDraft = newDraft();
   const l = lastFor(name);
   const cardio = isCardio(name);
-  gymDraft.items.push(l ? {ex: name, sets: l.sets, reps: l.reps, kg: l.kg}
-    : cardio ? {ex: name, sets: 1, reps: 30, kg: 0} : {ex: name, sets: 3, reps: 10, kg: 0});
+  gymDraft.items.push(l ? {ex: name, sets: l.sets, reps: l.reps, kg: l.kg, done: 0}
+    : cardio ? {ex: name, sets: 1, reps: 30, kg: 0, done: 0} : {ex: name, sets: 3, reps: 10, kg: 0, done: 0});
   draftSave();
 }
-function discardSession(){
-  if(gymDraft && gymDraft.items.length && !confirm('Discard this session? Nothing will be saved.')) return;
-  gymDraft = null; draftSave(); renderSession();
+async function discardSession(){
+  if(gymDraft && gymDraft.items.length && !await ask({title: gymDraft.id ? 'Drop these changes?' : 'Discard this workout?',
+    body: gymDraft.id ? 'The workout stays as it was saved.' : 'Nothing from this session will be saved.', ok: gymDraft.id ? 'Drop changes' : 'Discard', danger: true})) return;
+  restStop(); gymDraft = null; draftSave(); liveClose(); renderSession();
+}
+
+/* ---------- the live room ----------
+   Once Start is pressed the workout gets a screen of its own: the clock, the rest timer and the
+   exercise cards with their set dots. Minimising keeps it running underneath; the gym page shows
+   a Resume banner and a reload (or a return to Gym) walks straight back in. */
+let _wake = null, _liveMin = false;
+const liveOpenNow = () => !!document.getElementById('live');
+function liveOpen(){
+  if(!gymDraft || !gymDraft.started || gymDraft.id) return;
+  _liveMin = false;
+  if(liveOpenNow()) return liveRender();
+  document.body.insertAdjacentHTML('beforeend', `<div class="live" id="live" role="dialog" aria-label="Workout in progress">
+    <div class="live-head">
+      <button class="icon-btn" type="button" title="Minimise — keeps running" onclick="liveClose(true)">${ICO.chevD}</button>
+      <div class="ttl"><b id="liveTitle"></b><span id="liveDate"></span></div>
+      <button class="btn" type="button" onclick="finishSheet()">Finish</button>
+    </div>
+    <div class="live-body"><div class="live-col">
+      <div class="live-clock"><div class="t" id="liveClock">0:00</div><div class="sub" id="liveStats"></div></div>
+      <div class="live-rest" id="liveRest"></div>
+      <div class="live-sec"><h3>Exercises</h3><span id="liveUp"></span></div>
+      <div id="liveList"></div>
+      <button class="btn-ghost live-add" type="button" onclick="openPicker()">+ Add exercise</button>
+      <div class="live-foot"><button class="linkish" type="button" onclick="discardSession()">Discard workout</button></div>
+    </div></div></div>`);
+  document.body.style.overflow = 'hidden';
+  restResume();
+  liveRender(); startTick(); wakeOn();
+}
+function liveRender(){
+  if(!liveOpenNow() || !gymDraft) return;
+  document.getElementById('liveTitle').textContent = (gymDraft.notes || '').trim() || 'Workout';
+  document.getElementById('liveDate').textContent = fmtDate(gymDraft.date) + ' · started ' + new Date(gymDraft.started).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+  renderExList(); liveStats(); restPaint(); paintTick();
+}
+function liveStats(){
+  const el = document.getElementById('liveStats'); if(!el || !gymDraft) return;
+  const vol = draftDoneVol(), items = gymDraft.items;
+  el.textContent = `${plural(items.length, 'exercise')} · ${draftDone()} of ${draftSets()} sets${vol ? ' · ' + gnum(vol) + ' kg lifted' : ''}`;
+  const up = document.getElementById('liveUp'), i = exUpNext();
+  if(up) up.textContent = !items.length ? '' : i < 0 ? 'All done' : 'Up next: ' + items[i].ex;
+}
+function liveClose(minimise){
+  const el = document.getElementById('live');
+  document.body.style.overflow = '';
+  wakeOff();
+  if(!el) return;
+  _liveMin = !!minimise;
+  el.removeAttribute('id'); el.classList.add('closing');
+  const gone = () => el.remove();
+  el.addEventListener('transitionend', gone, {once: true}); setTimeout(gone, 500);
+  renderSession();
+}
+/* keep the screen on between sets — the phone sits on the bench with the room open */
+async function wakeOn(){
+  try{ if('wakeLock' in navigator && !_wake){ _wake = await navigator.wakeLock.request('screen'); _wake.addEventListener('release', () => { _wake = null; }); } }catch(e){}
+}
+function wakeOff(){ try{ _wake && _wake.release(); }catch(e){} _wake = null; }
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ if(liveOpenNow()) wakeOn(); restPaint(); paintTick(); } });
+
+/* in-app confirm — a small sheet with a question and two buttons, never the browser's confirm() */
+function ask(o){
+  return new Promise(res => {
+    const id = 'ask' + Date.now();
+    const done = v => { const bg = document.getElementById(id); if(!bg) return; document.removeEventListener('keydown', onKey); sheetClose(bg); res(v); };
+    const onKey = e => { if(e.key === 'Escape') done(false); };
+    document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="${id}" style="z-index:70">
+      <div class="sheet ask" role="alertdialog" aria-label="${esc_(o.title)}">
+        <div class="sheet-body"><h3>${esc_(o.title)}</h3>${o.body ? `<p>${esc_(o.body)}</p>` : ''}</div>
+        <div class="sheet-foot"><button class="btn-ghost" type="button">${esc_(o.cancel || 'Cancel')}</button>
+          <button class="btn${o.danger ? ' danger' : ''}" type="button">${esc_(o.ok || 'OK')}</button></div></div></div>`);
+    const bg = document.getElementById(id), [no, yes] = bg.querySelectorAll('.sheet-foot button');
+    no.onclick = () => done(false); yes.onclick = () => done(true);
+    bg.onclick = e => { if(e.target === bg) done(false); };
+    document.addEventListener('keydown', onKey);
+    yes.focus();
+  });
+}
+const esc_ = s => esc(String(s == null ? '' : s));
+
+/* Finish: one look at what gets saved before it goes. Exercises with no sets logged are skipped
+   unless you keep them; if nothing was ticked at all the planned numbers are saved as they stand. */
+function finishSheet(){
+  const d = gymDraft; if(!d || !d.items.length) return toast('Add at least one exercise');
+  if(document.getElementById('finBg')) return;
+  restStop(); restPaint();
+  document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="finBg" style="z-index:70" onclick="if(event.target===this)finClose()">
+    <div class="sheet" role="dialog" aria-label="Finish workout" style="max-width:480px">
+      <div class="sheet-head"><div class="top"><h3>Finish workout</h3>
+        <button class="icon-btn" type="button" title="Back to the workout" onclick="finClose()">${ICO.x}</button></div></div>
+      <div class="sheet-body">
+        <div class="fin-stats" id="finStats"></div>
+        <div class="fin-list" id="finList"></div>
+        <div style="margin-top:12px"><label class="lbl" for="finNotes">Name / notes (optional)</label>
+          <input id="finNotes" placeholder="e.g. Push day, felt strong" enterkeyhint="done" value="${esc(d.notes || '')}"
+            oninput="gymDraft.notes=this.value;draftSave()"></div>
+        <div style="margin-top:10px"><label class="lbl" for="finDate">Date</label>
+          <input id="finDate" type="date" style="width:auto" value="${d.date}" onchange="gymDraft.date=this.value;draftSave()"></div>
+      </div>
+      <div class="sheet-foot"><span class="n" id="finHint"></span>
+        <button class="btn-ghost" type="button" onclick="finClose()">Keep going</button>
+        <button class="btn" type="button" id="finishBtn" onclick="finishSession()">Save workout</button></div>
+    </div></div>`);
+  finPaint();
+}
+function finClose(){ sheetClose(document.getElementById('finBg')); }
+/* what each exercise will be saved as */
+function finRows(){
+  const d = gymDraft, tracked = d.items.some(it => exDone(it) > 0);
+  return d.items.filter(it => it.ex).map(it => {
+    const cardio = isCardio(it.ex), n = exDone(it);
+    const skip = tracked && n === 0 && !it.keep;
+    const sets = cardio ? 1 : tracked && n ? n : exPlanned(it);
+    return {it, skip, tracked, row: {exercise: it.ex, sets, reps: +it.reps || 0, weight_kg: +it.kg || 0}};
+  });
+}
+function finPaint(){
+  const list = document.getElementById('finList'); if(!list || !gymDraft) return;
+  const rows = finRows(), kept = rows.filter(r => !r.skip);
+  const vol = kept.reduce((a, r) => a + (isCardio(r.row.exercise) ? 0 : r.row.sets * r.row.reps * r.row.weight_kg), 0);
+  const sets = kept.reduce((a, r) => a + (isCardio(r.row.exercise) ? 0 : r.row.sets), 0);
+  const min = Math.max(1, Math.round(elapsedSec() / 60));
+  document.getElementById('finStats').innerHTML = `<div><b>${min}</b><span>min</span></div><div><b>${sets}</b><span>sets</span></div><div><b>${vol ? gnum(vol) : '—'}</b><span>kg volume</span></div>`;
+  list.innerHTML = rows.map((r, i) => `<div class="fin-row${r.skip ? ' skip' : ''}">${exIcon(r.row.exercise)}
+    <span class="grow">${esc(r.row.exercise)}</span>
+    ${r.skip ? `<button class="linkish" type="button" onclick="gymDraft.items[${i}].keep=true;draftSave();finPaint()">not logged · keep anyway</button>`
+      : `<b>${setLabel({ex: r.row.exercise, sets: r.row.sets, reps: r.row.reps, kg: r.row.weight_kg})}</b>`}</div>`).join('');
+  const hint = document.getElementById('finHint'), nSkip = rows.length - kept.length;
+  if(hint) hint.textContent = nSkip ? plural(nSkip, 'exercise') + ' skipped' : rows.some(r => r.tracked) ? 'Logged sets are what gets saved' : 'Saved as planned';
+  const btn = document.getElementById('finishBtn'); if(btn) btn.disabled = !kept.length;
 }
 async function finishSession(){
   const d = gymDraft; if(!d) return;
-  const rows = d.items.filter(it => it.ex).map(it => ({
-    exercise: it.ex, sets: Math.max(1, +it.sets || 1), reps: +it.reps || 0, weight_kg: +it.kg || 0}));
+  const rows = finRows().filter(r => !r.skip).map(r => r.row);
   if(!rows.length) return toast('Add at least one exercise');
   if(!d.date) return toast('Pick a date');
   const btn = document.getElementById('finishBtn');
   if(btn){ if(btn.disabled) return; btn.disabled = true; }
+  const duration = d.started ? Math.max(1, Math.round((Date.now() - d.started) / 60000)) : null;
   try{
     const notes = (d.notes || '').trim() || null;
     if(d.id){
@@ -1703,54 +2061,66 @@ async function finishSession(){
       toast('Workout updated'); return views.gym();
     }
     // one workout per day: append to an existing session on that date
-    const {data: existingRows, error: e0} = await sb.from('workouts').select('id,notes').eq('workout_date', d.date).limit(1);
+    const {data: existingRows, error: e0} = await sb.from('workouts').select('*').eq('workout_date', d.date).limit(1);
     if(e0) return err(e0);
     const existing = existingRows && existingRows[0];
     let woId, offset = 0;
     if(existing){
       woId = existing.id;
       offset = (window._allSets || []).filter(s => s.workout_id === woId).length;
-      if(notes && notes !== existing.notes)
-        await sb.from('workouts').update({notes: existing.notes ? existing.notes + ' · ' + notes : notes}).eq('id', woId);
+      const patch = {};
+      if(notes && notes !== existing.notes) patch.notes = existing.notes ? existing.notes + ' · ' + notes : notes;
+      if(duration) patch.duration_min = (+existing.duration_min || 0) + duration;
+      if(Object.keys(patch).length){
+        let up = await sb.from('workouts').update(patch).eq('id', woId);
+        if(up.error && /duration_min/.test(up.error.message || '') && patch.notes){ delete patch.duration_min; up = await sb.from('workouts').update(patch).eq('id', woId); }
+        if(up.error && !/duration_min/.test(up.error.message || '')) return err(up.error);
+      }
     } else {
-      const {data: wo, error} = await sb.from('workouts').insert({workout_date: d.date, notes}).select().single();
-      if(error) return err(error);
-      woId = wo.id;
+      // duration_min is a newer column: if this database doesn't have it yet, save without it
+      let ins = await sb.from('workouts').insert({workout_date: d.date, notes, duration_min: duration}).select().single();
+      if(ins.error && /duration_min/.test(ins.error.message || '')) ins = await sb.from('workouts').insert({workout_date: d.date, notes}).select().single();
+      if(ins.error) return err(ins.error);
+      woId = ins.data.id;
     }
     const {error: e2} = await sb.from('workout_sets').insert(rows.map((r, i) => ({...r, workout_id: woId, set_number: offset + i + 1})));
     if(e2) return err(e2);
-    gymDraft = null; draftSave();
-    toast(existing ? 'Added to ' + fmtDate(d.date) + ' session' : 'Workout saved');
+    restStop(); gymDraft = null; draftSave();
+    finClose(); liveClose();
+    toast(existing ? 'Added to ' + fmtDate(d.date) + ' session' : 'Workout saved' + (duration ? ' · ' + duration + ' min' : ''));
     return views.gym();
   } finally { if(btn) btn.disabled = false; }
 }
 /* an in-progress session is never replaced silently */
-function draftBusy(){
-  return gymDraft && gymDraft.items.length && !confirm(gymDraft.id
-    ? 'You are editing another workout — drop those changes?'
-    : 'A session is in progress — replace it? Its exercises will be lost.');
+async function draftBusy(){
+  if(!gymDraft || !gymDraft.items.length) return false;
+  return !await ask(gymDraft.id
+    ? {title: 'Drop the edit in progress?', body: 'You are editing another workout — its unsaved changes will be lost.', ok: 'Drop changes', danger: true}
+    : {title: 'Replace the current session?', body: 'A workout is in progress. Its exercises and logged sets will be lost.', ok: 'Replace', danger: true});
 }
-function editWorkout(id){
+async function editWorkout(id){
   const w = (window._gymWos || []).find(w => w.id === id); if(!w) return;
   if(gymDraft && gymDraft.id === id) return window.scrollTo({top: 0, behavior: 'smooth'});
-  if(draftBusy()) return;
+  if(await draftBusy()) return;
+  restStop();
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   gymDraft = {id, origDate: w.workout_date, date: w.workout_date, notes: w.notes || '',
     oldSetIds: ss.map(s => s.id),
-    items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0}))};
+    items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0, done: 0}))};
   _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
-function repeatWorkout(id){
+async function repeatWorkout(id){
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   if(!ss.length) return toast('That session had no exercises');
-  if(draftBusy()) return;
-  gymDraft = {date: todayStr(), notes: '', started: null,
-    items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0}))};
+  if(await draftBusy()) return;
+  restStop();
+  gymDraft = {...newDraft(),
+    items: ss.map(s => ({ex: exCanon(s.exercise), sets: +s.sets || 1, reps: +s.reps || 0, kg: +s.weight_kg || 0, done: 0}))};
   _exOpen = 0; draftSave(); renderSession(); window.scrollTo({top: 0, behavior: 'smooth'});
   toast('Loaded ' + ss.length + ' exercise' + (ss.length === 1 ? '' : 's') + ' — press Start when you begin');
 }
 async function delWorkout(id){
-  if(!confirm('Delete this workout and all its exercises? This cannot be undone.')) return;
+  if(!await ask({title: 'Delete this workout?', body: 'All its exercises go with it. This cannot be undone.', ok: 'Delete', danger: true})) return;
   const {error: eS} = await sb.from('workout_sets').delete().eq('workout_id', id);
   if(eS) return err(eS);
   const {error} = await sb.from('workouts').delete().eq('id', id);
@@ -1792,7 +2162,7 @@ function closePicker(){
   if(draftPending() && !gymDraft.items.length){ gymDraft = null; draftSave(); return renderSession(); }
   // mid-session, open the card of the exercise that was just added
   if(gymDraft && !draftPending() && gymDraft.items.length > _pickN) _exOpen = _pickN;
-  renderExList(); sessTotals();
+  gymRepaint();
 }
 function pickGroup(g){
   _pickG = g;
@@ -1866,7 +2236,7 @@ function renderHistory(){
     const icos = ss.slice(0, 4).map(s => exIcon(exCanon(s.exercise))).join('');
     return `<div class="wo-row">
       ${icos ? `<div class="wo-icos">${icos}</div>` : ''}
-      <div class="grow"><div class="title">${fmtDate(w.workout_date)}${w.notes ? ' · ' + esc(w.notes) : ''}</div>
+      <div class="grow"><div class="title">${fmtDate(w.workout_date)}${w.duration_min ? ' · ' + w.duration_min + ' min' : ''}${w.notes ? ' · ' + esc(w.notes) : ''}</div>
         <div class="sub">${summary}</div></div>
       <div class="wo-acts">
         <button class="icon-btn" type="button" title="Repeat this session today" onclick="repeatWorkout('${w.id}')">${ICO.redo}</button>
@@ -2599,7 +2969,7 @@ async function learnMerchant(key, category, description, before){
 }
 /* Merchant rules are learned, so they need a way to be unlearned. */
 async function forgetMerchant(key){
-  if(!confirm('Forget the rule for this merchant? Future taps there will come in as Other again.')) return;
+  if(!await ask({title: 'Forget this merchant rule?', body: 'Future taps there will come in as Other again.', ok: 'Forget'})) return;
   const {error} = await sb.from('merchant_rules').delete().eq('merchant_key', key);
   error ? err(error) : (toast('Rule forgotten'), window._moneyKeep = true, views.money());
 }
@@ -2983,7 +3353,7 @@ async function extendLease(){
 }
 async function deleteLease(){
   const L = window._lease; if(!L) return;
-  if(!confirm('Delete this lease and every month tracked under it? This cannot be undone. Meter readings are kept.')) return;
+  if(!await ask({title: 'Delete this lease?', body: 'Every month tracked under it goes too. This cannot be undone. Meter readings are kept.', ok: 'Delete', danger: true})) return;
   const {error} = await sb.from('rent_leases').delete().eq('id', L.id);
   error ? err(error) : views.rent();
 }
@@ -3042,7 +3412,7 @@ async function addReading(kind){
   views.rent();
 }
 async function delReading(id){
-  if(!confirm('Delete this meter reading? This cannot be undone.')) return;
+  if(!await ask({title: 'Delete this meter reading?', body: 'This cannot be undone.', ok: 'Delete', danger: true})) return;
   const {error} = await sb.from('meter_readings').delete().eq('id', id);
   error ? err(error) : views.rent();
 }
@@ -3447,7 +3817,7 @@ async function hdPlanAction(act){
     HD.plans.push({...row, data: hdNormalise(row.data)}); hdOpen(row.id); toast('Plan duplicated'); return;
   }
   if(act === 'del'){
-    if(!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
+    if(!await ask({title: `Delete "${p.name}"?`, body: 'This cannot be undone.', ok: 'Delete', danger: true})) return;
     const wasDirty = HDS.dirty.delete(p);
     const {error} = await sb.from('floor_plans').delete().eq('id', p.id);
     if(error){ if(wasDirty) HDS.dirty.add(p); return err(error); }
