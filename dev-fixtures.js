@@ -223,6 +223,8 @@
 
   /* ---------- a query builder that behaves like PostgREST on the fixture arrays ---------- */
   const SESSION = {user: {id: 'fixture-user', email: 'fixture@example.com'}, access_token: 'fixture'};
+  // &out=1 starts signed out (login page + intro); the form then "signs in" to the same fixture session
+  let live = params.get('out') === '1' ? null : SESSION, authCb = null;
   const clone = v => JSON.parse(JSON.stringify(v));
   function builder(table){
     const rows = db[table] || [];
@@ -267,11 +269,11 @@
     from: builder,
     rpc: () => Promise.resolve({data: null, error: null}),
     auth: {
-      getSession: () => Promise.resolve({data: {session: SESSION}, error: null}),
-      getUser: () => Promise.resolve({data: {user: SESSION.user}, error: null}),
-      onAuthStateChange: cb => { setTimeout(() => cb('SIGNED_IN', SESSION), 0); return {data: {subscription: {unsubscribe(){}}}}; },
+      getSession: () => Promise.resolve({data: {session: live}, error: null}),
+      getUser: () => Promise.resolve({data: {user: live && live.user}, error: null}),
+      onAuthStateChange: cb => { authCb = cb; setTimeout(() => cb(live ? 'SIGNED_IN' : 'INITIAL_SESSION', live), 0); return {data: {subscription: {unsubscribe(){}}}}; },
       signOut: () => { location.href = location.pathname; return Promise.resolve({error: null}); },
-      signInWithPassword: () => Promise.resolve({data: {session: SESSION}, error: null}),
+      signInWithPassword: () => { live = SESSION; setTimeout(() => authCb && authCb('SIGNED_IN', SESSION), 0); return Promise.resolve({data: {session: SESSION}, error: null}); },
       signUp: () => Promise.resolve({data: {}, error: null}),
       resetPasswordForEmail: () => Promise.resolve({error: null}),
       updateUser: () => Promise.resolve({error: null}),

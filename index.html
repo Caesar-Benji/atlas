@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atlas — Your life, organized</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2323221f'/%3E%3Cstop offset='1' stop-color='%234a4741'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="hero-atlas-rifle.png?v=49">
 <link rel="preload" as="image" href="hero-atlas-hub.png?v=38">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -47,8 +48,14 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 
 /* ---------- Auth ---------- */
 #authScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1}
-.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow);text-align:center}
-.auth-card .logo{margin:0 auto 14px}
+/* the login is the figure the intro ends on, standing beside the card; the bottom fades like the hub */
+.auth-wrap{display:flex;align-items:center;justify-content:center;gap:clamp(24px,5vw,64px);width:100%;max-width:960px}
+.auth-hero{flex:1 1 0;min-width:0;display:flex;justify-content:flex-end;animation:heroIn 600ms var(--ease-out) both}
+.auth-hero img{display:block;height:min(74vh,660px);max-width:100%;width:auto;object-fit:contain;filter:grayscale(1) contrast(1.06);pointer-events:none;
+  -webkit-mask-image:linear-gradient(#000 84%,transparent);mask-image:linear-gradient(#000 84%,transparent)}
+.auth-card{flex:0 0 380px;width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;box-shadow:var(--shadow);text-align:center;animation:fadeUp 500ms var(--ease-out) 80ms both}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:2px}
+.auth-brand .logo{margin:0}
 .auth-card h1{font-size:26px;font-weight:700;letter-spacing:-.03em}
 .auth-card .tag{color:var(--muted);font-size:13px;margin:6px 0 24px}
 .auth-card form{display:flex;flex-direction:column;gap:12px;text-align:left}
@@ -73,17 +80,14 @@ h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
 @keyframes draw{to{stroke-dashoffset:0}}
 
 /* login hero: Atlas catching the world (video, multiply-blended onto the card) */
-/* the wrapper must paint --surface itself: the heroIn/heroFloat animations make it an
-   isolated stacking context, so the multiply below has no backdrop to blend with otherwise */
-.hero-anim{position:relative;width:119px;height:200px;margin:0 auto 18px;background:var(--surface);animation:heroIn 600ms var(--ease-out) both}
-.hero-anim video,.hero-anim img{display:block;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;pointer-events:none;filter:grayscale(1) contrast(1.08)}
-.hero-anim .hero-still{display:none}
-.hero-anim.settled{animation:heroFloat 7s ease-in-out infinite}
 @keyframes heroIn{from{opacity:0}to{opacity:1}}
-@keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.auth-card h1,.auth-card .tag{animation:fadeUp 500ms var(--ease-out) 1.7s both}
-.auth-card .tag{animation-delay:1.78s}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:760px){
+  .auth-wrap{flex-direction:column;gap:6px}
+  .auth-hero{justify-content:center}
+  .auth-hero img{height:min(34vh,300px)}
+  .auth-card{flex:0 0 auto}
+}
 
 /* ---------- Layout ---------- */
 #app{min-height:100vh;position:relative;z-index:1}
@@ -92,7 +96,6 @@ main{padding:30px 36px 70px;max-width:1060px;margin:0 auto;width:100%}
 main.view-in{animation:viewIn 200ms var(--ease-out) both}
 @keyframes viewIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .page-head img{height:110px;filter:grayscale(1) contrast(1.06) brightness(1.02)}
-.auth-card>img{filter:grayscale(1) contrast(1.06)}
 .page-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:22px;gap:18px;flex-wrap:wrap}
 
 /* ---------- Hub: Atlas centre, sections orbiting the circle ---------- */
@@ -308,7 +311,6 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
   .page-head img{height:64px;margin-left:auto}
   main{padding:22px 16px 44px}
   .auth-card{padding:28px 22px;max-width:340px}
-  .hero-anim{width:98px;height:165px}
   .auth-card h1{font-size:22px}
   h2{font-size:19px}
   .stat{font-size:23px}
@@ -719,10 +721,8 @@ main.wide{max-width:1500px}
 
 /* ---------- reduced motion: fewer and gentler, not none ---------- */
 @media(prefers-reduced-motion:reduce){
-  .hero-anim,.hero-anim.settled,.logo path{animation:none!important;stroke-dashoffset:0}
-  .hero-anim .hero-video{display:none}
-  .hero-anim .hero-still{display:block}
-  .auth-card h1,.auth-card .tag{animation:fadeUp 300ms ease both}
+  .logo path{animation:none!important;stroke-dashoffset:0}
+  .auth-hero,.auth-card{animation:fadeUp 300ms ease both}
   .tile,.hub-hello{animation-duration:200ms;animation-delay:0ms!important}
   .hub-figure img{animation:tileIn 300ms ease both}
   main.view-in{animation:tileIn 150ms ease both}
@@ -745,22 +745,15 @@ main.wide{max-width:1500px}
 
 <!-- ============ AUTH ============ -->
 <div id="authScreen">
+  <div class="auth-wrap">
+  <div class="auth-hero"><img src="hero-atlas-rifle.png?v=49" alt="Classical statue in a plate carrier, firing a rifle" decoding="async" onerror="this.parentNode.remove()"></div>
   <div class="auth-card">
-    <div class="hero-anim" id="heroAnim">
-      <video class="hero-video" id="heroVideo" src="hero-atlas-catch.mp4" poster="hero-atlas-poster.png"
-        width="286" height="480" autoplay muted playsinline preload="auto"
-        disablepictureinpicture aria-hidden="true"
-        onerror="heroFallback()"></video>
-      <img class="hero-still" src="hero-atlas-poster.png" alt="Atlas catching the Earth"
-        onerror="document.getElementById('heroAnim').remove();document.querySelector('.auth-card .logo').style.display='inline'">
-    </div>
-    <svg class="logo" style="display:none" width="56" height="56" viewBox="0 0 48 48" fill="none">
+    <div class="auth-brand"><svg class="logo" width="36" height="36" viewBox="0 0 48 48" fill="none">
       <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0" stop-color="#23221f"/><stop offset="1" stop-color="#4a4741"/>
       </linearGradient></defs>
       <path d="M24 6 L40 42 M24 6 L8 42 M13 30 Q24 22 35 30" stroke="url(#lg)" stroke-width="3.5" stroke-linecap="round"/>
-    </svg>
-    <h1>Atlas</h1>
+    </svg><h1>Atlas</h1></div>
     <div class="tag">Your life, organized.</div>
     <form id="authForm">
       <input type="email" id="authEmail" placeholder="Email" required autocomplete="email">
@@ -775,6 +768,7 @@ main.wide{max-width:1500px}
     <div class="auth-msg" id="authMsg"></div>
     <div class="auth-switch" id="authSwitch">No account? <button class="linkish" type="button" onclick="toggleAuthMode()">Sign up</button></div>
     <div class="auth-switch" id="authForgot" style="margin-top:8px"><button class="linkish" type="button" onclick="forgotPassword()">Forgot password?</button></div>
+  </div>
   </div>
 </div>
 
@@ -813,7 +807,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v48</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v49</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -910,25 +904,8 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v48');
+console.log('Atlas v49');
 
-// ---------- login hero video ----------
-// Plays the catch once, then holds the last frame with a slow float.
-// Falls back to the poster still if the video can't load or autoplay is blocked.
-function heroFallback(){
-  const v = document.getElementById('heroVideo');
-  if(v) v.style.display = 'none';
-  const s = document.querySelector('.hero-anim .hero-still');
-  if(s) s.style.display = 'block';
-}
-(function initHero(){
-  const v = document.getElementById('heroVideo');
-  if(!v) return;
-  v.muted = true;                                   // required for autoplay on iOS/Safari
-  v.addEventListener('ended', () => document.getElementById('heroAnim')?.classList.add('settled'));
-  const p = v.play();
-  if(p && p.catch) p.catch(heroFallback);           // autoplay blocked (e.g. iOS Low Power Mode)
-})();
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
 window.addEventListener('drop', e => e.preventDefault());
@@ -957,7 +934,7 @@ document.getElementById('authForm').addEventListener('submit', async e => {
     ? await sb.auth.signUp({email, password})
     : await sb.auth.signInWithPassword({email, password});
   if(error){ msg.className = 'auth-msg err'; msg.textContent = error.message; return; }
-  if(!signupMode){ msg.textContent = ''; atlasIntro(); }   // a real sign-in gets the intro; a remembered session goes straight home
+  if(!signupMode) msg.textContent = '';
   if(signupMode){ msg.className = 'auth-msg ok'; msg.textContent = 'Account created! If asked, confirm via the email we sent — then sign in.'; signupMode = false; toggleAuthMode(); toggleAuthMode(); }
 });
 ['signOutBtn','signOutHub'].forEach(id => document.getElementById(id).addEventListener('click', () => sb.auth.signOut()));
@@ -993,6 +970,8 @@ sb.auth.onAuthStateChange((ev, session) => {
     return;
   }
   if(window._recovering) return;
+  // the intro opens the app: a cold load with nobody signed in plays it over the login page
+  if(ev === 'INITIAL_SESSION' && !session) atlasIntro();
   document.getElementById('authScreen').classList.toggle('hidden', !!session);
   document.getElementById('app').classList.toggle('hidden', !session);
   // only route on real sign-in — TOKEN_REFRESHED fires hourly and must not wipe forms mid-typing
@@ -5502,7 +5481,7 @@ function hd3Export(){
   });
 }
 
-/* ================= INTRO: Atlas holds the line (plays after sign-in) =================
+/* ================= INTRO: Atlas holds the line (plays on a cold load, before the login) =================
    A ~6 s hand-drawn sequence on one canvas: the hub hero is sketched in, robots climb the hill
    toward him, he fires three shots, they burst into ink, the wordmark is drawn, and the whole
    thing fades into the hub. Everything except the hero PNG is drawn in code with a "rough"
@@ -5510,8 +5489,9 @@ function hd3Export(){
    boil. No libraries: rough.js / GSAP would do parts of this, but a fixed seeded renderer keeps
    it tiny, offline-safe and testable frame by frame (window.atlasIntroFrame(t)). */
 const AI_INK = '#1c1b19', AI_PAPER = '#f3f2ef';
-const AI_SRC = 'hero-atlas-hub.png?v=38';
-const AI_IMG = {w: 756, h: 1100, muzzle: [732, 975], pivot: [300, 700], port: [400, 612], axis: 40.2};
+const AI_SRC = 'hero-atlas-rifle.png?v=49';
+/* landmarks in image pixels: suppressor tip, hips (rotation centre), ejection port, barrel angle */
+const AI_IMG = {w: 762, h: 1121, muzzle: [754, 180], pivot: [340, 520], port: [478, 156], axis: 2.5};
 const AI_T = {reveal: [0, 1.15], enter: .7, shots: [2.3, 2.85, 3.4], title: 4.05, out: 5.5, end: 6.1};
 let AI = null;
 
@@ -5550,8 +5530,8 @@ function aiHatch(x, rnd, pts, gap, ang, j = .8){
 /* ---------- composition: one landscape and one portrait stage ---------- */
 function aiLayout(W, H){
   const land = W / H >= .95;
-  const L = land ? {sw: 1600, sh: 1000, F: 780, fx: 110, fy: 20, rot: -21, hr: 230, ts: [230, 470, 700], title: [1190, 215, 128]}
-                 : {sw: 800, sh: 1600, F: 700, fx: -60, fy: 40, rot: 12, hr: 170, ts: [200, 410, 620], title: [330, 1400, 100]};
+  const L = land ? {sw: 1600, sh: 1000, F: 900, fx: 150, fy: 60, rot: 17, hr: 230, ts: [230, 470, 700], title: [1190, 215, 128]}
+                 : {sw: 800, sh: 1600, F: 760, fx: -185, fy: 110, rot: 32, hr: 170, ts: [170, 330, 480], title: [330, 1400, 100]};
   L.k = L.F / AI_IMG.h;
   L.scale = Math.min(W / L.sw, H / L.sh); L.ox = (W - L.sw * L.scale) / 2; L.oy = (H - L.sh * L.scale) / 2;
   L.piv = [L.fx + AI_IMG.pivot[0] * L.k, L.fy + AI_IMG.pivot[1] * L.k];
