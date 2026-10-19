@@ -98,6 +98,79 @@ main.view-in{animation:viewIn 200ms var(--ease-out) both}
 .page-head img{height:110px;filter:grayscale(1) contrast(1.06) brightness(1.02)}
 .page-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:22px;gap:18px;flex-wrap:wrap}
 
+/* ---------- Section masthead (v50 shape): title, one status line, one primary action, the engraving at the side ----------
+   Forms never live here; the action opens a sheet or the live room. Sections adopt this one at a time, Gym first. */
+.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.mast-txt{min-width:0;flex:1}
+.mast h2{font-size:32px;letter-spacing:-.03em;line-height:1}
+.mast-sub{color:var(--muted);font-size:14px;margin-top:8px;min-height:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mast-sub .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;animation:pulse 1.6s ease-in-out infinite}
+.mast-sub b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.mast-acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.mast-acts .btn,.mast-acts .btn-ghost{white-space:nowrap}
+.mast-art{height:124px;flex:none;filter:grayscale(1) contrast(1.06) brightness(1.02);align-self:flex-end}
+/* lead numbers: the two or three figures that matter today, boxed because they are the one thing that is */
+.lead{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:12px;margin-bottom:26px}
+.lead .mstat{display:flex;flex-direction:column}
+.lead .week{margin-top:auto;padding-top:10px}
+.lead .week .dot{height:26px;font-size:10.5px;border-radius:7px;margin-top:3px}
+.lead .week .dot svg{width:12px;height:12px}
+.lead .week .d{font-size:9px}
+/* ledger lists: hairlines on the paper instead of grey boxes; the whole row is one tap target */
+.sec{margin-bottom:28px}
+.sec-h{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
+.sec-h h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:0;flex:1}
+.sec-h .n{font-size:12.5px;color:var(--muted)}
+.sec-h .btn-ghost{padding:5px 10px;font-size:12px}
+.ledger{display:flex;flex-direction:column}
+.ledger .empty{margin-top:8px}
+.lrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:12px 6px;border-top:1px solid var(--border);background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;color:inherit;font:inherit;width:100%;border-radius:8px;transition:background-color var(--t-hover) ease}
+.lrow:first-child{border-top-color:transparent}
+.lrow.static{cursor:default}
+@media(hover:hover) and (pointer:fine){ .lrow:not(.static):hover{background:var(--surface2)} .lrow:not(.static):hover+.lrow{border-top-color:transparent} }
+.lrow:active:not(.static){background:var(--surface2)}
+.lrow .when{width:40px;text-align:center;line-height:1;flex:none}
+.lrow .when b{display:block;font-size:19px;font-weight:700;letter-spacing:-.03em}
+.lrow .when span{display:block;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
+.lrow .body{display:block;min-width:0}
+.lrow .t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-weight:600;font-size:14.5px;line-height:1.25}
+.lrow .m{display:block;font-size:12.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .r{text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.lrow .r b{display:block;font-size:14px;font-weight:600}
+.lrow .r span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;white-space:nowrap}
+.lrow .chev{color:var(--muted);display:flex;flex:none}
+.lrow .exi{width:34px;height:34px;flex:none}
+.lrow .pill{margin-left:6px}
+/* the session sheet: one workout in full, with the secondary actions that used to crowd every row */
+.wo-sheet .sheet-head .sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.wo-ex{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 2px;border-top:1px solid var(--border)}
+.wo-ex:first-child{border-top:0}
+.wo-ex .exi{width:38px;height:38px}
+.wo-ex .t{font-weight:600;font-size:14px}
+.wo-ex .m{font-size:12.5px;color:var(--muted);margin-top:2px}
+.wo-ex .r{text-align:right;font-variant-numeric:tabular-nums}
+.wo-ex .r b{display:block;font-size:14px;font-weight:600}
+.wo-ex .r span{display:block;font-size:11.5px;margin-top:2px;color:var(--muted)}
+.wo-ex .r span.up{color:var(--green)}.wo-ex .r span.down{color:var(--red)}
+.wo-sheet .sheet-foot{flex-wrap:wrap}
+.wo-sheet .sheet-foot .btn{min-width:0}
+.linkish.danger{color:var(--red);font-weight:500;font-size:13px}
+/* the chart's controls sit under the heading, not inside it */
+.chart-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0 12px}
+.chart-ctl select{width:auto;max-width:100%;padding:6px 10px;font-size:13px}
+@media(max-width:760px){
+  .mast{align-items:center;padding-bottom:16px;margin-bottom:16px;gap:12px}
+  .mast h2{font-size:26px}
+  .mast-sub{font-size:13px}
+  .mast-acts{margin-top:12px}.mast-acts .btn,.mast-acts .btn-ghost{flex:1}
+  .mast-art{height:84px;align-self:flex-start}
+  .lead{grid-template-columns:1fr 1fr;gap:10px}
+  .lead .mstat:first-child{grid-column:1/-1}
+  .lrow{gap:10px;padding:11px 4px}
+  .lrow:not(.static) .r span{display:none}
+  .lead .mstat .s{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
+
 /* ---------- Hub: Atlas centre, sections orbiting the circle ---------- */
 /* Everything derives from --figh so the circle, the orbit radius and the stage stay
    locked together at any viewport. Each tile carries its own --tx/--ty (sin/cos of its
@@ -807,7 +880,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v49</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v50</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -904,7 +977,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v49');
+console.log('Atlas v50');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1551,18 +1624,26 @@ views.gym = async function(){
   const seq = renderStart();
   if(gymDraft === undefined) gymDraft = draftLoad();
   document.getElementById('main').innerHTML = `
-    <div class="page-head"><h2>Gym</h2><img src="hero-gym.png" alt="" onerror="this.remove()"></div>
-    <div class="card" style="margin-bottom:16px" id="sessCard"><div class="empty">Loading…</div></div>
-    <div class="card" style="margin-bottom:16px"><h3>This week — <span id="weekCount" style="color:var(--text)"></span></h3><div id="weekStrip"></div></div>
-    <div class="grid cols2" style="margin-bottom:16px">
-      <div class="card"><h3 class="h3-row">Progress —
-        <select id="exSelect" style="width:auto;display:inline-block;padding:4px 8px;font-size:13px" onchange="drawGymChart()"></select>
-        <select id="exMetric" style="width:auto;display:inline-block;padding:4px 8px;font-size:13px" onchange="drawGymChart()">
-          <option value="max">top weight</option><option value="vol">volume</option></select></h3>
-        <div class="chart-box"><canvas id="gymChart"></canvas></div></div>
-      <div class="card"><h3>Personal records</h3><div class="list" id="prList"><div class="empty">Loading…</div></div></div>
+    <div class="mast">
+      <div class="mast-txt"><h2>Gym</h2><div class="mast-sub" id="gymSub">Loading…</div><div class="mast-acts" id="gymActs"></div></div>
+      <img class="mast-art" src="hero-gym.png" alt="" onerror="this.remove()">
     </div>
-    <div class="card"><h3>History</h3><div class="list" id="woList"><div class="empty">Loading…</div></div></div>`;
+    <div class="card hidden" style="margin-bottom:20px" id="sessCard"></div>
+    <div class="lead">
+      <div class="mstat"><div class="lbl">This week</div><div class="v" id="weekCount">—</div><div id="weekStrip"></div></div>
+      <div class="mstat"><div class="lbl">Last session</div><div class="v" id="leadLast">—</div><div class="s" id="leadLastSub"></div></div>
+      <div class="mstat"><div class="lbl" id="leadMonthLbl">This month</div><div class="v" id="leadMonth">—</div><div class="s" id="leadMonthSub"></div></div>
+    </div>
+    <div class="sec"><div class="sec-h"><h3>History</h3><span class="n" id="woCount"></span></div>
+      <div class="ledger" id="woList"><div class="empty">Loading…</div></div></div>
+    <div class="grid cols2" style="margin-bottom:16px">
+      <div class="sec"><div class="sec-h"><h3>Progress</h3></div>
+        <div class="chart-ctl"><select id="exSelect" onchange="drawGymChart()"></select>
+          <div class="seg" id="exMetric"><button type="button" class="on" data-m="max" onclick="gymMetric('max')">Top weight</button><button type="button" data-m="vol" onclick="gymMetric('vol')">Volume</button></div></div>
+        <div class="chart-box"><canvas id="gymChart"></canvas></div></div>
+      <div class="sec"><div class="sec-h"><h3>Records</h3><span class="n">heaviest set per exercise</span></div>
+        <div class="ledger" id="prList"><div class="empty">Loading…</div></div></div>
+    </div>`;
   renderSession();
   // a running session reopens its room unless it was minimised on purpose this visit
   if(gymDraft && gymDraft.started && !gymDraft.id && !_liveMin) liveOpen();
@@ -1582,7 +1663,7 @@ views.gym = async function(){
   window._allSets = sets.data || [];
   window._gymWos = wos.data || [];
   window._woDates = Object.fromEntries((allWos.data || []).map(w => [w.id, w.workout_date]));
-  renderSession(); liveRender(); renderWeek(); renderHistory(); renderPRs();
+  renderSession(); liveRender(); renderWeek(); renderLead(); renderHistory(); renderPRs();
   const exercises = [...new Set(window._allSets.map(s => exCanon(s.exercise)))].sort();
   const sel = document.getElementById('exSelect');
   sel.innerHTML = exercises.map(e => `<option>${esc(e)}</option>`).join('') || '<option>—</option>';
@@ -1591,39 +1672,41 @@ views.gym = async function(){
 
 /* ---------- session card ---------- */
 function renderSession(){
-  const c = document.getElementById('sessCard'); if(!c) return;
-  const d = gymDraft;
+  const c = document.getElementById('sessCard'), sub = document.getElementById('gymSub'), acts = document.getElementById('gymActs');
+  if(!c || !sub || !acts) return;
+  const d = gymDraft, loaded = Array.isArray(window._gymWos);
+  // idle: the masthead carries the status line and the one action; no card at all
   if(!d){
+    c.classList.add('hidden'); c.innerHTML = '';
     const last = (window._gymWos || [])[0];
-    const n = last ? (window._allSets || []).filter(s => s.workout_id === last.id).length : 0;
-    c.innerHTML = `<h3>Log workout</h3>
-      <div class="gym-top">
-        <div class="grow"><div class="big">Ready to train</div>
-          <div class="sub">${last ? 'Last session ' + fmtDate(last.workout_date) + (last.notes ? ' · ' + esc(last.notes) : '') + ' · ' + plural(n, 'exercise') : 'No workouts logged yet'}</div></div>
-        <div class="gym-acts">
-          <button class="btn" type="button" onclick="startSession()">Start workout</button>
-          ${last ? `<button class="btn-ghost" type="button" onclick="repeatWorkout('${last.id}')">Repeat last</button>` : ''}
-        </div>
-      </div>`;
+    if(!loaded) sub.textContent = 'Loading…';
+    else if(!last) sub.textContent = 'No workouts logged yet';
+    else {
+      const days = Math.round((new Date(todayStr()) - new Date(last.workout_date)) / 864e5);
+      sub.innerHTML = (days === 0 ? 'Trained today' : days === 1 ? 'Trained yesterday' : `Last trained ${fmtDays(days, true)} ago`)
+        + (last.notes ? ' · ' + esc(short(last.notes)) : '') + ' · ' + plural(woStats(last.id).n, 'exercise');
+    }
+    acts.innerHTML = `<button class="btn" type="button" onclick="startSession()">Start workout</button>
+      ${last ? `<button class="btn-ghost" type="button" onclick="repeatWorkout('${last.id}')">Repeat last</button>` : ''}`;
     return;
   }
   const wait = draftPending();
-  // a running session lives in the live room; the page only keeps a way back in
+  // a running session lives in the live room; the masthead keeps a way back in
   if(!d.id && !wait){
+    c.classList.add('hidden'); c.innerHTML = '';
     const n = d.items.length, done = draftDone();
-    c.innerHTML = `<h3>Session in progress</h3>
-      <div class="gym-top sess-live">
-        <span class="pulse"></span>
-        <div class="grow"><div class="big"><span id="sessElapsed">0:00</span></div>
-          <div class="sub">${plural(n, 'exercise')} · ${done} of ${draftSets()} sets done${d.notes ? ' · ' + esc(d.notes) : ''}</div></div>
-        <div class="gym-acts">
-          <button class="btn ico" type="button" onclick="liveOpen()">${ICO.play}Resume</button>
-          <button class="btn-ghost" type="button" onclick="finishSheet()">Finish</button>
-        </div>
-      </div>`;
+    sub.className = 'mast-sub sess-live';
+    sub.innerHTML = `<span class="pulse"></span><b id="sessElapsed">0:00</b> in session · ${plural(n, 'exercise')} · ${done} of ${draftSets()} sets done${d.notes ? ' · ' + esc(d.notes) : ''}`;
+    acts.innerHTML = `<button class="btn ico" type="button" onclick="liveOpen()">${ICO.play}Resume</button>
+      <button class="btn-ghost" type="button" onclick="finishSheet()">Finish</button>`;
     startTick();
     return;
   }
+  // pending (picked, not started) or editing an old workout: the editor card below the masthead
+  sub.className = 'mast-sub';
+  sub.textContent = d.id ? 'Editing the workout of ' + fmtDate(d.date) : 'Pick your exercises, then press Start';
+  acts.innerHTML = '';
+  c.classList.remove('hidden');
   const title = d.id ? 'Editing ' + fmtDate(d.date) : 'New workout';
   c.innerHTML = `<h3>${title}</h3>
     <div class="gym-top" style="margin-bottom:12px">
@@ -1816,6 +1899,8 @@ const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 const elapsedSec = () => gymDraft && gymDraft.started ? Math.max(0, Math.floor((Date.now() - gymDraft.started) / 1000)) : 0;
 function paintTick(){
   const el = document.getElementById('sessElapsed'), lc = document.getElementById('liveClock');
+  // idle masthead: nothing to tick; the gym view re-renders the line itself
+  if(el && !gymDraft && !lc){ clearInterval(_gymTick); _gymTick = null; return; }
   if(!el && !lc){ clearInterval(_gymTick); _gymTick = null; return; }
   if(el){
     if(!gymDraft || !gymDraft.started || gymDraft.id) el.textContent = draftPending() ? 'Not started · ' : '';
@@ -2146,6 +2231,7 @@ async function draftBusy(){
 }
 async function editWorkout(id){
   const w = (window._gymWos || []).find(w => w.id === id); if(!w) return;
+  woClose();
   if(gymDraft && gymDraft.id === id) return window.scrollTo({top: 0, behavior: 'smooth'});
   if(await draftBusy()) return;
   restStop();
@@ -2158,6 +2244,7 @@ async function editWorkout(id){
 async function repeatWorkout(id){
   const ss = (window._allSets || []).filter(s => s.workout_id === id);
   if(!ss.length) return toast('That session had no exercises');
+  woClose();
   if(await draftBusy()) return;
   restStop();
   gymDraft = {...newDraft(),
@@ -2167,6 +2254,7 @@ async function repeatWorkout(id){
 }
 async function delWorkout(id){
   if(!await ask({title: 'Delete this workout?', body: 'All its exercises go with it. This cannot be undone.', ok: 'Delete', danger: true})) return;
+  woClose();
   const {error: eS} = await sb.from('workout_sets').delete().eq('workout_id', id);
   if(eS) return err(eS);
   const {error} = await sb.from('workouts').delete().eq('id', id);
@@ -2272,25 +2360,90 @@ function renderWeek(){
   const c = document.getElementById('weekCount');
   if(c) c.textContent = n + ' session' + (n === 1 ? '' : 's');
 }
+/* one workout in numbers: exercises, sets, volume (cardio counts as an exercise, not as load) */
+function woStats(id){
+  const ss = (window._allSets || []).filter(s => s.workout_id === id);
+  let sets = 0, vol = 0;
+  ss.forEach(s => { if(isCardio(exCanon(s.exercise))) return; sets += +s.sets || 1; vol += (+s.sets || 1) * (+s.reps || 0) * (+s.weight_kg || 0); });
+  return {n: ss.length, sets, vol, rows: ss};
+}
+const kgFmt = v => Math.round(v).toLocaleString('en-GB') + ' kg';
+const short = (t, n = 44) => { t = (t || '').trim(); return t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t; };
+/* lead tiles: last session and this month, next to the week strip */
+function renderLead(){
+  const wos = window._gymWos || [], last = wos[0];
+  const L = document.getElementById('leadLast'), Ls = document.getElementById('leadLastSub');
+  if(L){
+    if(!last){ L.textContent = '—'; Ls.textContent = 'Nothing logged yet'; }
+    else {
+      const days = Math.round((new Date(todayStr()) - new Date(last.workout_date)) / 864e5), st = woStats(last.id);
+      L.textContent = days === 0 ? 'Today' : days === 1 ? 'Yesterday' : fmtDays(days, true) + ' ago';
+      Ls.textContent = [short(last.notes, 32), plural(st.n, 'exercise'), st.vol ? kgFmt(st.vol) : ''].filter(Boolean).join(' · ');
+    }
+  }
+  const M = document.getElementById('leadMonth'), Ms = document.getElementById('leadMonthSub'), Ml = document.getElementById('leadMonthLbl');
+  if(M){
+    const cur = todayStr().slice(0, 7), dates = window._woDates || {};
+    const ids = Object.keys(dates).filter(id => dates[id].startsWith(cur));
+    const vol = ids.reduce((a, id) => a + woStats(id).vol, 0);
+    if(Ml) Ml.textContent = new Date(cur + '-01T00:00').toLocaleDateString('en-GB', {month: 'long'});
+    M.textContent = plural(ids.length, 'session');
+    Ms.textContent = vol ? kgFmt(vol) + ' lifted' : ids.length ? 'Cardio only' : 'No sessions yet';
+  }
+}
 function renderHistory(){
   const el = document.getElementById('woList'); if(!el) return;
   const byWo = {};
   (window._allSets || []).forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
+  const cnt = document.getElementById('woCount'), total = Object.keys(window._woDates || {}).length;
+  if(cnt) cnt.textContent = total ? plural(total, 'workout') + (total > window._gymWos.length ? ' · latest ' + window._gymWos.length : '') : '';
   el.innerHTML = (window._gymWos || []).length ? window._gymWos.map(w => {
-    const ss = byWo[w.id] || [];
-    const summary = ss.map(s => `${esc(exCanon(s.exercise))} ${setLabel(s)}`).join(' · ') || 'no exercises';
-    const icos = ss.slice(0, 4).map(s => exIcon(exCanon(s.exercise))).join('');
-    return `<div class="wo-row">
-      ${icos ? `<div class="wo-icos">${icos}</div>` : ''}
-      <div class="grow"><div class="title">${fmtDate(w.workout_date)}${w.duration_min ? ' · ' + w.duration_min + ' min' : ''}${w.notes ? ' · ' + esc(w.notes) : ''}</div>
-        <div class="sub">${summary}</div></div>
-      <div class="wo-acts">
-        <button class="icon-btn" type="button" title="Repeat this session today" onclick="repeatWorkout('${w.id}')">${ICO.redo}</button>
-        <button class="icon-btn" type="button" title="Edit workout" onclick="editWorkout('${w.id}')">${ICO.edit}</button>
-        <button class="icon-btn danger" type="button" title="Delete workout" onclick="delWorkout('${w.id}')">${ICO.x}</button>
-      </div></div>`;
-  }).join('') : '<div class="empty">No workouts yet — start your first session above</div>';
+    const ss = byWo[w.id] || [], st = woStats(w.id), d = new Date(w.workout_date + 'T00:00');
+    const names = ss.map(s => esc(exCanon(s.exercise))).join(', ') || 'No exercises';
+    const sub = [st.sets ? plural(st.sets, 'set') : '', w.duration_min ? w.duration_min + ' min' : ''].filter(Boolean).join(' · ');
+    return `<button class="lrow" type="button" onclick="woSheet('${w.id}')" aria-label="${esc(fmtDate(w.workout_date))}${w.notes ? ', ' + esc(w.notes) : ''}">
+      <span class="when"><b>${d.getDate()}</b><span>${d.toLocaleDateString('en-GB', {month: 'short'})}</span></span>
+      <span class="body"><span class="t">${titleOf(w.notes, 'workout')}</span><span class="m">${names}</span></span>
+      <span class="r"><b>${st.vol ? kgFmt(st.vol) : plural(st.n, 'exercise')}</b>${sub ? `<span>${sub}</span>` : ''}</span>
+      <span class="chev">${ICO.chevR}</span></button>`;
+  }).join('') : '<div class="empty">No workouts yet — press Start workout to log the first</div>';
 }
+/* ---------- session sheet: the whole workout, each lift against its previous outing, and the actions ---------- */
+function woSheet(id){
+  const w = (window._gymWos || []).find(w => w.id === id); if(!w || document.getElementById('woBg')) return;
+  const st = woStats(id), dateOf = window._woDates || {};
+  const rows = st.rows.map(s => {
+    const name = exCanon(s.exercise), cardio = isCardio(name);
+    // the previous time this exercise was logged, by workout date
+    let prev = null;
+    (window._allSets || []).forEach(o => {
+      if(o.workout_id === id || exCanon(o.exercise) !== name) return;
+      const d = dateOf[o.workout_id]; if(!d || d > w.workout_date || (d === w.workout_date && o.created_at >= s.created_at)) return;
+      if(!prev || d > prev.date) prev = {date: d, kg: +o.weight_kg || 0, reps: +o.reps || 0};
+    });
+    let delta = '';
+    if(!cardio){
+      if(!prev) delta = '<span>First time</span>';
+      else { const dk = (+s.weight_kg || 0) - prev.kg;
+        delta = dk > 0 ? `<span class="up">+${gnum(dk)} kg on ${fmtDate(prev.date)}</span>` : dk < 0 ? `<span class="down">−${gnum(-dk)} kg on ${fmtDate(prev.date)}</span>` : `<span>Same as ${fmtDate(prev.date)}</span>`; }
+    }
+    return `<div class="wo-ex">${exIcon(name)}<div><div class="t">${esc(name)}</div><div class="m">${cardio ? 'Cardio' : plural(+s.sets || 1, 'set') + ' · ' + (+s.reps || 0) + ' reps'}</div></div>
+      <div class="r"><b>${esc(setLabel(s))}</b>${delta}</div></div>`;
+  }).join('') || '<div class="empty">No exercises in this workout</div>';
+  const meta = [plural(st.n, 'exercise'), st.sets ? plural(st.sets, 'set') : '', st.vol ? kgFmt(st.vol) : '', w.duration_min ? w.duration_min + ' min' : ''].filter(Boolean).join(' · ');
+  const when = new Date(w.workout_date + 'T00:00').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
+  document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="woBg" onclick="if(event.target===this)woClose()">
+    <div class="sheet wo-sheet" role="dialog" aria-label="Workout ${esc(fmtDate(w.workout_date))}">
+      <div class="sheet-head"><div class="top"><div style="flex:1;min-width:0"><h3>${titleOf(w.notes, 'workout')}</h3><div class="sub">${when} · ${meta}</div></div>
+        <button class="icon-btn" type="button" aria-label="Close" onclick="woClose()">${ICO.x}</button></div></div>
+      <div class="sheet-body">${rows}</div>
+      <div class="sheet-foot"><span class="n"><button class="linkish danger" type="button" onclick="delWorkout('${w.id}')">Delete</button></span>
+        <button class="btn-ghost" type="button" onclick="editWorkout('${w.id}')">Edit</button>
+        <button class="btn ico" type="button" onclick="repeatWorkout('${w.id}')">${ICO.redo}Repeat today</button></div></div></div>`);
+  document.addEventListener('keydown', woEsc);
+}
+function woEsc(e){ if(e.key === 'Escape') woClose(); }
+function woClose(){ document.removeEventListener('keydown', woEsc); sheetClose(document.getElementById('woBg')); }
 function renderPRs(){
   const el = document.getElementById('prList'); if(!el) return;
   const dateOf = window._woDates || {}, best = {};
@@ -2305,17 +2458,19 @@ function renderPRs(){
   const prs = Object.entries(best).sort((a, b) => b[1].weight_kg - a[1].weight_kg);
   const fresh = d => (new Date(todayStr()) - new Date(d)) / 864e5 <= 14;
   el.innerHTML = prs.length ? prs.map(([ex, p]) => `
-    <div class="row">${exIcon(ex, 'pr-ico')}<div class="grow"><div class="title">${esc(ex)}</div>
-      <div class="sub">${gnum(p.weight_kg)}kg × ${p.reps} reps · ${fmtDate(p.date)}</div></div>
-      ${fresh(p.date) ? '<span class="pill green">NEW PR</span>' : ''}</div>`).join('')
+    <div class="lrow static">${exIcon(ex)}<span class="body"><span class="t">${esc(ex)}${fresh(p.date) ? '<span class="pill green">New</span>' : ''}</span>
+      <span class="m">${fmtDate(p.date)}</span></span>
+      <span class="r"><b>${gnum(p.weight_kg)} kg</b><span>× ${p.reps} reps</span></span></div>`).join('')
     : '<div class="empty">Log workouts to start setting records</div>';
 }
+let _gymMetric = 'max';
+function gymMetric(m){ _gymMetric = m; drawGymChart(); }
 function drawGymChart(){
   const selEl = document.getElementById('exSelect'); if(!selEl) return;
-  const ex = selEl.value, metric = (document.getElementById('exMetric') || {}).value || 'max';
+  const ex = selEl.value, metric = _gymMetric;
   const cardio = isCardio(ex);
   const mEl = document.getElementById('exMetric');
-  if(mEl){ mEl.options[0].text = cardio ? 'minutes' : 'top weight'; mEl.options[1].text = cardio ? 'distance' : 'volume'; }
+  if(mEl) mEl.querySelectorAll('button').forEach(b => { b.classList.toggle('on', b.dataset.m === metric); b.textContent = b.dataset.m === 'max' ? (cardio ? 'Minutes' : 'Top weight') : (cardio ? 'Distance' : 'Volume'); });
   const dateOf = window._woDates || {}, byDate = {};
   (window._allSets || []).filter(s => exCanon(s.exercise) === ex).forEach(s => {
     const d = dateOf[s.workout_id]; if(!d) return;

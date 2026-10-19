@@ -11,6 +11,7 @@ Atlas is Benji's personal life dashboard: one file, `index.html` (vanilla JS + C
 - **Async views**: every view takes `const seq = renderStart();` and does `if(stale(seq)) return;` right after its await (the router replaces `#main` without notice). Tickers self-clear by checking their element still exists.
 - **Form fields** have uppercase mini-labels (`.lbl`); submit buttons are guarded by `submitGuard()`; all lists use `fetchAll()` past PostgREST's 1000-row cap.
 - **Hebrew** text goes through `bidi()` when next to Latin/dates.
+- **Section shape (v50, Gym first; the other sections follow one by one)**: a `.mast` masthead (title, one status line, one primary action, engraving at the side) → `.lead` tiles (the 2–3 numbers that matter today) → `.sec` blocks with `.ledger` rows (hairlines, no grey boxes, the whole `.lrow` is one tap target) → a detail sheet that holds Edit / Repeat / Delete. Forms open in sheets, never inline; no icon-button clusters on rows; destructive actions only inside a sheet behind `ask`. Review that led to this: `../Claude outputs/atlas-v49-review.md`.
 
 ## Gym
 
