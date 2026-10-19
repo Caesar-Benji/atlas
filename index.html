@@ -935,7 +935,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v59</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v60</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1032,7 +1032,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v59');
+console.log('Atlas v60');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -6338,6 +6338,19 @@ function atlasIntro(){
   img.onerror = () => finish(true);      // no hero, no intro
   img.src = AI_SRC;
 }
+/* On a phone the app is resumed far more often than it is loaded: Safari and the home-screen app
+   bring the page back from memory, so INITIAL_SESSION never fires again. Coming back after a while
+   away plays the intro too, unless a workout is running or a sheet is open. */
+const INTRO_AWAY_MS = 20 * 60000;
+let _hiddenAt = 0;
+function introOnReturn(){
+  if(!_hiddenAt || Date.now() - _hiddenAt < INTRO_AWAY_MS) return false;
+  _hiddenAt = 0;
+  if(AI || liveOpenNow() || document.querySelector('.sheet-bg')) return false;
+  atlasIntro(); return true;
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') _hiddenAt = Date.now(); else introOnReturn(); });
+window.addEventListener('pageshow', e => { if(e.persisted){ _hiddenAt = Date.now() - INTRO_AWAY_MS; introOnReturn(); } });
 /* test hook: render a single moment of the intro without the clock */
 window.atlasIntroFrame = t => { if(AI){ AI.test = true; aiFrame(t); } };
 </script>
