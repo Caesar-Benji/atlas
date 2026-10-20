@@ -303,6 +303,8 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .tab{background:transparent;border:none;color:var(--muted);padding:8px 12px;border-radius:9px;font-size:13.5px;font-weight:600;white-space:nowrap;transition:background-color var(--t-hover) ease,color var(--t-hover) ease}
 @media(hover:hover) and (pointer:fine){ .tab:hover{background:var(--surface2);color:var(--text)} }
 .tab.active{background:var(--grad);color:var(--on-ink)}
+.tab .ti{display:none}
+.top-title{display:none}
 
 /* ---------- Cards / grids ---------- */
 .grid{display:grid;gap:16px}
@@ -427,7 +429,20 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .topbar{padding:8px 12px;gap:2px}
   .home-btn{font-size:0;gap:0;padding:6px}
   .home-btn img{height:24px}
-  .tab{padding:8px 10px;font-size:13px}
+  .top-title{display:block;flex:1;min-width:0;text-align:center;font-weight:700;font-size:15px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
+  /* phone navigation (v64): the seven sections sit in a bar along the bottom, icon over a small label, no scrolling strip */
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;gap:0;overflow:visible;padding:4px 4px calc(6px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);
+    box-shadow:0 -1px 0 rgba(255,255,255,.6),0 -14px 24px -18px rgba(26,26,24,.22);-webkit-mask-image:none;mask-image:none;justify-content:space-around}
+  .tab{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 2px;border-radius:0;font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;background:transparent!important}
+  .tab .ti{display:flex;align-items:center;justify-content:center;width:38px;height:26px;border-radius:9px;color:var(--text);transition:background-color var(--t-hover) ease,color var(--t-hover) ease,transform var(--t-hover) var(--ease-out)}
+  .tab .ti svg{width:19px;height:19px;stroke-width:1.9}
+  .tab .tl{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tab.active{color:var(--text)}
+  .tab.active .ti{background:var(--grad);color:var(--on-ink)}
+  .tab:active .ti{transform:scale(.94)}
+  /* the page ends above the bar, the toast floats above it */
+  #shell main{padding-bottom:calc(44px + 62px + env(safe-area-inset-bottom))}
+  #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
   #hub{padding:20px 16px 14px}
   .hub-top{font-size:13px;align-items:flex-start}
   .hub-hello .hub-date{font-size:13.5px;margin-top:4px}
@@ -467,8 +482,9 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .chart-box{height:200px}
   .page-head input[type=month]{max-width:150px}
 }
-/* six tabs have to fit across a narrow phone */
-@media(max-width:420px){ .tab{padding:8px 8px;font-size:12.5px} .hub-col{gap:14px 16px} .tile .ic{width:52px;height:52px;border-radius:16px} .tile svg{width:21px;height:21px} .tile b{font-size:11.5px} }
+/* a 320px phone gives each of the seven tabs 44px: the label gets a little smaller so "Schedule" still fits */
+@media(max-width:360px){ .tab{font-size:9.5px;letter-spacing:-.01em} .tab .ti{width:34px} }
+@media(max-width:420px){ .hub-col{gap:14px 16px} .tile .ic{width:52px;height:52px;border-radius:16px} .tile svg{width:21px;height:21px} .tile b{font-size:11.5px} }
 /* seven 40px cells plus gaps don't fit a 320px card: let aspect-ratio size them from the track instead */
 @media(max-width:360px){ .cal-day{min-height:0} }
 
@@ -951,21 +967,22 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v63</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v64</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
   <div id="shell" class="hidden">
     <header class="topbar">
       <button class="home-btn" id="homeBtn" aria-label="Back to home"><img src="atlas-logo.png" alt="" onerror="this.remove()">Atlas</button>
-      <nav class="tabs">
-        <button class="tab" data-tab="schedule">Schedule</button>
-        <button class="tab" data-tab="gym">Gym</button>
-        <button class="tab" data-tab="money">Money</button>
-        <button class="tab" data-tab="rent">Rent</button>
-        <button class="tab" data-tab="goals">Goals</button>
-        <button class="tab" data-tab="chores">Chores</button>
-        <button class="tab" data-tab="house">House</button>
+      <span class="top-title" id="topTitle"></span>
+      <nav class="tabs" aria-label="Sections">
+        <button class="tab" data-tab="schedule"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg></span><span class="tl">Schedule</span></button>
+        <button class="tab" data-tab="gym"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11"/></svg></span><span class="tl">Gym</span></button>
+        <button class="tab" data-tab="money"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5"/></svg></span><span class="tl">Money</span></button>
+        <button class="tab" data-tab="rent"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.6L12 3l9 7.6"/><path d="M5.6 9.4V20a1 1 0 001 1h10.8a1 1 0 001-1V9.4"/><path d="M9.7 21v-6.2h4.6V21"/></svg></span><span class="tl">Rent</span></button>
+        <button class="tab" data-tab="goals"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><span class="tl">Goals</span></button>
+        <button class="tab" data-tab="chores"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><span class="tl">Chores</span></button>
+        <button class="tab" data-tab="house"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><span class="tl">House</span></button>
       </nav>
       <button class="icon-btn" id="signOutBtn" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
     </header>
@@ -1048,7 +1065,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v63');
+console.log('Atlas v64');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1160,8 +1177,11 @@ function go(tab){
   // restart the entrance: remove, reflow, add
   main.classList.remove('view-in'); void main.offsetWidth; main.classList.add('view-in');
   main.addEventListener('animationend', () => main.classList.remove('view-in'), {once: true});
-  // on a phone the strip scrolls: bring the active tab into view
-  document.querySelector('.tab.active')?.scrollIntoView({block: 'nearest', inline: 'nearest'});
+  const act = document.querySelector('.tab.active');
+  document.getElementById('topTitle').textContent = act ? act.querySelector('.tl').textContent : '';
+  // the desktop strip can overflow at mid widths: bring the active tab into view (the phone bar never scrolls)
+  const strip = document.querySelector('.tabs');
+  if(act && strip.scrollWidth > strip.clientWidth + 2) act.scrollIntoView({block: 'nearest', inline: 'nearest'});
   views[tab]();
 }
 /* the strip's right-edge fade is a scroll hint; drop it once there's nothing further to scroll to */
