@@ -430,19 +430,23 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .home-btn{font-size:0;gap:0;padding:6px}
   .home-btn img{height:24px}
   .top-title{display:block;flex:1;min-width:0;text-align:center;font-weight:700;font-size:15px;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 6px}
-  /* phone navigation (v64): the seven sections sit in a bar along the bottom, icon over a small label, no scrolling strip */
-  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;gap:0;overflow:visible;padding:4px 4px calc(6px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);
-    box-shadow:0 -1px 0 rgba(255,255,255,.6),0 -14px 24px -18px rgba(26,26,24,.22);-webkit-mask-image:none;mask-image:none;justify-content:space-around}
-  .tab{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0 2px;border-radius:0;font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:.01em;background:transparent!important}
-  .tab .ti{display:flex;align-items:center;justify-content:center;width:38px;height:26px;border-radius:9px;color:var(--text);transition:background-color var(--t-hover) ease,color var(--t-hover) ease,transform var(--t-hover) var(--ease-out)}
-  .tab .ti svg{width:19px;height:19px;stroke-width:1.9}
+  /* phone navigation (v65): a slider along the bottom — three sections in view, the open one centred and larger,
+     a swipe snaps to the neighbour and opens it (navSettle); tapping a side one works too. Spacers before and after let the first and last tab reach the centre. */
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:40;margin:0;gap:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;
+    padding:6px 0 calc(8px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--border);justify-content:flex-start;
+    box-shadow:0 -1px 0 rgba(255,255,255,.6),0 -14px 24px -18px rgba(26,26,24,.22);-webkit-mask-image:none;mask-image:none}
+  .tabs::before,.tabs::after{content:'';flex:0 0 calc(100vw / 3)}
+  .tab{flex:0 0 calc(100vw / 3);scroll-snap-align:center;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:3px 0 2px;border-radius:0;
+    font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.01em;background:transparent!important;opacity:.5;transform:scale(.88);
+    transition:opacity var(--t-hover) ease,transform var(--t-hover) var(--ease-out),color var(--t-hover) ease}
+  .tab .ti{display:flex;align-items:center;justify-content:center;width:50px;height:34px;border-radius:12px;color:var(--text);transition:background-color var(--t-hover) ease,color var(--t-hover) ease}
+  .tab .ti svg{width:23px;height:23px;stroke-width:1.9}
   .tab .tl{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .tab.active{color:var(--text)}
+  .tab.active{color:var(--text);opacity:1;transform:none}
   .tab.active .ti{background:var(--grad);color:var(--on-ink)}
-  .tab:active .ti{transform:scale(.94)}
   /* the page ends above the bar, the toast floats above it */
-  #shell main{padding-bottom:calc(44px + 62px + env(safe-area-inset-bottom))}
-  #toast{bottom:calc(84px + env(safe-area-inset-bottom))}
+  #shell main{padding-bottom:calc(44px + 72px + env(safe-area-inset-bottom))}
+  #toast{bottom:calc(92px + env(safe-area-inset-bottom))}
   #hub{padding:20px 16px 14px}
   .hub-top{font-size:13px;align-items:flex-start}
   .hub-hello .hub-date{font-size:13.5px;margin-top:4px}
@@ -482,8 +486,6 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
   .chart-box{height:200px}
   .page-head input[type=month]{max-width:150px}
 }
-/* a 320px phone gives each of the seven tabs 44px: the label gets a little smaller so "Schedule" still fits */
-@media(max-width:360px){ .tab{font-size:9.5px;letter-spacing:-.01em} .tab .ti{width:34px} }
 @media(max-width:420px){ .hub-col{gap:14px 16px} .tile .ic{width:52px;height:52px;border-radius:16px} .tile svg{width:21px;height:21px} .tile b{font-size:11.5px} }
 /* seven 40px cells plus gaps don't fit a 320px card: let aspect-ratio size them from the track instead */
 @media(max-width:360px){ .cal-day{min-height:0} }
@@ -967,7 +969,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v64</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v65</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1065,7 +1067,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v64');
+console.log('Atlas v65');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1165,7 +1167,7 @@ function go(tab){
   if(typeof liveOpenNow === 'function' && liveOpenNow()) liveClose(true);   // the back button minimises the workout room
   window._curTab = tab;
   location.hash = tab;
-  const home = tab === 'home';
+  const home = tab === 'home', wasOpen = !document.getElementById('shell').classList.contains('hidden');
   document.getElementById('hub').classList.toggle('hidden', !home);
   document.getElementById('shell').classList.toggle('hidden', home);
   window.scrollTo(0, 0);
@@ -1179,15 +1181,29 @@ function go(tab){
   main.addEventListener('animationend', () => main.classList.remove('view-in'), {once: true});
   const act = document.querySelector('.tab.active');
   document.getElementById('topTitle').textContent = act ? act.querySelector('.tl').textContent : '';
-  // the desktop strip can overflow at mid widths: bring the active tab into view (the phone bar never scrolls)
-  const strip = document.querySelector('.tabs');
-  if(act && strip.scrollWidth > strip.clientWidth + 2) act.scrollIntoView({block: 'nearest', inline: 'nearest'});
+  // phone: slide the bar so the open section sits in the middle; desktop: the strip can overflow at mid widths
+  if(act && navPhone()) navCenter(wasOpen);
+  else if(act && document.querySelector('.tabs').scrollWidth > document.querySelector('.tabs').clientWidth + 2) act.scrollIntoView({block: 'nearest', inline: 'nearest'});
   views[tab]();
 }
-/* the strip's right-edge fade is a scroll hint; drop it once there's nothing further to scroll to */
+/* desktop: the strip's right-edge fade is a scroll hint, dropped once there's nothing further to scroll to.
+   phone: the bar is a snap slider — when a swipe settles, whichever tab sits in the middle becomes the open section. */
+const navPhone = () => window.matchMedia('(max-width:760px)').matches;
+function navCenter(smooth){
+  const t = document.querySelector('.tabs'), a = t && t.querySelector('.tab.active'); if(!a) return;
+  t.scrollTo({left: a.offsetLeft + a.offsetWidth / 2 - t.clientWidth / 2, behavior: smooth ? 'smooth' : 'auto'});
+}
 (function(){ const t = document.querySelector('.tabs'); if(!t) return;
   const chk = () => t.classList.toggle('at-end', t.scrollWidth - t.clientWidth - t.scrollLeft < 4);
-  t.addEventListener('scroll', chk, {passive: true}); window.addEventListener('resize', chk); setTimeout(chk, 0); })();
+  let tm = 0;
+  const settle = () => { tm = 0; if(!navPhone()) return;
+    const mid = t.scrollLeft + t.clientWidth / 2; let best = null, bd = 1e9;
+    t.querySelectorAll('.tab').forEach(b => { const d = Math.abs(b.offsetLeft + b.offsetWidth / 2 - mid); if(d < bd){ bd = d; best = b; } });
+    if(best && best.dataset.tab !== window._curTab) go(best.dataset.tab); };
+  t.addEventListener('scroll', () => { chk(); clearTimeout(tm); tm = setTimeout(settle, 160); }, {passive: true});
+  if('onscrollend' in window) t.addEventListener('scrollend', () => { clearTimeout(tm); settle(); });
+  window.addEventListener('resize', () => { chk(); if(navPhone() && window._curTab && window._curTab !== 'home') navCenter(false); });
+  setTimeout(chk, 0); })();
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 document.getElementById('homeBtn').addEventListener('click', () => go('home'));
 
