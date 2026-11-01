@@ -895,6 +895,11 @@ main.wide{max-width:1500px}
 .wd-g{position:absolute;pointer-events:none}
 .wd-g canvas,.wd-g img{display:block;width:100%;height:100%;object-fit:contain}
 .wd-g.raw img{mix-blend-mode:multiply}
+.wd-g svg,.wd-flat-i svg{display:block;width:100%;height:100%}
+.wd-flat-i svg{width:auto}
+.wd-g.mirror svg{transform:scaleX(-1)}
+.wd-drawn .ink{fill:none;stroke:var(--text);stroke-width:.6;stroke-linejoin:round;stroke-linecap:round}
+.wd-drawn .seam{fill:none;stroke:var(--text);stroke-width:.25;opacity:.45;stroke-linecap:round}
 .wd-g.mirror canvas,.wd-g.mirror img{transform:scaleX(-1)}
 .wd-doll::after{content:"tap a piece";position:absolute;right:12px;top:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
 .wd-ctl{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:8px;z-index:2}
@@ -1104,7 +1109,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v72</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v73</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1203,7 +1208,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v72');
+console.log('Atlas v73');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -6648,7 +6653,7 @@ function wdDetail(id){
         ${wdSlotOf(x.kind) ? `<span>Measures</span><span>${(() => { const d = wdDims(x); return `${Math.round(d.len)} × ${Math.round(d.w)} cm${d.est ? ' <span class="pill grey">estimated</span>' : ''}`; })()}</span>` : ''}
         <span>Bought</span><span>${x.bought_on ? fmtDate(x.bought_on) : '—'}${x.price != null ? ' · ' + wdNis(x.price) : ''}</span>
         <span>From</span><span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${WD_SHOP[x.source] || esc(x.source || '')}</a>` : esc(WD_SHOP[x.source] || x.source || '—')}${x.sku ? ' · ' + esc(x.sku) : ''}</span>
-        ${x.cut_path ? `<span>Photo</span><span>${x.photo_kind === 'flat' ? 'Flat shop photo, cut on white' : x.photo_kind === 'model' ? 'Shot on a model, garment cut out' : 'Chosen by hand'} · ${x.cut_w} × ${x.cut_h} px</span>` : x.img ? `<span>Photo</span><span>Not prepared yet</span>` : ''}
+        ${x.cut_path ? `<span>Photo</span><span>${x.photo_kind === 'flat' ? 'Flat shop photo, cut on white' : x.photo_kind === 'model' ? 'Shot on a model, garment cut out' : 'Chosen by hand'} · ${x.cut_w} × ${x.cut_h} px</span>` : x.photo_kind === 'drawn' ? `<span>Photo</span><span>No clean shop photo · drawn to its measurements</span>` : x.img ? `<span>Photo</span><span>Not prepared yet</span>` : ''}
         ${x.status !== 'active' ? `<span>Status</span><span>${x.status === 'returned' ? 'Returned for a refund' : x.status === 'gift' ? 'Not yours' : esc(x.status)}</span>` : ''}
         ${x.notes ? `<span>Notes</span><span>${esc(x.notes)}</span>` : ''}</div></div>`,
     foot: `<span class="n"><button class="linkish danger" type="button" onclick="sheetDel('wardrobe_items','${x.id}','wardrobe')">Delete</button></span>
@@ -6705,6 +6710,48 @@ const WD_DIMS = {tee: {len: 76, w: 60}, polo: {len: 77, w: 58}, shirt: {len: 80,
 const WD_SIZE_ADJ = {L: -2, XXL: 2, '2XL': 2, M: -4};
 function wdDims(x){ const d = WD_DIMS[x.kind] || WD_DIMS.other, adj = WD_SIZE_ADJ[(x.size || '').toUpperCase()] || 0;
   return {len: +x.length_cm || d.len + (x.kind === 'shoes' ? 0 : adj), w: +x.width_cm || d.w, body: d.body, est: !(+x.length_cm)}; }
+/* a piece without a clean shop photo (a lifestyle shot only, the proxy down, a fixture) is drawn instead: an ink-and-paper
+   garment of its kind, sized to its cm and tinted with its colour, so the doll never shows a ragged cut-out.
+   Returns {svg, ar} — ar is width / height of the drawing's box (shoes are a side view: length by height) */
+function wdDrawn(x, d){
+  const kind = x.kind, col = x.color || '#cfcbc2', f = n => (+n).toFixed(1);
+  let w = d.w, h = d.len, body = '', seams = '';
+  const M = (pts) => 'M' + pts.map(p => f(p[0]) + ',' + f(p[1])).join('L') + 'Z';
+  if(['tee', 'polo', 'shirt', 'sweat', 'hoodie', 'jacket', 'other', 'basics'].includes(kind)){
+    const hood = kind === 'hoodie', long = kind !== 'tee' && kind !== 'polo' && kind !== 'basics';
+    const top = hood ? h - (d.body || h * .74) : 1.5, bh = h - top;                 // the body hangs from the shoulder line
+    const cx = w / 2, bw = w * .78, bx = cx - bw / 2, nw = w * .15, ny = bh * (kind === 'shirt' || kind === 'polo' ? .11 : .07);
+    const sl = long ? .52 : .26, sw = long ? w * .2 : 0;                             // sleeve drop and cuff inset
+    const right = [[cx + nw, top], [cx + bw / 2, top + bh * .02], [w, top + bh * sl], [w - sw, top + bh * (sl + .08)], [cx + bw / 2 - (long ? 0 : 1.5), top + bh * (long ? .27 : .34)], [cx + bw / 2, h], [cx, h]];
+    const pts = right.concat(right.slice(0, -1).reverse().map(p => [w - p[0], p[1]]));
+    body = M(pts);
+    const neck = `M${f(cx - nw)},${f(top)} Q${f(cx)},${f(top + ny * 2)} ${f(cx + nw)},${f(top)}`;
+    seams = `<path class="seam" d="${neck}"/><path class="seam" d="M${f(bx + 1)},${f(h - 2.5)} L${f(bx + bw - 1)},${f(h - 2.5)}"/>`;
+    if(hood) body += ` M${f(cx - nw * 1.7)},${f(top + 1)} C${f(cx - nw * 2.1)},${f(-top * .25)} ${f(cx + nw * 2.1)},${f(-top * .25)} ${f(cx + nw * 1.7)},${f(top + 1)}`;
+    if(hood) seams += `<path class="seam" d="M${f(cx - bw * .3)},${f(h - 3)} L${f(cx - bw * .33)},${f(h - bh * .28)} L${f(cx + bw * .33)},${f(h - bh * .28)} L${f(cx + bw * .3)},${f(h - 3)}"/>`;
+    if(kind === 'polo' || kind === 'shirt') seams += `<path class="seam" d="M${f(cx - nw)},${f(top)} L${f(cx - nw * .3)},${f(top + ny * 2.4)} L${f(cx)},${f(top + ny * 1.4)} L${f(cx + nw * .3)},${f(top + ny * 2.4)} L${f(cx + nw)},${f(top)}"/><path class="seam" d="M${f(cx)},${f(top + ny * 1.6)} L${f(cx)},${f(kind === 'shirt' ? h - 3 : top + bh * .3)}"/>`;
+    if(kind === 'jacket') seams += `<path class="seam" d="M${f(cx)},${f(top + ny * 1.5)} L${f(cx)},${f(h - 2.5)}"/><path class="seam" d="M${f(cx - .8)},${f(top + ny * 1.5)} L${f(cx - .8)},${f(h - 2.5)}"/>`;
+    if(kind === 'tee') seams += `<path class="seam" d="M${f(cx + bw * .12)},${f(top + bh * .22)} h${f(bw * .18)} v${f(bw * .18)} h-${f(bw * .18)} Z"/>`;
+  } else if(kind === 'pants' || kind === 'shorts'){
+    const cx = w / 2, crotch = kind === 'pants' ? h * .27 : h * .48, hem = kind === 'pants' ? w * .1 : w * .04, gap = kind === 'pants' ? w * .05 : w * .04;
+    body = M([[0, 0], [w, 0], [w - hem, h], [cx + gap, h], [cx, crotch], [cx - gap, h], [hem, h]]);
+    seams = `<path class="seam" d="M0.5,${f(h * .04)} L${f(w - .5)},${f(h * .04)}"/><path class="seam" d="M${f(cx)},${f(h * .04)} L${f(cx)},${f(crotch - 1)}"/>`;
+  } else if(kind === 'shoes'){
+    w = d.len; h = d.w;                                                               // side view: 29.5 long, 12 tall
+    body = `M${f(w * .02)},${f(h * .85)} C${f(w * .02)},${f(h * .55)} ${f(w * .12)},${f(h * .08)} ${f(w * .3)},${f(h * .08)} L${f(w * .42)},${f(h * .08)} C${f(w * .6)},${f(h * .12)} ${f(w * .72)},${f(h * .45)} ${f(w * .98)},${f(h * .7)} C${f(w * 1)},${f(h * .85)} ${f(w * .98)},${f(h * .98)} ${f(w * .9)},${f(h * .98)} L${f(w * .08)},${f(h * .98)} C${f(w * .03)},${f(h * .98)} ${f(w * .02)},${f(h * .92)} ${f(w * .02)},${f(h * .85)} Z`;
+    seams = `<path class="seam" d="M${f(w * .03)},${f(h * .8)} L${f(w * .97)},${f(h * .8)}"/><path class="seam" d="M${f(w * .3)},${f(h * .1)} L${f(w * .48)},${f(h * .55)}"/>`;
+  } else if(kind === 'cap'){
+    body = `M${f(w * .15)},${f(h * .72)} C${f(w * .15)},${f(h * .1)} ${f(w * .85)},${f(h * .1)} ${f(w * .85)},${f(h * .72)} L${f(w * .98)},${f(h * .82)} C${f(w * .9)},${f(h * .98)} ${f(w * .1)},${f(h * .98)} ${f(w * .02)},${f(h * .82)} Z`;
+    seams = `<path class="seam" d="M${f(w * .5)},${f(h * .12)} L${f(w * .5)},${f(h * .72)}"/><path class="seam" d="M${f(w * .15)},${f(h * .72)} L${f(w * .85)},${f(h * .72)}"/>`;
+  } else if(kind === 'beanie'){
+    body = `M${f(w * .05)},${f(h * .98)} L${f(w * .05)},${f(h * .55)} C${f(w * .05)},${f(h * .05)} ${f(w * .95)},${f(h * .05)} ${f(w * .95)},${f(h * .55)} L${f(w * .95)},${f(h * .98)} Z`;
+    seams = `<path class="seam" d="M${f(w * .05)},${f(h * .72)} L${f(w * .95)},${f(h * .72)}"/>`;
+  } else { body = `M1,1 H${f(w - 1)} V${f(h - 1)} H1 Z`; }
+  const flip = kind === 'shoes' ? ` transform="matrix(-1 0 0 1 ${f(w)} 0)"` : '';   // shop side shots point the toe left; the pair is mirrored on the doll
+  const svg = `<svg class="wd-drawn" viewBox="0 0 ${f(w)} ${f(h)}" preserveAspectRatio="none" aria-hidden="true"><g${flip}><path class="ink" d="${body}" style="fill:${col}"/>${seams}</g></svg>`;
+  return {svg, ar: w / h};
+}
+function wdDrawnEl(x, d){ const t = document.createElement('template'); t.innerHTML = wdDrawn(x, d).svg; return t.content.firstChild; }
 /* the figure, in cm from the ground; the stage is 130 cm wide and 200 cm tall */
 const WD_BODY = {height: 189, shoulder: 155, armpit: 141, chest: 136, waist: 112, hip: 98, crotch: 86, knee: 52, ankle: 8, chin: 166, eye: 177, brow: 180};
 const WD_W = 130, WD_H = 210;
@@ -6919,7 +6966,7 @@ function wdPickShot(shots){
   if(flats.length){ const best = Math.max(...flats.map(s => s.sc.garment)); flats.filter(s => s.sc.garment >= best * .9).forEach(s => out.push({pick: s, mode: 'flat'})); flats.filter(s => s.sc.garment < best * .9).sort((a, b) => b.sc.garment - a.sc.garment).forEach(s => out.push({pick: s, mode: 'flat'})); }
   // model shots: the full figure (some skin showing, clothes under 60 % of the frame — a torso close-up has neither)
   // before close-ups; among full figures the front comes first in the gallery, so: those within a fifth of the most clothes in gallery order, then the rest
-  const dressed = shots.filter(s => s.sc.clothes > .05), full = dressed.filter(s => s.sc.person > .03 && s.sc.clothes < .6);
+  const dressed = shots.filter(s => s.sc.clothes > .05 && s.sc.bright > 200), full = dressed.filter(s => s.sc.person > .03 && s.sc.clothes < .6);   // studio shots only (light backdrop): a lifestyle photo on a dark, busy background cannot be cut and the piece is drawn instead
   if(full.length){ const best = Math.max(...full.map(s => s.sc.clothes)); full.filter(s => s.sc.clothes >= best * .8).forEach(s => out.push({pick: s, mode: 'model'})); full.filter(s => s.sc.clothes < best * .8).sort((a, b) => b.sc.clothes - a.sc.clothes).forEach(s => out.push({pick: s, mode: 'model'})); }
   dressed.filter(s => !full.includes(s)).sort((a, b) => b.sc.clothes - a.sc.clothes).forEach(s => out.push({pick: s, mode: 'model'}));
   shots.filter(s => s.sc.framed > .85 && s.sc.bright > 200 && !out.some(o => o.pick === s)).sort((a, b) => b.sc.garment - a.sc.garment).forEach(s => out.push({pick: s, mode: 'flat'}));   // shoes and bags are never segmented: best-framed shots
@@ -6939,7 +6986,7 @@ async function wdPrepareOne(x, forceUrl){
     if(t.wdParts === 1 || x.kind === 'shoes' || x.kind === 'bag'){ cv = t; pick = c.pick; mode = c.mode; break; } if(!spare) spare = {t, c}; }
   if(!cv && spare){ cv = spare.t; pick = spare.c.pick; mode = spare.c.mode; }
   shots.forEach(s => s.bmp.close && s.bmp.close());
-  if(!cv) return false;
+  if(!cv){ if(!forceUrl){ const row = {cut_path: null, photo_kind: 'drawn', photos: shots.map(s => s.u)}; await sb.from('wardrobe_items').update(row).eq('id', x.id); Object.assign(x, row); W2.cache.delete(x.id); } return false; }
   const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
   const {data: {user}} = await sb.auth.getUser(); const path = user.id + '/' + x.id + '.png';
   const up = await sb.storage.from('wardrobe').upload(path, blob, {upsert: true, contentType: 'image/png'}); if(up.error) throw up.error;
@@ -6950,7 +6997,7 @@ async function wdPrepareOne(x, forceUrl){
 }
 async function wdPrepareAll(force){
   if(W2.preparing) return; W2.preparing = true;
-  const todo = (window._wd || []).filter(x => x.status === 'active' && wdSlotOf(x.kind) && x.img && (force || !x.cut_path));
+  const todo = (window._wd || []).filter(x => x.status === 'active' && wdSlotOf(x.kind) && x.img && (force || (!x.cut_path && x.photo_kind !== 'drawn')));
   let done = 0, failed = 0;
   // keeps going if he wanders to another section (it is only fetching and cutting); the doll re-draws when it is on screen
   for(const x of todo){ const sub = document.getElementById('wdSub'); if(sub) sub.innerHTML = `<span class="pulse"></span>Preparing photos ${done + failed + 1} / ${todo.length} · ${esc(short(x.name, 30))}`;
@@ -6978,9 +7025,9 @@ async function wdDollRender(){
     if(cur && cur.dataset.item === x.id && cur.dataset.len === String(d.len)) continue;
     const piece = await wdPiece(x); if(el._seq !== seq) return;
     drop(slot);
-    const g = document.createElement('div'); g.className = 'wd-g' + (piece.cut ? '' : ' raw'); g.dataset.slot = slot; g.dataset.item = x.id; g.dataset.len = String(d.len);
-    const img = piece.canvas || Object.assign(new Image(), {src: wdBig(x), alt: '', crossOrigin: 'anonymous'}); g.appendChild(img);
-    const ar = piece.canvas ? piece.canvas.width / piece.canvas.height : 3 / 4;   // a raw photo is assumed 3:4
+    const g = document.createElement('div'); g.className = 'wd-g' + (piece.cut ? '' : ' drawn'); g.dataset.slot = slot; g.dataset.item = x.id; g.dataset.len = String(d.len);
+    const img = piece.canvas || wdDrawnEl(x, d); g.appendChild(img);                 // no clean photo: the piece is drawn to its cm
+    const ar = piece.canvas ? piece.canvas.width / piece.canvas.height : wdDrawn(x, d).ar;
     let hcm, wcm, left, top;
     if(slot === 'top' || slot === 'outer'){ hcm = d.len; wcm = hcm * ar; const hem = B.shoulder - (d.body || d.len) + (slot === 'outer' ? -1 : 0); top = hem + hcm; left = WD_W / 2 - wcm / 2; }
     else if(slot === 'bottom'){ hcm = d.len; wcm = hcm * ar; top = 106; left = WD_W / 2 - wcm / 2; }
@@ -6989,7 +7036,7 @@ async function wdDollRender(){
     g.style.left = wdPx(left) + '%'; g.style.top = wdPy(top) + '%'; g.style.width = wdPx(wcm) + '%'; g.style.height = (hcm / WD_H * 100) + '%';
     if(slot === 'feet'){ const g2 = g.cloneNode(false); g2.classList.add('mirror'); g2.style.left = wdPx(WD_W / 2 + 13 - wcm / 2) + '%';
       if(piece.canvas){ const c2 = document.createElement('canvas'); c2.width = piece.canvas.width; c2.height = piece.canvas.height; c2.getContext('2d').drawImage(piece.canvas, 0, 0); g2.appendChild(c2); }
-      else g2.appendChild(Object.assign(new Image(), {src: wdBig(x), alt: ''}));
+      else g2.appendChild(wdDrawnEl(x, d));
       el.appendChild(g2); }
     g.title = x.name + ' · ' + (d.est ? 'estimated ' : '') + Math.round(d.len) + ' cm';
     el.appendChild(g);
@@ -7029,8 +7076,8 @@ function wdFlatRender(){
   el.innerHTML = rows.map(x => { const d = wdDims(x), p = W2.cache.get(x.id);
     return `<div class="wd-flat-p" role="button" tabindex="0" onclick="wdDetail('${x.id}')" onkeydown="if(event.key==='Enter'){wdDetail('${x.id}')}" style="--h:${d.len}">
       <div class="wd-flat-i"></div><b>${esc(short(x.name, 28))}</b><span class="m">${Math.round(d.len)} × ${Math.round(d.w)} cm${d.est ? ' · estimated' : ''}</span></div>`; }).join('');
-  rows.forEach((x, i) => { const p = W2.cache.get(x.id), box = el.children[i].querySelector('.wd-flat-i'); if(p && p.canvas){ const c = document.createElement('canvas'); c.width = p.canvas.width; c.height = p.canvas.height; c.getContext('2d').drawImage(p.canvas, 0, 0); box.appendChild(c); }
-    else box.innerHTML = `<img src="${esc(wdBig(x))}" alt="">`; });
+  rows.forEach((x, i) => { const p = W2.cache.get(x.id), d = wdDims(x), box = el.children[i].querySelector('.wd-flat-i'); if(p && p.canvas){ const c = document.createElement('canvas'); c.width = p.canvas.width; c.height = p.canvas.height; c.getContext('2d').drawImage(p.canvas, 0, 0); box.appendChild(c); }
+    else box.appendChild(wdDrawnEl(x, d)); });
 }
 function wdFlatToggle(){ W2.flat = !W2.flat; document.getElementById('wdFlatBtn')?.classList.toggle('on', W2.flat); wdFlatRender(); }
 /* a tap on the figure opens the piece under the finger: topmost layer first, by the cut-out's alpha */
