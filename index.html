@@ -886,7 +886,10 @@ main.wide{max-width:1500px}
 .wd-3d:active{cursor:grabbing}
 .wd-3d canvas{display:block;width:100%!important;height:100%!important}
 .wd-3d-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px}
-.wd-3d::after{content:"drag to turn";position:absolute;right:12px;bottom:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
+.wd-3d::after{content:"drag to turn · tap a piece";position:absolute;right:12px;top:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
+.wd-ctl{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:8px}
+.wd-ctl-l{display:flex;align-items:center;gap:8px;height:38px;padding:0 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.wd-ctl-l input{width:96px;margin:0;accent-color:var(--accent)}
 .wd-side{display:flex;flex-direction:column;gap:14px;min-width:0}
 .wd-slots{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px}
 .wd-slot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-top:1px solid var(--border);cursor:pointer;transition:background-color var(--t-hover) ease}
@@ -1030,7 +1033,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v67</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v68</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1129,7 +1132,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v67');
+console.log('Atlas v68');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -6355,8 +6358,10 @@ function wdWear(slot, id){
   // a shirt pulled on as a layer comes off the top slot, and vice versa, so one piece isn't worn twice
   if(id){ Object.keys(fit).forEach(k => { if(k !== slot && fit[k] === id) fit[k] = null; }); }
   wdFitSet(fit); wdSlotsRender(); wdDress(); wdRender();
+  if(id && W3) wdCamHold(slot);   // the piece lands on a still camera, then the view settles back to the whole figure
 }
 function wdPick(slot){
+  wdCamTo(slot);
   const kinds = WD_SLOTS.find(s => s[0] === slot)[2], fit = wdFit();
   const rows = (window._wd || []).filter(x => x.status === 'active' && kinds.includes(x.kind));
   const groups = kinds.map(k => [k, rows.filter(x => x.kind === k)]).filter(g => g[1].length);
@@ -6451,9 +6456,24 @@ async function wdSave(){
 }
 
 /* ================= WARDROBE 3D: the figure =================
-   A stylised mannequin built from lathe profiles (189 cm, broad shoulders, narrow waist) with the
-   garments as slightly larger shells in the piece's colour, inked with an inverted-hull outline so it
-   reads like the engravings elsewhere in Atlas. three.js is fetched the first time the section opens. */
+   Spec (numbers, not adjectives — the full directed prompt is in the project doc):
+   MODEL  artist's mannequin, 1.89 m, shoulders 0.49 m, waist 0.33 m, lathe profiles flattened to z×0.64, ball joints
+   LOOK   mat #eceae6 with a 10 cm grid in #dcd9d3; mannequin #d6d2c8 roughness .92; garments in the piece's colour, ink outline #1f1e1b
+   LIGHT  hemisphere sky #fff ground #b4b0a6 ×2.4; key #fff ×2.2 at (2.5, 4, 3.5) with a 2048 PCF-soft shadow; fill #fff ×.9 at (−3, 1.5, −2.5)
+   MOTION ease-out-expo fly-in 700 ms, parts staggered 70 ms, from 1.15× the explode vector; ease-in-expo fly-out 380 ms;
+          camera ease-in-out-quart 600 ms; explode ease-in-out-quart 500 ms; auto-turn 0.28 rad/s; no fades, no bounce on colour
+   CAMERA fov 24, pitch 0.03–0.55 rad, distance 1.6–6.5 m; overview (0, .96) at 5.1 m; per-slot framings in WD_CAM
+   BANNED fog, bloom, particles, turntable spin faster than 0.3 rad/s, anything fading in, more than one hero move at once
+   Every frame is a function of t (seconds since the stage opened); window.wdRenderAt(t) freezes one for review. */
+const WD_M = {
+  expoOut: u => u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(2, -10 * u),
+  expoIn: u => u <= 0 ? 0 : u >= 1 ? 1 : Math.pow(2, 10 * u - 10),
+  quartInOut: u => u <= 0 ? 0 : u >= 1 ? 1 : u < .5 ? 8 * u * u * u * u : 1 - Math.pow(-2 * u + 2, 4) / 2,
+  flyIn: .7, flyOut: .38, stagger: .07, cam: .6, explode: .5, turn: .28, overshoot: 1.15,
+};
+/* where each slot's garment flies in from, and goes to when the outfit is laid out (metres, figure space) */
+const WD_EV = {head: [0, .34, 0], outer: [-.72, .06, .1], top: [.7, .02, .1], bottom: [0, -.02, .62], feet: [.36, 0, .52]};
+const WD_CAM = {all: [[0, .94, 0], 5.1, .13], head: [[0, 1.64, 0], 2.0, .08], outer: [[0, 1.27, 0], 2.9, .1], top: [[0, 1.27, 0], 2.9, .1], bottom: [[0, .68, 0], 3.0, .14], feet: [[0, .18, 0], 2.1, .3]};
 let W3 = null;
 async function wdThree(){
   if(window.__THREE) return window.__THREE;
@@ -6466,50 +6486,111 @@ async function wdStage(){
   if(!el.isConnected) return;
   if(W3 && W3.el !== el) wdDispose();
   if(W3) return wdDress();
-  const renderer = new T.WebGLRenderer({antialias: true, alpha: true});
+  let renderer; try{ renderer = new T.WebGLRenderer({antialias: true, alpha: true}); }catch(e){ const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'This browser can\'t draw the figure (no WebGL) — the pieces and outfits still work'; return; }
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
   renderer.outputColorSpace = T.SRGBColorSpace;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
   el.querySelector('#wd3dNote')?.remove();
   el.appendChild(renderer.domElement);
+  el.insertAdjacentHTML('beforeend', `<div class="wd-ctl"><label class="wd-ctl-l"><span>Lay out</span><input type="range" id="wdExplode" min="0" max="100" value="0" aria-label="Lay the outfit out"></label>
+    <button class="hd-ib" type="button" id="wdReset" title="Reset view">${ICO.redo}<span>View</span></button></div>`);
   const scene = new T.Scene();
-  const camera = new T.PerspectiveCamera(24, 1, .1, 20); camera.position.set(0, 1.08, 5.1); camera.lookAt(0, .96, 0);
+  const camera = new T.PerspectiveCamera(24, 1, .1, 30);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   scene.add(new T.HemisphereLight(0xffffff, 0xb4b0a6, 2.4));
-  const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(2.5, 4, 3.5); scene.add(sun);
+  const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(2.5, 4, 3.5); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.near = .5; sun.shadow.camera.far = 12;
+  sun.shadow.camera.left = sun.shadow.camera.bottom = -1.7; sun.shadow.camera.right = sun.shadow.camera.top = 1.7; sun.shadow.bias = -.0004; sun.shadow.normalBias = .01;
+  scene.add(sun);
   const fill = new T.DirectionalLight(0xffffff, .9); fill.position.set(-3, 1.5, -2.5); scene.add(fill);
+  // the mat: a 3 m square with a 10 cm grid, lines fading out towards the edge, in the page's own colours
+  const mc = document.createElement('canvas'); mc.width = mc.height = 1024; const mx = mc.getContext('2d');
+  mx.fillStyle = css('--surface2') || '#eceae6'; mx.fillRect(0, 0, 1024, 1024);
+  const line = css('--border') || '#dcd9d3', cell = 1024 / 30;
+  for(let i = 0; i <= 30; i++){ mx.strokeStyle = line; mx.lineWidth = i % 5 ? 1.2 : 2.2; mx.beginPath(); mx.moveTo(i * cell, 0); mx.lineTo(i * cell, 1024); mx.moveTo(0, i * cell); mx.lineTo(1024, i * cell); mx.stroke(); }
+  const fade = mx.createRadialGradient(512, 512, 380, 512, 512, 560); fade.addColorStop(0, 'rgba(236,234,230,0)'); fade.addColorStop(1, css('--surface2') || '#eceae6'); mx.fillStyle = fade; mx.fillRect(0, 0, 1024, 1024);
+  const matTex = new T.CanvasTexture(mc); matTex.colorSpace = T.SRGBColorSpace; matTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const mat = new T.Mesh(new T.PlaneGeometry(3, 3), new T.MeshBasicMaterial({map: matTex}));   // unlit, so the page colour stays exact
+  mat.rotation.x = -Math.PI / 2; scene.add(mat);
+  const shade = new T.Mesh(new T.PlaneGeometry(3, 3), new T.ShadowMaterial({opacity: .2}));          // the shadow lands on a separate sheet
+  shade.rotation.x = -Math.PI / 2; shade.position.y = .001; shade.receiveShadow = true; scene.add(shade);
   const root = new T.Group(); scene.add(root);
-  // contact shadow: a radial fade on the floor
-  const sc = document.createElement('canvas'); sc.width = sc.height = 128; const sx = sc.getContext('2d');
-  const g = sx.createRadialGradient(64, 64, 6, 64, 64, 64); g.addColorStop(0, 'rgba(26,26,24,.28)'); g.addColorStop(1, 'rgba(26,26,24,0)'); sx.fillStyle = g; sx.fillRect(0, 0, 128, 128);
-  const shadow = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({map: new T.CanvasTexture(sc), transparent: true, depthWrite: false}));
-  shadow.rotation.x = -Math.PI / 2; shadow.position.y = .002; shadow.scale.set(1, .55, 1); root.add(shadow);
-  W3 = {T, el, renderer, scene, camera, root, body: new T.Group(), cloth: new T.Group(), yaw: .35, vel: 0, drag: null, idle: 0, raf: 0};
+  W3 = {T, el, renderer, scene, camera, root, sun, body: new T.Group(), cloth: new T.Group(), slots: {}, leaving: [],
+    t: 0, t00: performance.now(), frozen: false, raf: 0,
+    yaw: .35, drag: null, lastT: null, camNext: null,
+    cam: {from: null, to: [WD_CAM.all[0].slice(), WD_CAM.all[1], WD_CAM.all[2]], t0: -9}, explode: {from: 0, to: 0, t0: -9},
+    reduced: matchMedia('(prefers-reduced-motion:reduce)').matches};
   root.add(W3.body); root.add(W3.cloth);
   wdBody();
-  // turn it by hand; it drifts back to a slow turn when left alone
-  el.addEventListener('pointerdown', e => { W3.drag = {x: e.clientX, yaw: W3.yaw}; W3.idle = performance.now(); el.setPointerCapture(e.pointerId); });
-  el.addEventListener('pointermove', e => { if(!W3 || !W3.drag) return; const d = (e.clientX - W3.drag.x) * .012; W3.vel = d - (W3.yaw - W3.drag.yaw); W3.yaw = W3.drag.yaw + d; W3.idle = performance.now(); });
-  const up = () => { if(W3) W3.drag = null; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  // orbit: horizontal drag turns the figure, vertical tilts the camera, wheel/pinch zooms; a click (under 5 px) selects a garment
+  const ray = new T.Raycaster(), ndc = new T.Vector2();
+  el.addEventListener('pointerdown', e => { if(e.target.closest('.wd-ctl')) return; W3.cam = {from: null, to: wdCamNow(), t0: -9}; W3.drag = {x: e.clientX, y: e.clientY, yaw: W3.yaw, pitch: W3.cam.to[2], moved: false, id: e.pointerId}; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => { const d = W3 && W3.drag; if(!d) return;
+    const dx = e.clientX - d.x, dy = e.clientY - d.y; if(Math.hypot(dx, dy) > 5) d.moved = true;
+    if(d.moved){ W3.yaw = d.yaw + dx * .012; W3.cam.to[2] = Math.max(.03, Math.min(.55, d.pitch + dy * .004)); } });
+  const up = e => { const d = W3 && W3.drag; if(!d) return; W3.drag = null;
+    if(!d.moved){ const r = el.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, W3.camera); const hit = ray.intersectObjects(W3.cloth.children, true)[0];
+      let o = hit && hit.object; while(o && !o.userData.item) o = o.parent; if(o) wdDetail(o.userData.item); } };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', () => { if(W3) W3.drag = null; });
+  el.addEventListener('wheel', e => { if(!W3) return; e.preventDefault(); const n = wdCamNow(); W3.cam = {from: null, to: [n[0], Math.max(1.6, Math.min(6.5, n[1] * (1 + Math.sign(e.deltaY) * .12))), n[2]], t0: -9}; }, {passive: false});
+  document.getElementById('wdExplode').addEventListener('input', e => { W3.explode = {from: +e.target.value / 100, to: +e.target.value / 100, t0: -9}; });
+  document.getElementById('wdReset').addEventListener('click', () => { wdCamTo('all'); W3.explode = {from: wdExplodeNow(), to: 0, t0: W3.t}; document.getElementById('wdExplode').value = 0; });
   const size = () => { if(!W3) return; const w = el.clientWidth, h = el.clientHeight; if(!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
   new ResizeObserver(size).observe(el); size();
-  const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
-  let last = performance.now();
   const loop = now => {
     if(!W3) return;
     if(!el.isConnected) return wdDispose();                 // the router replaced #main
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
-    if(!W3.drag){ const spin = reduced ? 0 : .28; W3.vel += (spin - W3.vel) * Math.min(1, dt * 1.6); W3.yaw += W3.vel * dt; }
-    root.rotation.y = W3.yaw;
-    renderer.render(scene, camera);
+    if(!W3.frozen) wdFrame((now - W3.t00) / 1000);
     W3.raf = requestAnimationFrame(loop);
   };
   W3.raf = requestAnimationFrame(loop);
-  wdDress();
+  wdDress(true);
 }
+/* one frame, from t alone (plus what the pointer has set): the turn, the flights, the explode, the camera */
+function wdFrame(t){
+  const {T, root, camera, slots} = W3; W3.t = t;
+  // the figure turns on its own at 0.28 rad/s unless a drag has hold of it
+  const dt = W3.lastT == null ? 0 : Math.min(.1, t - W3.lastT); W3.lastT = t;
+  if(!W3.reduced && !(W3.drag && W3.drag.moved)) W3.yaw += WD_M.turn * dt;
+  root.rotation.y = W3.yaw;
+  const ex = wdExplodeNow();
+  Object.values(slots).forEach(s => wdPlace(s, t, ex, false));
+  W3.leaving = W3.leaving.filter(s => { const done = wdPlace(s, t, ex, true); if(done) wdDrop(s.group); return !done; });
+  // camera: a spherical seat around the target, flown between framings; a queued return fires on time
+  if(W3.camNext && t >= W3.camNext.at){ wdCamTo(W3.camNext.slot); W3.camNext = null; }
+  const [tg, dist, pitch] = wdCamNow();
+  camera.position.set(tg[0], tg[1] + dist * Math.sin(pitch), tg[2] + dist * Math.cos(pitch)); camera.lookAt(tg[0], tg[1], tg[2]);
+  W3.renderer.render(W3.scene, camera);
+}
+function wdExplodeNow(){ const e = W3.explode, u = W3.reduced ? 1 : (W3.t - e.t0) / WD_M.explode; return e.from + (e.to - e.from) * WD_M.quartInOut(u); }
+function wdCamNow(){ const c = W3.cam; if(!c.from) return [c.to[0].slice(), c.to[1], c.to[2]];
+  const u = W3.reduced ? 1 : WD_M.quartInOut((W3.t - c.t0) / WD_M.cam), f = c.from, g = c.to, L = (a, b) => a + (b - a) * u;
+  return [[L(f[0][0], g[0][0]), L(f[0][1], g[0][1]), L(f[0][2], g[0][2])], L(f[1], g[1]), L(f[2], g[2])]; }
+function wdCamHold(slot){ const at = W3.cam.to, want = WD_CAM[slot]; const there = Math.abs(at[1] - want[1]) < .01 && Math.abs(at[0][1] - want[0][1]) < .01;
+  if(there) W3.camNext = {slot: 'all', at: W3.t + WD_M.flyIn + 1.1}; }
+function wdCamTo(slot, back){ if(!W3) return; const to = WD_CAM[slot] || WD_CAM.all; W3.cam = {from: wdCamNow(), to: [to[0].slice(), to[1], to[2]], t0: W3.t}; W3.camNext = back ? {slot: 'all', at: W3.t + WD_M.cam + 1.3} : null; }
+/* a garment's parts: each sits at its base position plus a share of the slot's explode vector;
+   on the way in that share starts at 1.15 and eases out to 0 (ease-out-expo, 70 ms between parts), on the way out it eases in to 1 */
+function wdPlace(s, t, ex, out){
+  const ev = WD_EV[s.slot]; let done = true;
+  s.parts.forEach((p, i) => {
+    const u = W3.reduced ? 1 : (t - s.t0 - p.userData.lag * WD_M.stagger) / (out ? WD_M.flyOut : WD_M.flyIn);
+    const k = out ? WD_M.expoIn(u) * WD_M.overshoot : (1 - WD_M.expoOut(u)) * WD_M.overshoot;
+    if(u < 1) done = false;
+    const e = out ? 0 : ex;
+    p.position.set(p.userData.b[0] + ev[0] * (k + e), p.userData.b[1] + ev[1] * (k + e), p.userData.b[2] + ev[2] * (k + e));
+  });
+  return done;
+}
+function wdDrop(g){ g.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); g.parent && g.parent.remove(g); }
 function wdDispose(){
   if(!W3) return; cancelAnimationFrame(W3.raf);
   W3.scene.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if(m.map) m.map.dispose(); m.dispose(); }); } });
-  W3.renderer.dispose(); W3.renderer.domElement.remove(); W3 = null;
+  W3.renderer.dispose(); W3.renderer.domElement.remove(); W3.el.querySelector('.wd-ctl')?.remove(); W3 = null;
 }
+/* review hook: freeze the stage at second t (the lab loop renders stills and contact sheets through this) */
+window.wdRenderAt = t => { if(!W3) return false; W3.frozen = true; W3.lastT = undefined; wdFrame(t); return true; };
 /* geometry helpers: a lathe from [radius, height] pairs (scaled flat on z so bodies are oval, not round),
    each mesh paired with a slightly larger back-face copy in ink for the outline */
 function wdLathe(pts, seg){ const {T} = W3; const g = new T.LatheGeometry(pts.map(([r, y]) => new T.Vector2(Math.max(r, .0005), y)), seg || 36); g.computeVertexNormals(); return g; }
@@ -6519,6 +6600,7 @@ function wdMesh(geo, color, parent, o){
   const {T} = W3; o = o || {};
   const m = new T.Mesh(geo, wdMat(color)); if(o.z) m.scale.z = o.z; if(o.x) m.scale.x = o.x;
   if(o.pos) m.position.set(...o.pos); if(o.rot) m.rotation.set(...o.rot);
+  m.castShadow = true;
   if(o.ink !== false){
     const ink = new T.Mesh(geo, new T.MeshBasicMaterial({color: WD_INK, side: T.BackSide}));
     const k = o.ink || 1.035; ink.scale.set(k, 1, k);   // round the sides only: a vertical push would show as a dark band at every hem
@@ -6556,62 +6638,71 @@ function wdBody(){
     wdMesh(wdLathe([[0, 0], [.055, 0], [.06, .045], [.045, .08], [0, .085]]), sk, body, {pos: [s * WD_LEG.x, 0, .06], z: 2.1});   // foot: a flat oval
   });
 }
-/* the clothes: rebuilt whenever a slot changes. Each garment is the body's own profile pushed out a little,
-   so it hangs on the figure instead of floating round it. */
-function wdDress(){
+/* the clothes. Each slot is a group tagged with its piece; every part of a garment is its own sub-group with a
+   base position, so it can fly in from the slot's explode vector and lay out along it. Garments are the body's
+   own profile pushed out 16 mm (a layer: 30 mm) so they hang on the figure instead of floating round it. */
+function wdDress(first){
   if(!W3) return;
-  const {T, cloth} = W3;
-  while(cloth.children.length){ const c = cloth.children.pop(); c.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); }
-  const fit = wdFit(), get = s => fit[s] ? wdById(fit[s]) : null;
-  const top = get('top'), outer = get('outer'), bottom = get('bottom'), feet = get('feet'), head = get('head');
-  const col = x => new T.Color(x && x.color || '#8f867a');
-  const torso = (off, hem, c) => wdMesh(wdLathe([[0, hem], [.19 + off, hem], [.19 + off, 1.0], [.172 + off, 1.1], [.2 + off, 1.3], [.218 + off, 1.42], [.226 + off, 1.47], [.19 + off, 1.525], [.12 + off * .4, 1.56], [.065, 1.585], [0, 1.598]]), c, cloth, {z: WD_Z});
-  const sleeve = (off, len, c) => [-1, 1].forEach(s => { const a = new T.Group(); a.position.set(s * WD_ARM.x, WD_ARM.y, 0); a.rotation.z = s * -WD_ARM.tilt; cloth.add(a);
+  const {T, cloth, slots} = W3;
+  const fit = wdFit();
+  const slotsNow = ['head', 'outer', 'top', 'bottom', 'feet'];
+  // what changed: a slot whose piece differs is flown out, then its new piece flown in
+  const outerChanged = (slots.outer ? slots.outer.item : null) !== (fit.outer || null);
+  slotsNow.forEach(slot => { const cur = slots[slot], id = fit[slot] || null;
+    // a hoodie's hood is drawn over or under the layer, so the top is redrawn (without a flight) when the layer changes
+    const redo = slot === 'top' && outerChanged && cur && (wdById(cur.item) || {}).kind === 'hoodie';
+    if(cur && cur.item === id && !redo) return;
+    if(redo){ delete slots[slot]; wdDrop(cur.group); }
+    else
+    if(cur){ delete slots[slot]; cur.t0 = W3.t; W3.leaving.push(cur); }
+    const x = id ? wdById(id) : null; if(!x) return;
+    const g = new T.Group(); g.userData.item = x.id; cloth.add(g);
+    const s = {slot, item: x.id, group: g, parts: [], t0: first || redo ? W3.t - 9 : W3.t};
+    slots[slot] = s;
+    const part = (pos, lag) => { const p = new T.Group(); p.userData.b = pos || [0, 0, 0]; p.userData.lag = lag || 0; p.position.set(...p.userData.b); g.add(p); s.parts.push(p); return p; };
+    wdGarment(x, slot, part, !!fit.outer);
+  });
+  if(first) Object.values(slots).forEach(s => s.t0 = W3.t - 9);
+}
+function wdGarment(x, slot, part, layered){
+  const {T} = W3, c = new T.Color(x.color || '#8f867a'), k = x.kind;
+  const torso = (off, hem) => wdMesh(wdLathe([[0, hem], [.19 + off, hem], [.19 + off, 1.0], [.172 + off, 1.1], [.2 + off, 1.3], [.218 + off, 1.42], [.226 + off, 1.47], [.19 + off, 1.525], [.12 + off * .4, 1.56], [.065, 1.585], [0, 1.598]]), c, part(), {z: WD_Z});
+  const sleeve = (off, len) => [-1, 1].forEach(s => { const a = part([s * WD_ARM.x, WD_ARM.y, 0], 1); a.rotation.z = s * -WD_ARM.tilt;
     const l = Math.min(len, WD_ARM.upper);
     wdMesh(wdLathe([[0, -l], [.052 + off, -l], [.056 + off, -.18], [.06 + off, -.04], [.046 + off, .02], [0, .03]]), c, a, {z: .9});
     if(len > WD_ARM.upper){ const f = new T.Group(); f.position.y = -WD_ARM.upper; f.rotation.z = s * -.04; a.add(f);
       const fl = len - WD_ARM.upper; wdMesh(wdLathe([[0, -fl], [.04 + off, -fl], [.046 + off, -.12], [.05 + off, 0], [.045 + off, .04], [0, .05]]), c, f, {z: .9}); } });
-  const dressTop = (x, layer) => {
-    if(!x) return;
-    const c = col(x), off = layer ? .03 : .016, k = x.kind;
-    const long = k !== 'tee' && k !== 'polo';
-    const hem = layer ? .9 : .95;
-    torso(off, hem, c);
-    sleeve(off, long ? WD_ARM.upper + WD_ARM.fore - .02 : .22, c);
+  if(slot === 'top' || slot === 'outer'){
+    const layer = slot === 'outer', off = layer ? .03 : .016, long = k !== 'tee' && k !== 'polo', hem = layer ? .9 : .95;
+    torso(off, hem);
+    sleeve(off, long ? WD_ARM.upper + WD_ARM.fore - .02 : .22);
     if(k === 'polo' || k === 'shirt' || k === 'jacket'){   // collar
-      const cl = wdMesh(new T.TorusGeometry(.074 + off, .02, 10, 28), c, cloth, {pos: [0, 1.578, -.004]}); cl.rotation.x = Math.PI / 2; cl.scale.z = .82;
+      const cl = wdMesh(new T.TorusGeometry(.074 + off, .02, 10, 28), c, part([0, 1.578, -.004])); cl.rotation.x = Math.PI / 2; cl.scale.y = .82;
     }
-    if(k === 'hoodie'){                                      // hood resting on the shoulders
-      const h = wdMesh(new T.SphereGeometry(.15, 24, 16), c, cloth, {pos: [0, 1.57, -.1]}); h.scale.set(1.2, .62, .85);
+    if(k === 'hoodie'){                                      // the hood rests on the shoulders — outside a layer when one is worn over it
+      const h = wdMesh(new T.SphereGeometry(.15, 24, 16), c, part([0, 1.57, layered && !layer ? -.13 : -.1])); h.scale.set(layered && !layer ? 1.32 : 1.2, .62, .85);
     }
     if(k === 'shirt' || k === 'jacket'){                     // a placket / zip down the front
-      wdMesh(new T.BoxGeometry(k === 'jacket' ? .02 : .034, 1.56 - hem, .01), c.clone().multiplyScalar(.7), cloth, {pos: [0, (hem + 1.56) / 2, (.2 + off) * WD_Z + .008], ink: false});
+      wdMesh(new T.BoxGeometry(k === 'jacket' ? .02 : .034, 1.5 - hem, .01), c.clone().multiplyScalar(.7), part([0, (hem + 1.5) / 2, (.2 + off) * WD_Z + .008]), {ink: false});
     }
     if(k === 'sweat' || k === 'hoodie'){                     // ribbed hem
-      const r = wdMesh(new T.TorusGeometry(.174 + off, .014, 10, 36), c, cloth, {pos: [0, hem + .012, 0]}); r.rotation.x = Math.PI / 2; r.scale.z = WD_Z;
+      const r = wdMesh(new T.TorusGeometry(.174 + off, .014, 10, 36), c, part([0, hem + .012, 0])); r.rotation.x = Math.PI / 2; r.scale.y = WD_Z;
     }
-  };
-  dressTop(top, false); dressTop(outer, true);
-  if(bottom){
-    const c = col(bottom), shorts = bottom.kind === 'shorts', hemY = shorts ? .55 : .06;
-    wdMesh(wdLathe([[0, .86], [.16, .86], [.198, .93], [.2, 1.0], [.186, 1.09], [0, 1.1]]), c, cloth, {z: WD_Z});   // seat
-    [-1, 1].forEach(s => { const leg = new T.Group(); leg.position.set(s * WD_LEG.x, WD_LEG.y, 0); cloth.add(leg);
-      const L = WD_LEG.y - hemY;
+  } else if(slot === 'bottom'){
+    const shorts = k === 'shorts', hemY = shorts ? .55 : .09;
+    wdMesh(wdLathe([[0, .86], [.16, .86], [.198, .93], [.2, 1.0], [.186, 1.09], [0, 1.1]]), c, part(), {z: WD_Z});   // seat
+    [-1, 1].forEach(s => { const leg = part([s * WD_LEG.x, WD_LEG.y, 0], 1); const L = WD_LEG.y - hemY;
       wdMesh(wdLathe([[0, -L], [shorts ? .095 : .072, -L], [.084, -.45], [.095, -.2], [.1, -.04], [.09, .02], [0, .03]]), c, leg, {z: .9}); });
-  }
-  if(feet){
-    const c = col(feet);
-    [-1, 1].forEach(s => { const f = wdMesh(wdLathe([[0, 0], [.066, 0], [.074, .04], [.064, .085], [.04, .115], [0, .12]]), c, cloth, {pos: [s * WD_LEG.x, 0, .075], z: 2.1});
+  } else if(slot === 'feet'){
+    [-1, 1].forEach(s => { const f = wdMesh(wdLathe([[0, 0], [.066, 0], [.074, .04], [.064, .085], [.04, .115], [0, .12]]), c, part([s * WD_LEG.x, 0, .075]), {z: 2.1});
       const sole = wdMesh(new T.TorusGeometry(.064, .011, 8, 30), c.clone().multiplyScalar(.55), f, {pos: [0, .01, 0], ink: false}); sole.rotation.x = Math.PI / 2; });
-  }
-  if(head){
-    const c = col(head);
-    if(head.kind === 'cap'){
-      const d = wdMesh(new T.SphereGeometry(.113, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2), c, cloth, {pos: [0, 1.785, .008]}); d.scale.set(.95, 1.05, 1.02);
-      const b = wdMesh(new T.CylinderGeometry(.125, .125, .01, 24, 1, false, -Math.PI * .4, Math.PI * .8), c.clone().multiplyScalar(.85), cloth, {pos: [0, 1.79, .03]}); b.rotation.y = Math.PI; b.rotation.x = .1;
+  } else if(slot === 'head'){
+    if(k === 'cap'){
+      const d = wdMesh(new T.SphereGeometry(.113, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2), c, part([0, 1.785, .008])); d.scale.set(.95, 1.05, 1.02);
+      const b = wdMesh(new T.CylinderGeometry(.125, .125, .01, 24, 1, false, -Math.PI * .4, Math.PI * .8), c.clone().multiplyScalar(.85), part([0, 1.79, .03])); b.rotation.y = Math.PI; b.rotation.x = .1;
     } else {
-      const d = wdMesh(new T.SphereGeometry(.116, 28, 18, 0, Math.PI * 2, 0, Math.PI * .6), c, cloth, {pos: [0, 1.775, .008]}); d.scale.set(.94, 1.14, 1);
-      const band = wdMesh(new T.TorusGeometry(.108, .02, 10, 32), c, cloth, {pos: [0, 1.728, .008]}); band.rotation.x = Math.PI / 2; band.scale.set(.94, 1, .98);
+      const d = wdMesh(new T.SphereGeometry(.116, 28, 18, 0, Math.PI * 2, 0, Math.PI * .6), c, part([0, 1.775, .008])); d.scale.set(.94, 1.14, 1);
+      const band = wdMesh(new T.TorusGeometry(.108, .02, 10, 32), c, part([0, 1.728, .008])); band.rotation.x = Math.PI / 2; band.scale.set(.94, .98, 1);
     }
   }
 }
