@@ -22,3 +22,6 @@ create policy "own rows select" on outfits for select using (auth.uid() = user_i
 create policy "own rows insert" on outfits for insert with check (auth.uid() = user_id);
 create policy "own rows update" on outfits for update using (auth.uid() = user_id);
 create policy "own rows delete" on outfits for delete using (auth.uid() = user_id);
+
+-- v69: real garment measurements, typed in after taping the piece (null = estimated from the brand chart)
+alter table wardrobe_items add column if not exists length_cm numeric, add column if not exists width_cm numeric;

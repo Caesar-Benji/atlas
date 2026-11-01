@@ -882,14 +882,29 @@ main.wide{max-width:1500px}
 /* ---------- reduced motion: fewer and gentler, not none ---------- */
 /* ---------- Wardrobe (v67): the figure, the slots beside it, product rows ---------- */
 .wd-stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:18px;margin-bottom:26px}
-.wd-3d{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:4/5;max-height:560px;overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
-.wd-3d:active{cursor:grabbing}
-.wd-3d canvas{display:block;width:100%!important;height:100%!important}
-.wd-3d-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px}
-.wd-3d::after{content:"drag to turn · tap a piece";position:absolute;right:12px;top:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
-.wd-ctl{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:8px}
-.wd-ctl-l{display:flex;align-items:center;gap:8px;height:38px;padding:0 11px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
-.wd-ctl-l input{width:96px;margin:0;accent-color:var(--accent)}
+/* the paper doll: a 130 × 200 cm stage, everything placed in percent so it scales with the box */
+.wd-doll{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:130/200;max-height:620px;overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default}
+.wd-doll .wd-fig{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.wd-doll .wd-fig .body{fill:var(--surface);stroke:var(--text);stroke-width:.6;stroke-linejoin:round}
+.wd-doll .wd-fig .ink path{fill:none;stroke:var(--text);stroke-width:9.6;stroke-linecap:round;stroke-linejoin:round}
+.wd-doll .wd-fig .paper path{fill:none;stroke:var(--surface);stroke-width:8.4;stroke-linecap:round;stroke-linejoin:round}
+.wd-doll .wd-fig .shade{fill:rgba(26,26,24,.12)}
+.wd-doll .wd-fig .rule line{stroke:var(--muted);stroke-width:.35;vector-effect:non-scaling-stroke;opacity:.7}
+.wd-doll .wd-fig .rule text{font:3.6px/1 "Space Grotesk",system-ui,sans-serif;fill:var(--muted);text-anchor:end}
+.wd-g{position:absolute;pointer-events:none}
+.wd-g canvas,.wd-g img{display:block;width:100%;height:100%;object-fit:contain}
+.wd-g.raw img{mix-blend-mode:multiply}
+.wd-g.mirror canvas,.wd-g.mirror img{transform:scaleX(-1)}
+.wd-doll::after{content:"tap a piece";position:absolute;right:12px;top:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
+.wd-ctl{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:8px;z-index:2}
+/* the flat lay: each worn piece on its own, height proportional to its length */
+.wd-flat[hidden]{display:none}
+.wd-flat{grid-column:1/-1;display:flex;gap:14px;align-items:flex-end;overflow-x:auto;padding:14px 6px 6px;border-top:1px solid var(--border)}
+.wd-flat-p{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;text-align:center;width:max(96px,calc(var(--h) * 1.4px))}
+.wd-flat-i{height:calc(var(--h) * 1.6px);max-height:190px;display:flex;align-items:flex-end;justify-content:center}
+.wd-flat-i canvas,.wd-flat-i img{max-height:100%;max-width:100%;width:auto;height:100%;object-fit:contain}
+.wd-flat-p b{font-size:12px;font-weight:600;line-height:1.25}
+.wd-flat-p .m{font-size:11.5px;color:var(--muted)}
 .wd-side{display:flex;flex-direction:column;gap:14px;min-width:0}
 .wd-slots{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px}
 .wd-slot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-top:1px solid var(--border);cursor:pointer;transition:background-color var(--t-hover) ease}
@@ -940,7 +955,7 @@ main.wide{max-width:1500px}
 .wd-pick-b .shop{font-weight:500;color:var(--muted);font-size:12px}
 @media(max-width:760px){
   .wd-stage{grid-template-columns:minmax(0,1fr)}
-  .wd-3d{aspect-ratio:4/5;max-height:440px}
+  .wd-doll{max-height:520px}
   .grid.wd-picks{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wd-pick img{aspect-ratio:1/1}
 }
@@ -1033,7 +1048,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v68</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v69</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1132,7 +1147,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v68');
+console.log('Atlas v69');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -6224,11 +6239,12 @@ views.wardrobe = async function(){
       <img class="mast-art" src="hero-wardrobe.png" alt="" onerror="this.remove()">
     </div>
     <div class="wd-stage">
-      <div class="wd-3d" id="wd3d"><div class="wd-3d-note" id="wd3dNote">Loading the figure…</div></div>
+      <div class="wd-doll" id="wdDoll" onclick="wdDollTap(event)"><div class="wd-ctl"><button class="hd-ib" type="button" id="wdFlatBtn" onclick="wdFlatToggle()" title="Flat lay with measurements">${ICO.edit}<span>Flat lay</span></button></div></div>
       <div class="wd-side">
         <div class="wd-slots" id="wdSlots"></div>
         <div class="wd-outfits" id="wdOutfits"></div>
       </div>
+      <div class="wd-flat" id="wdFlat" hidden></div>
     </div>
     <div class="lead" id="wdLead"></div>
     <div class="sec"><div class="sec-h"><h3>Matches for what you have</h3><span class="n">in stock in your sizes · found 1 Nov</span></div>
@@ -6249,7 +6265,7 @@ views.wardrobe = async function(){
     ['top', 'bottom', 'feet'].forEach(s => { const x = window._wd.find(i => i.status === 'active' && wdSlotOf(i.kind) === s); if(x) fit[s] = x.id; });
     wdFitSet(fit); }
   wdRender();
-  wdStage();
+  wdDoll();
 };
 /* the table isn't there yet: say so, and hand over the SQL instead of a stack of errors */
 function wdMissing(e){
@@ -6258,7 +6274,6 @@ function wdMissing(e){
   const list = document.getElementById('wdList'); if(list) list.innerHTML = `<div class="empty">The wardrobe tables aren't in Supabase yet.<br>
     <button class="linkish" type="button" onclick="wdSqlSheet()">Show the SQL to run</button></div>`;
   const sub = document.getElementById('wdSub'); if(sub) sub.textContent = 'Not set up yet';
-  const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'Run the SQL first';
 }
 function wdSqlSheet(){
   openSheet({title: 'Create the wardrobe tables', sub: 'Supabase → SQL editor → paste → Run. Then reopen this section and press Import.',
@@ -6317,7 +6332,7 @@ function wdRender(){
   const lead = document.getElementById('wdLead'); if(lead) lead.innerHTML = [
     statTile('Pieces', mine.length, mine.length ? `${plural(mine.filter(x => wdSlotOf(x.kind) === 'top').length, 'top')} · ${mine.filter(x => wdSlotOf(x.kind) === 'bottom').length} bottoms · ${mine.filter(x => x.kind === 'shoes').length} shoes` : 'nothing imported yet'),
     statTile('Spent', NIS(Math.round(spent)), mine.length ? 'on what you kept' : ''),
-    statTile('Outfits', (window._wdOutfits || []).length, (window._wdOutfits || []).length ? 'saved looks' : 'dress the figure and save one'),
+    statTile('Measured', mine.filter(x => +x.length_cm).length + ' / ' + mine.filter(x => wdSlotOf(x.kind)).length, 'pieces with a taped length · the rest are brand-chart estimates'),
   ].join('');
   const sub = document.getElementById('wdSub'); if(sub) sub.textContent = mine.length ? `${plural(mine.length, 'piece')} · ${plural(brands.size, 'brand')}${newest ? ' · last bought ' + fmtDate(newest.bought_on) : ''}` : 'Empty wardrobe';
   wdSlotsRender(); wdOutfitsRender();
@@ -6357,11 +6372,9 @@ function wdWear(slot, id){
   const fit = wdFit(); fit[slot] = id || null;
   // a shirt pulled on as a layer comes off the top slot, and vice versa, so one piece isn't worn twice
   if(id){ Object.keys(fit).forEach(k => { if(k !== slot && fit[k] === id) fit[k] = null; }); }
-  wdFitSet(fit); wdSlotsRender(); wdDress(); wdRender();
-  if(id && W3) wdCamHold(slot);   // the piece lands on a still camera, then the view settles back to the whole figure
+  wdFitSet(fit); wdSlotsRender(); wdDollRender(); wdRender();
 }
 function wdPick(slot){
-  wdCamTo(slot);
   const kinds = WD_SLOTS.find(s => s[0] === slot)[2], fit = wdFit();
   const rows = (window._wd || []).filter(x => x.status === 'active' && kinds.includes(x.kind));
   const groups = kinds.map(k => [k, rows.filter(x => x.kind === k)]).filter(g => g[1].length);
@@ -6379,7 +6392,7 @@ function wdOutfitsRender(){
   el.innerHTML = `<div class="lbl">Outfits</div>` + (of.length ? `<div class="seg wd-chips">${of.map(o => `<button type="button" onclick="wdLoadOutfit('${o.id}')">${esc(short(o.name, 24))}</button>`).join('')}
     <button class="linkish" type="button" onclick="wdOutfitsSheet()">Manage</button></div>` : '<div class="n">Dress the figure, then Save this outfit</div>');
 }
-function wdLoadOutfit(id){ const o = (window._wdOutfits || []).find(x => x.id === id); if(!o) return; wdFitSet(Object.assign({head: null, outer: null, top: null, bottom: null, feet: null}, o.slots || {})); wdSlotsRender(); wdDress(); wdRender(); toast(o.name); }
+function wdLoadOutfit(id){ const o = (window._wdOutfits || []).find(x => x.id === id); if(!o) return; wdFitSet(Object.assign({head: null, outer: null, top: null, bottom: null, feet: null}, o.slots || {})); wdSlotsRender(); wdDollRender(); wdRender(); toast(o.name); }
 async function wdSaveOutfit(){
   const fit = wdFit();
   if(!Object.values(fit).some(Boolean)) return toast('Put something on the figure first');
@@ -6415,6 +6428,7 @@ function wdDetail(id){
     body: `<div class="wd-detail">${big ? `<img src="${esc(big)}" alt="" onerror="this.remove()">` : wdSwatchHtml(x.color, 'big')}
       <div class="kv"><span>Colour</span><span><span class="wd-dot" style="background:${x.color || '#8f867a'}"></span>${esc(x.color_name || '—')}</span>
         <span>Size</span><span>${esc(x.size || '—')}</span>
+        ${wdSlotOf(x.kind) ? `<span>Measures</span><span>${(() => { const d = wdDims(x); return `${Math.round(d.len)} × ${Math.round(d.w)} cm${d.est ? ' <span class="pill grey">estimated</span>' : ''}`; })()}</span>` : ''}
         <span>Bought</span><span>${x.bought_on ? fmtDate(x.bought_on) : '—'}${x.price != null ? ' · ' + wdNis(x.price) : ''}</span>
         <span>From</span><span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${WD_SHOP[x.source] || esc(x.source || '')}</a>` : esc(WD_SHOP[x.source] || x.source || '—')}${x.sku ? ' · ' + esc(x.sku) : ''}</span>
         ${x.status !== 'active' ? `<span>Status</span><span>${x.status === 'returned' ? 'Returned for a refund' : x.status === 'gift' ? 'Not yours' : esc(x.status)}</span>` : ''}
@@ -6422,13 +6436,13 @@ function wdDetail(id){
     foot: `<span class="n"><button class="linkish danger" type="button" onclick="sheetDel('wardrobe_items','${x.id}','wardrobe')">Delete</button></span>
       <button class="btn-ghost" type="button" onclick="closeSheet();wdItemSheet('${x.id}')">Edit</button>
       ${slot && x.status === 'active' ? (on ? `<button class="btn-ghost" type="button" onclick="wdWear('${on}',null);closeSheet()">Take off</button>`
-        : `<button class="btn" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet();document.getElementById('wd3d')?.scrollIntoView({behavior:'smooth',block:'center'})">Wear it</button>`) : ''}`});
+        : `<button class="btn" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet();document.getElementById('wdDoll')?.scrollIntoView({behavior:'smooth',block:'center'})">Wear it</button>`) : ''}`});
 }
 function wdItemSheet(id){
   const x = id ? wdById(id) : null; if(id && !x) return;
   window._editWd = x;
   const opt = (v, l, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`;
-  openSheet({title: x ? 'Edit piece' : 'Add piece', focus: x ? '' : 'wdName', sub: x ? '' : 'Anything you own that didn\'t come through an order',
+  openSheet({title: x ? 'Edit piece' : 'Add piece', focus: x ? '' : 'wdName', sub: x ? 'Length and width as laid flat — tape them to replace the estimate' : 'Anything you own that didn\'t come through an order',
     body: `<form id="wdForm" onsubmit="submitGuard(event, wdSave)"><div class="form-grid">
       <div style="grid-column:1/-1"><label class="lbl" for="wdName">Name</label><input id="wdName" placeholder="e.g. Grey crewneck" value="${x ? esc(x.name) : ''}"></div>
       <div><label class="lbl" for="wdBrand">Brand</label><input id="wdBrand" placeholder="e.g. Carhartt" value="${x && x.brand !== '—' ? esc(x.brand || '') : ''}"></div>
@@ -6436,6 +6450,8 @@ function wdItemSheet(id){
       <div><label class="lbl" for="wdColorName">Colour</label><input id="wdColorName" placeholder="e.g. Olive" value="${x ? esc(x.color_name || '') : ''}"></div>
       <div><label class="lbl" for="wdColor">Swatch</label><input id="wdColor" type="color" value="${x && x.color ? x.color : '#8f867a'}"></div>
       <div><label class="lbl" for="wdSize">Size</label><input id="wdSize" placeholder="XL / 34 / 45" value="${x ? esc(x.size || '') : ''}"></div>
+      <div><label class="lbl" for="wdLen">Length (cm)</label><input id="wdLen" type="number" inputmode="decimal" step="0.5" min="1" placeholder="${WD_DIMS[x ? x.kind : 'tee'] ? (WD_DIMS[x ? x.kind : 'tee'].len) + ' est.' : ''}" value="${x && x.length_cm != null ? x.length_cm : ''}"></div>
+      <div><label class="lbl" for="wdWid">Width (cm)</label><input id="wdWid" type="number" inputmode="decimal" step="0.5" min="1" placeholder="${WD_DIMS[x ? x.kind : 'tee'] ? (WD_DIMS[x ? x.kind : 'tee'].w) + ' est.' : ''}" value="${x && x.width_cm != null ? x.width_cm : ''}"></div>
       <div><label class="lbl" for="wdPrice">Paid (₪)</label><input id="wdPrice" type="number" inputmode="decimal" step="0.01" min="0" value="${x && x.price != null ? x.price : ''}"></div>
       <div><label class="lbl" for="wdDate">Bought on</label><input id="wdDate" type="date" value="${x ? x.bought_on || '' : todayStr()}"></div>
       <div><label class="lbl" for="wdStatus">Status</label><select id="wdStatus">${opt('active', 'In the wardrobe', x ? x.status : 'active')}${opt('returned', 'Returned', x ? x.status : '')}${opt('gift', 'Not mine', x ? x.status : '')}${opt('gone', 'Worn out / given away', x ? x.status : '')}</select></div>
@@ -6448,263 +6464,153 @@ function wdItemSheet(id){
 async function wdSave(){
   const name = wdName.value.trim(); if(!name) return toast('Name the piece');
   const row = {name, brand: wdBrand.value.trim() || null, kind: wdKind.value, color: wdColor.value, color_name: wdColorName.value.trim() || null, size: wdSize.value.trim() || null,
-    price: wdPrice.value === '' ? null : +wdPrice.value, bought_on: wdDate.value || null, status: wdStatus.value, url: wdUrl.value.trim() || null, img: wdImg.value.trim() || null, notes: wdNotes.value.trim() || null};
+    price: wdPrice.value === '' ? null : +wdPrice.value, bought_on: wdDate.value || null, length_cm: wdLen.value === '' ? null : +wdLen.value, width_cm: wdWid.value === '' ? null : +wdWid.value, status: wdStatus.value, url: wdUrl.value.trim() || null, img: wdImg.value.trim() || null, notes: wdNotes.value.trim() || null};
   const ed = window._editWd;
   const {error} = ed ? await sb.from('wardrobe_items').update(row).eq('id', ed.id) : await sb.from('wardrobe_items').insert(Object.assign({source: 'manual'}, row));
   if(error) return err(error);
-  window._editWd = null; closeSheet(); toast(ed ? 'Piece updated' : 'Piece added'); views.wardrobe();
+  window._editWd = null; closeSheet(); toast(ed ? 'Piece updated' : 'Piece added'); if(ed) W2.cache.delete(ed.id); views.wardrobe();
 }
 
-/* ================= WARDROBE 3D: the figure =================
-   Spec (numbers, not adjectives — the full directed prompt is in the project doc):
-   MODEL  artist's mannequin, 1.89 m, shoulders 0.49 m, waist 0.33 m, lathe profiles flattened to z×0.64, ball joints
-   LOOK   mat #eceae6 with a 10 cm grid in #dcd9d3; mannequin #d6d2c8 roughness .92; garments in the piece's colour, ink outline #1f1e1b
-   LIGHT  hemisphere sky #fff ground #b4b0a6 ×2.4; key #fff ×2.2 at (2.5, 4, 3.5) with a 2048 PCF-soft shadow; fill #fff ×.9 at (−3, 1.5, −2.5)
-   MOTION ease-out-expo fly-in 700 ms, parts staggered 70 ms, from 1.15× the explode vector; ease-in-expo fly-out 380 ms;
-          camera ease-in-out-quart 600 ms; explode ease-in-out-quart 500 ms; auto-turn 0.28 rad/s; no fades, no bounce on colour
-   CAMERA fov 24, pitch 0.03–0.55 rad, distance 1.6–6.5 m; overview (0, .96) at 5.1 m; per-slot framings in WD_CAM
-   BANNED fog, bloom, particles, turntable spin faster than 0.3 rad/s, anything fading in, more than one hero move at once
-   Every frame is a function of t (seconds since the stage opened); window.wdRenderAt(t) freezes one for review. */
-const WD_M = {
-  expoOut: u => u <= 0 ? 0 : u >= 1 ? 1 : 1 - Math.pow(2, -10 * u),
-  expoIn: u => u <= 0 ? 0 : u >= 1 ? 1 : Math.pow(2, 10 * u - 10),
-  quartInOut: u => u <= 0 ? 0 : u >= 1 ? 1 : u < .5 ? 8 * u * u * u * u : 1 - Math.pow(-2 * u + 2, 4) / 2,
-  flyIn: .7, flyOut: .38, stagger: .07, cam: .6, explode: .5, turn: .28, overshoot: 1.15,
-};
-/* where each slot's garment flies in from, and goes to when the outfit is laid out (metres, figure space) */
-const WD_EV = {head: [0, .34, 0], outer: [-.72, .06, .1], top: [.7, .02, .1], bottom: [0, -.02, .62], feet: [.36, 0, .52]};
-const WD_CAM = {all: [[0, .94, 0], 5.1, .13], head: [[0, 1.64, 0], 2.0, .08], outer: [[0, 1.27, 0], 2.9, .1], top: [[0, 1.27, 0], 2.9, .1], bottom: [[0, .68, 0], 3.0, .14], feet: [[0, .18, 0], 2.1, .3]};
-let W3 = null;
-async function wdThree(){
-  if(window.__THREE) return window.__THREE;
-  if(!window.__THREEp) window.__THREEp = import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js').then(m => (window.__THREE = m));
-  return window.__THREEp;
+/* ================= WARDROBE 2D: the paper doll =================
+   A front-view figure drawn to Benji's own numbers (189 cm, 87 kg, chest 112, waist 86) in centimetres, and the
+   shops' own flat product photos cut out of their white and laid on it at real scale: every piece is placed by its
+   length in cm. Photos come through the `img` Edge Function (CORS, signed-in only) so the page can read their
+   pixels; without it the photo is shown as-is. A measurement typed into the piece (length_cm / width_cm) replaces
+   the brand-chart default and drops the "estimated" tag. */
+const WD_PROXY = SUPABASE_URL + '/functions/v1/img?u=';
+/* flat-lay defaults by kind for his sizes (XL / 34 / 44 / EU 45): [total height as laid flat, width] in cm.
+   A hoodie's height includes the hood laid out above the shoulders; `body` is hem-to-shoulder for placing it. */
+const WD_DIMS = {tee: {len: 76, w: 60}, polo: {len: 77, w: 58}, shirt: {len: 80, w: 60}, sweat: {len: 75, w: 62}, hoodie: {len: 100, w: 63, body: 74}, jacket: {len: 76, w: 62},
+  shorts: {len: 52, w: 48}, pants: {len: 110, w: 46}, shoes: {len: 29.5, w: 12}, cap: {len: 16, w: 27}, beanie: {len: 24, w: 23}, bag: {len: 40, w: 30}, basics: {len: 20, w: 20}, other: {len: 70, w: 55}};
+const WD_SIZE_ADJ = {L: -2, XXL: 2, '2XL': 2, M: -4};
+function wdDims(x){ const d = WD_DIMS[x.kind] || WD_DIMS.other, adj = WD_SIZE_ADJ[(x.size || '').toUpperCase()] || 0;
+  return {len: +x.length_cm || d.len + (x.kind === 'shoes' ? 0 : adj), w: +x.width_cm || d.w, body: d.body, est: !(+x.length_cm)}; }
+/* the figure, in cm from the ground; the stage is 130 cm wide and 200 cm tall */
+const WD_BODY = {height: 189, shoulder: 155, armpit: 141, chest: 136, waist: 112, hip: 98, crotch: 86, knee: 52, ankle: 8, chin: 166, eye: 177, brow: 180};
+const WD_W = 130, WD_H = 200;
+const wdPx = cm => cm / WD_W * 100, wdPy = cm => (WD_H - cm) / WD_H * 100;   // cm → percent of the stage
+function wdFigureSvg(){
+  const B = WD_BODY, cx = WD_W / 2, Y = cm => WD_H - cm;
+  // right half of the trunk and legs, mirrored for the left; ink stroke on a paper fill
+  const half = [[6, B.chin], [6.5, 157], [23.5, B.shoulder], [20.5, B.armpit], [20, 134], [16.5, B.waist], [18.5, B.hip], [18, B.crotch], [17, 70], [13.5, B.knee], [14, 38], [9.5, 10], [11.5, 1.5], [2.5, 1.5], [3, 10], [2.5, 38], [3, B.knee], [2.5, 70], [1.5, 82], [0, B.crotch]];
+  const pts = half.map(([x, y]) => [cx + x, Y(y)]).concat(half.slice().reverse().map(([x, y]) => [cx - x, Y(y)]));
+  const trunk = 'M' + pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join('L') + 'Z';
+  const arm = s => `M${cx + s * 23.5},${Y(152)} L${cx + s * 31},${Y(124)} L${cx + s * 37},${Y(99)}`;
+  const hand = s => `<ellipse cx="${cx + s * 39}" cy="${Y(90)}" rx="4.6" ry="8.5" transform="rotate(${s * -15} ${cx + s * 39} ${Y(90)})"/>`;
+  const head = `<ellipse cx="${cx}" cy="${Y(177.5)}" rx="7.9" ry="11.6"/>`, neck = `<path d="M${cx - 5.6},${Y(168)} L${cx - 6.2},${Y(156.5)} L${cx + 6.2},${Y(156.5)} L${cx + 5.6},${Y(168)}"/>`;
+  const vb = `viewBox="0 0 ${WD_W} ${WD_H}" preserveAspectRatio="none"`;
+  const back = `<svg class="wd-fig back" ${vb} aria-hidden="true">
+    <ellipse class="shade" cx="${cx}" cy="${Y(0)}" rx="26" ry="2.6"/>
+    <g class="ink"><path d="${arm(1)}"/><path d="${arm(-1)}"/></g><g class="paper"><path d="${arm(1)}"/><path d="${arm(-1)}"/></g>
+    <path class="body" d="${trunk}"/>
+    <g class="rule">${Array.from({length: 20}, (_, i) => `<line x1="${WD_W - 7}" x2="${WD_W - (i % 5 ? 4.5 : 3)}" y1="${Y(i * 10)}" y2="${Y(i * 10)}"/>`).join('')}
+      <line x1="${WD_W - 7}" x2="${WD_W - 7}" y1="${Y(0)}" y2="${Y(190)}"/>
+      ${[0, 50, 100, 150, 189].map(v => `<text x="${WD_W - 8}" y="${Y(v) + 1.2}">${v}</text>`).join('')}</g></svg>`;
+  const front = `<svg class="wd-fig front" ${vb} aria-hidden="true"><g class="body">${head}${neck}${hand(1)}${hand(-1)}</g></svg>`;
+  return back + front;
 }
-async function wdStage(){
-  const el = document.getElementById('wd3d'); if(!el) return;
-  let T; try{ T = await wdThree(); }catch(e){ const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'The 3D figure needs a connection the first time'; return; }
-  if(!el.isConnected) return;
-  if(W3 && W3.el !== el) wdDispose();
-  if(W3) return wdDress();
-  let renderer; try{ renderer = new T.WebGLRenderer({antialias: true, alpha: true}); }catch(e){ const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'This browser can\'t draw the figure (no WebGL) — the pieces and outfits still work'; return; }
-  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-  renderer.outputColorSpace = T.SRGBColorSpace;
-  renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
-  el.querySelector('#wd3dNote')?.remove();
-  el.appendChild(renderer.domElement);
-  el.insertAdjacentHTML('beforeend', `<div class="wd-ctl"><label class="wd-ctl-l"><span>Lay out</span><input type="range" id="wdExplode" min="0" max="100" value="0" aria-label="Lay the outfit out"></label>
-    <button class="hd-ib" type="button" id="wdReset" title="Reset view">${ICO.redo}<span>View</span></button></div>`);
-  const scene = new T.Scene();
-  const camera = new T.PerspectiveCamera(24, 1, .1, 30);
-  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  scene.add(new T.HemisphereLight(0xffffff, 0xb4b0a6, 2.4));
-  const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(2.5, 4, 3.5); sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.near = .5; sun.shadow.camera.far = 12;
-  sun.shadow.camera.left = sun.shadow.camera.bottom = -1.7; sun.shadow.camera.right = sun.shadow.camera.top = 1.7; sun.shadow.bias = -.0004; sun.shadow.normalBias = .01;
-  scene.add(sun);
-  const fill = new T.DirectionalLight(0xffffff, .9); fill.position.set(-3, 1.5, -2.5); scene.add(fill);
-  // the mat: a 3 m square with a 10 cm grid, lines fading out towards the edge, in the page's own colours
-  const mc = document.createElement('canvas'); mc.width = mc.height = 1024; const mx = mc.getContext('2d');
-  mx.fillStyle = css('--surface2') || '#eceae6'; mx.fillRect(0, 0, 1024, 1024);
-  const line = css('--border') || '#dcd9d3', cell = 1024 / 30;
-  for(let i = 0; i <= 30; i++){ mx.strokeStyle = line; mx.lineWidth = i % 5 ? 1.2 : 2.2; mx.beginPath(); mx.moveTo(i * cell, 0); mx.lineTo(i * cell, 1024); mx.moveTo(0, i * cell); mx.lineTo(1024, i * cell); mx.stroke(); }
-  const fade = mx.createRadialGradient(512, 512, 380, 512, 512, 560); fade.addColorStop(0, 'rgba(236,234,230,0)'); fade.addColorStop(1, css('--surface2') || '#eceae6'); mx.fillStyle = fade; mx.fillRect(0, 0, 1024, 1024);
-  const matTex = new T.CanvasTexture(mc); matTex.colorSpace = T.SRGBColorSpace; matTex.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const mat = new T.Mesh(new T.PlaneGeometry(3, 3), new T.MeshBasicMaterial({map: matTex}));   // unlit, so the page colour stays exact
-  mat.rotation.x = -Math.PI / 2; scene.add(mat);
-  const shade = new T.Mesh(new T.PlaneGeometry(3, 3), new T.ShadowMaterial({opacity: .2}));          // the shadow lands on a separate sheet
-  shade.rotation.x = -Math.PI / 2; shade.position.y = .001; shade.receiveShadow = true; scene.add(shade);
-  const root = new T.Group(); scene.add(root);
-  W3 = {T, el, renderer, scene, camera, root, sun, body: new T.Group(), cloth: new T.Group(), slots: {}, leaving: [],
-    t: 0, t00: performance.now(), frozen: false, raf: 0,
-    yaw: .35, drag: null, lastT: null, camNext: null,
-    cam: {from: null, to: [WD_CAM.all[0].slice(), WD_CAM.all[1], WD_CAM.all[2]], t0: -9}, explode: {from: 0, to: 0, t0: -9},
-    reduced: matchMedia('(prefers-reduced-motion:reduce)').matches};
-  root.add(W3.body); root.add(W3.cloth);
-  wdBody();
-  // orbit: horizontal drag turns the figure, vertical tilts the camera, wheel/pinch zooms; a click (under 5 px) selects a garment
-  const ray = new T.Raycaster(), ndc = new T.Vector2();
-  el.addEventListener('pointerdown', e => { if(e.target.closest('.wd-ctl')) return; W3.cam = {from: null, to: wdCamNow(), t0: -9}; W3.drag = {x: e.clientX, y: e.clientY, yaw: W3.yaw, pitch: W3.cam.to[2], moved: false, id: e.pointerId}; el.setPointerCapture(e.pointerId); });
-  el.addEventListener('pointermove', e => { const d = W3 && W3.drag; if(!d) return;
-    const dx = e.clientX - d.x, dy = e.clientY - d.y; if(Math.hypot(dx, dy) > 5) d.moved = true;
-    if(d.moved){ W3.yaw = d.yaw + dx * .012; W3.cam.to[2] = Math.max(.03, Math.min(.55, d.pitch + dy * .004)); } });
-  const up = e => { const d = W3 && W3.drag; if(!d) return; W3.drag = null;
-    if(!d.moved){ const r = el.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
-      ray.setFromCamera(ndc, W3.camera); const hit = ray.intersectObjects(W3.cloth.children, true)[0];
-      let o = hit && hit.object; while(o && !o.userData.item) o = o.parent; if(o) wdDetail(o.userData.item); } };
-  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', () => { if(W3) W3.drag = null; });
-  el.addEventListener('wheel', e => { if(!W3) return; e.preventDefault(); const n = wdCamNow(); W3.cam = {from: null, to: [n[0], Math.max(1.6, Math.min(6.5, n[1] * (1 + Math.sign(e.deltaY) * .12))), n[2]], t0: -9}; }, {passive: false});
-  document.getElementById('wdExplode').addEventListener('input', e => { W3.explode = {from: +e.target.value / 100, to: +e.target.value / 100, t0: -9}; });
-  document.getElementById('wdReset').addEventListener('click', () => { wdCamTo('all'); W3.explode = {from: wdExplodeNow(), to: 0, t0: W3.t}; document.getElementById('wdExplode').value = 0; });
-  const size = () => { if(!W3) return; const w = el.clientWidth, h = el.clientHeight; if(!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
-  new ResizeObserver(size).observe(el); size();
-  const loop = now => {
-    if(!W3) return;
-    if(!el.isConnected) return wdDispose();                 // the router replaced #main
-    if(!W3.frozen) wdFrame((now - W3.t00) / 1000);
-    W3.raf = requestAnimationFrame(loop);
-  };
-  W3.raf = requestAnimationFrame(loop);
-  wdDress(true);
+let W2 = {cache: new Map(), jobs: new Map(), flat: false};
+/* fetch a shop photo through the proxy as a bitmap; a failure falls back to the plain image (no cut-out) */
+async function wdBitmap(url){
+  const {data} = await sb.auth.getSession(); const tok = data && data.session && data.session.access_token;
+  const r = await fetch(WD_PROXY + encodeURIComponent(url), {headers: {Authorization: 'Bearer ' + tok, apikey: SUPABASE_KEY}});
+  if(!r.ok) throw new Error('image ' + r.status);
+  return createImageBitmap(await r.blob());
 }
-/* one frame, from t alone (plus what the pointer has set): the turn, the flights, the explode, the camera */
-function wdFrame(t){
-  const {T, root, camera, slots} = W3; W3.t = t;
-  // the figure turns on its own at 0.28 rad/s unless a drag has hold of it
-  const dt = W3.lastT == null ? 0 : Math.min(.1, t - W3.lastT); W3.lastT = t;
-  if(!W3.reduced && !(W3.drag && W3.drag.moved)) W3.yaw += WD_M.turn * dt;
-  root.rotation.y = W3.yaw;
-  const ex = wdExplodeNow();
-  Object.values(slots).forEach(s => wdPlace(s, t, ex, false));
-  W3.leaving = W3.leaving.filter(s => { const done = wdPlace(s, t, ex, true); if(done) wdDrop(s.group); return !done; });
-  // camera: a spherical seat around the target, flown between framings; a queued return fires on time
-  if(W3.camNext && t >= W3.camNext.at){ wdCamTo(W3.camNext.slot); W3.camNext = null; }
-  const [tg, dist, pitch] = wdCamNow();
-  camera.position.set(tg[0], tg[1] + dist * Math.sin(pitch), tg[2] + dist * Math.cos(pitch)); camera.lookAt(tg[0], tg[1], tg[2]);
-  W3.renderer.render(W3.scene, camera);
-}
-function wdExplodeNow(){ const e = W3.explode, u = W3.reduced ? 1 : (W3.t - e.t0) / WD_M.explode; return e.from + (e.to - e.from) * WD_M.quartInOut(u); }
-function wdCamNow(){ const c = W3.cam; if(!c.from) return [c.to[0].slice(), c.to[1], c.to[2]];
-  const u = W3.reduced ? 1 : WD_M.quartInOut((W3.t - c.t0) / WD_M.cam), f = c.from, g = c.to, L = (a, b) => a + (b - a) * u;
-  return [[L(f[0][0], g[0][0]), L(f[0][1], g[0][1]), L(f[0][2], g[0][2])], L(f[1], g[1]), L(f[2], g[2])]; }
-function wdCamHold(slot){ const at = W3.cam.to, want = WD_CAM[slot]; const there = Math.abs(at[1] - want[1]) < .01 && Math.abs(at[0][1] - want[0][1]) < .01;
-  if(there) W3.camNext = {slot: 'all', at: W3.t + WD_M.flyIn + 1.1}; }
-function wdCamTo(slot, back){ if(!W3) return; const to = WD_CAM[slot] || WD_CAM.all; W3.cam = {from: wdCamNow(), to: [to[0].slice(), to[1], to[2]], t0: W3.t}; W3.camNext = back ? {slot: 'all', at: W3.t + WD_M.cam + 1.3} : null; }
-/* a garment's parts: each sits at its base position plus a share of the slot's explode vector;
-   on the way in that share starts at 1.15 and eases out to 0 (ease-out-expo, 70 ms between parts), on the way out it eases in to 1 */
-function wdPlace(s, t, ex, out){
-  const ev = WD_EV[s.slot]; let done = true;
-  s.parts.forEach((p, i) => {
-    const u = W3.reduced ? 1 : (t - s.t0 - p.userData.lag * WD_M.stagger) / (out ? WD_M.flyOut : WD_M.flyIn);
-    const k = out ? WD_M.expoIn(u) * WD_M.overshoot : (1 - WD_M.expoOut(u)) * WD_M.overshoot;
-    if(u < 1) done = false;
-    const e = out ? 0 : ex;
-    p.position.set(p.userData.b[0] + ev[0] * (k + e), p.userData.b[1] + ev[1] * (k + e), p.userData.b[2] + ev[2] * (k + e));
-  });
-  return done;
-}
-function wdDrop(g){ g.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); g.parent && g.parent.remove(g); }
-function wdDispose(){
-  if(!W3) return; cancelAnimationFrame(W3.raf);
-  W3.scene.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if(m.map) m.map.dispose(); m.dispose(); }); } });
-  W3.renderer.dispose(); W3.renderer.domElement.remove(); W3.el.querySelector('.wd-ctl')?.remove(); W3 = null;
-}
-/* review hook: freeze the stage at second t (the lab loop renders stills and contact sheets through this) */
-window.wdRenderAt = t => { if(!W3) return false; W3.frozen = true; W3.lastT = undefined; wdFrame(t); return true; };
-/* geometry helpers: a lathe from [radius, height] pairs (scaled flat on z so bodies are oval, not round),
-   each mesh paired with a slightly larger back-face copy in ink for the outline */
-function wdLathe(pts, seg){ const {T} = W3; const g = new T.LatheGeometry(pts.map(([r, y]) => new T.Vector2(Math.max(r, .0005), y)), seg || 36); g.computeVertexNormals(); return g; }
-function wdMat(color){ const {T} = W3; return new T.MeshStandardMaterial({color, roughness: .92, metalness: 0}); }
-const WD_INK = 0x1f1e1b;
-function wdMesh(geo, color, parent, o){
-  const {T} = W3; o = o || {};
-  const m = new T.Mesh(geo, wdMat(color)); if(o.z) m.scale.z = o.z; if(o.x) m.scale.x = o.x;
-  if(o.pos) m.position.set(...o.pos); if(o.rot) m.rotation.set(...o.rot);
-  m.castShadow = true;
-  if(o.ink !== false){
-    const ink = new T.Mesh(geo, new T.MeshBasicMaterial({color: WD_INK, side: T.BackSide}));
-    const k = o.ink || 1.035; ink.scale.set(k, 1, k);   // round the sides only: a vertical push would show as a dark band at every hem
-    m.add(ink);
+/* cut the garment out: flood the near-white (or transparent) background in from the edges, keep the rest,
+   then draw a thin ink line round it so a white tee still reads on paper. Returns the cropped canvas. */
+function wdCutout(bmp){
+  const W = bmp.width, H = bmp.height, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(bmp, 0, 0);
+  const id = x.getImageData(0, 0, W, H), d = id.data, bg = new Uint8Array(W * H), st = [];
+  const open = i => { const o = i * 4; if(d[o + 3] < 12) return true; const r = d[o], g = d[o + 1], b = d[o + 2]; return r > 241 && g > 241 && b > 241 && Math.max(r, g, b) - Math.min(r, g, b) < 10; };
+  for(let i = 0; i < W; i++){ st.push(i, (H - 1) * W + i); } for(let j = 0; j < H; j++){ st.push(j * W, j * W + W - 1); }
+  while(st.length){ const i = st.pop(); if(bg[i] || !open(i)) continue; bg[i] = 1; const xx = i % W;
+    if(xx) st.push(i - 1); if(xx < W - 1) st.push(i + 1); if(i >= W) st.push(i - W); if(i < W * (H - 1)) st.push(i + W); }
+  let x0 = W, y0 = H, x1 = -1, y1 = -1; const edge = [];
+  for(let i = 0; i < W * H; i++){
+    if(bg[i]){ d[i * 4 + 3] = 0; continue; }
+    const xx = i % W, yy = (i / W) | 0; if(xx < x0) x0 = xx; if(xx > x1) x1 = xx; if(yy < y0) y0 = yy; if(yy > y1) y1 = yy;
+    if((xx && bg[i - 1]) || (xx < W - 1 && bg[i + 1]) || (i >= W && bg[i - W]) || (i < W * (H - 1) && bg[i + W])) edge.push(i);
   }
-  parent.add(m); return m;
+  if(x1 < 0) return null;
+  const t = Math.max(1, Math.round(W / 420));   // ink line ≈ 2.4 px per 1000 px of photo
+  edge.forEach(i => { const xx = i % W, yy = (i / W) | 0; for(let dy = -t; dy <= t; dy++) for(let dx = -t; dx <= t; dx++){ const X = xx + dx, Yy = yy + dy; if(X < 0 || Yy < 0 || X >= W || Yy >= H) continue; const k = Yy * W + X; if(bg[k]) continue; d[k * 4] = 31; d[k * 4 + 1] = 30; d[k * 4 + 2] = 27; d[k * 4 + 3] = 255; } });
+  x.putImageData(id, 0, 0);
+  const out = document.createElement('canvas'); out.width = x1 - x0 + 1; out.height = y1 - y0 + 1;
+  out.getContext('2d').drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return out;
 }
-const WD_SKIN = 0xd6d2c8, WD_Z = .64;
-/* an artist's mannequin: ball joints at the shoulders, elbows, hips and knees, flat-oval limbs between them.
-   Heights in metres, feet on y = 0; shoulders 49 cm across, waist 33, like the man it stands in for. */
-const WD_ARM = {x: .238, y: 1.49, tilt: .07, upper: .31, fore: .27};     // shoulder joint, segment lengths
-const WD_LEG = {x: .1, y: .93, thigh: .45, calf: .41};
-function wdBody(){
-  const {T, body} = W3, sk = WD_SKIN;
-  const ball = (r, pos, parent) => wdMesh(new T.SphereGeometry(r, 24, 16), sk, parent || body, {pos, ink: 1.05});
-  // pelvis and torso, one lathe each so the waist reads as a waist
-  wdMesh(wdLathe([[0, .86], [.13, .86], [.178, .93], [.182, 1.0], [.168, 1.08], [0, 1.09]]), sk, body, {z: WD_Z});
-  wdMesh(wdLathe([[0, 1.06], [.165, 1.06], [.168, 1.14], [.196, 1.3], [.215, 1.42], [.228, 1.49], [.2, 1.535], [.12, 1.565], [.06, 1.575], [0, 1.578]]), sk, body, {z: WD_Z});
-  wdMesh(new T.CylinderGeometry(.052, .06, .12, 24), sk, body, {pos: [0, 1.615, 0], z: .85});
-  const head = wdMesh(new T.SphereGeometry(.105, 32, 24), sk, body, {pos: [0, 1.775, .012], ink: 1.03}); head.scale.set(.9, 1.1, .96);
-  [-1, 1].forEach(s => {
-    ball(.052, [s * WD_ARM.x, WD_ARM.y, 0]);
-    const arm = new T.Group(); arm.position.set(s * WD_ARM.x, WD_ARM.y, 0); arm.rotation.z = s * -WD_ARM.tilt; body.add(arm);
-    wdMesh(wdLathe([[0, -WD_ARM.upper], [.04, -WD_ARM.upper], [.046, -.18], [.05, -.04], [.04, 0], [0, .01]]), sk, arm, {z: .85});
-    ball(.042, [0, -WD_ARM.upper, 0], arm);
-    const fore = new T.Group(); fore.position.y = -WD_ARM.upper; fore.rotation.z = s * -.04; arm.add(fore);
-    wdMesh(wdLathe([[0, -WD_ARM.fore], [.03, -WD_ARM.fore], [.036, -.14], [.04, -.02], [0, 0]]), sk, fore, {z: .85});
-    const hand = wdMesh(new T.SphereGeometry(.042, 20, 14), sk, fore, {pos: [0, -WD_ARM.fore - .045, .01], ink: 1.04}); hand.scale.set(.7, 1.3, .45);
-    ball(.075, [s * WD_LEG.x, WD_LEG.y, 0]);
-    const leg = new T.Group(); leg.position.set(s * WD_LEG.x, WD_LEG.y, 0); body.add(leg);
-    wdMesh(wdLathe([[0, -WD_LEG.thigh], [.06, -WD_LEG.thigh], [.068, -.28], [.082, -.06], [.07, 0], [0, .01]]), sk, leg, {z: .88});
-    ball(.062, [0, -WD_LEG.thigh, 0], leg);
-    const calf = new T.Group(); calf.position.y = -WD_LEG.thigh; leg.add(calf);
-    wdMesh(wdLathe([[0, -WD_LEG.calf], [.04, -WD_LEG.calf], [.052, -.24], [.062, -.1], [.055, 0], [0, .01]]), sk, calf, {z: .88});
-    wdMesh(wdLathe([[0, 0], [.055, 0], [.06, .045], [.045, .08], [0, .085]]), sk, body, {pos: [s * WD_LEG.x, 0, .06], z: 2.1});   // foot: a flat oval
-  });
+const wdBig = x => x.img && x.img.startsWith(WD_TX_IMG) ? x.img.replace(WD_TX_IMG, WD_TX_BIG) : x.img;
+async function wdPiece(x){
+  if(W2.cache.has(x.id)) return W2.cache.get(x.id);
+  if(W2.jobs.has(x.id)) return W2.jobs.get(x.id);
+  const job = (async () => { let cv = null, cut = true;
+    try{ cv = wdCutout(await wdBitmap(wdBig(x))); }catch(e){ cut = false; cv = null; }
+    const r = {canvas: cv, cut}; W2.cache.set(x.id, r); W2.jobs.delete(x.id); return r; })();
+  W2.jobs.set(x.id, job); return job;
 }
-/* the clothes. Each slot is a group tagged with its piece; every part of a garment is its own sub-group with a
-   base position, so it can fly in from the slot's explode vector and lay out along it. Garments are the body's
-   own profile pushed out 16 mm (a layer: 30 mm) so they hang on the figure instead of floating round it. */
-function wdDress(first){
-  if(!W3) return;
-  const {T, cloth, slots} = W3;
-  const fit = wdFit();
-  const slotsNow = ['head', 'outer', 'top', 'bottom', 'feet'];
-  // what changed: a slot whose piece differs is flown out, then its new piece flown in
-  const outerChanged = (slots.outer ? slots.outer.item : null) !== (fit.outer || null);
-  slotsNow.forEach(slot => { const cur = slots[slot], id = fit[slot] || null;
-    // a hoodie's hood is drawn over or under the layer, so the top is redrawn (without a flight) when the layer changes
-    const redo = slot === 'top' && outerChanged && cur && (wdById(cur.item) || {}).kind === 'hoodie';
-    if(cur && cur.item === id && !redo) return;
-    if(redo){ delete slots[slot]; wdDrop(cur.group); }
-    else
-    if(cur){ delete slots[slot]; cur.t0 = W3.t; W3.leaving.push(cur); }
-    const x = id ? wdById(id) : null; if(!x) return;
-    const g = new T.Group(); g.userData.item = x.id; cloth.add(g);
-    const s = {slot, item: x.id, group: g, parts: [], t0: first || redo ? W3.t - 9 : W3.t};
-    slots[slot] = s;
-    const part = (pos, lag) => { const p = new T.Group(); p.userData.b = pos || [0, 0, 0]; p.userData.lag = lag || 0; p.position.set(...p.userData.b); g.add(p); s.parts.push(p); return p; };
-    wdGarment(x, slot, part, !!fit.outer);
-  });
-  if(first) Object.values(slots).forEach(s => s.t0 = W3.t - 9);
+function wdDoll(){
+  const el = document.getElementById('wdDoll'); if(!el) return;
+  if(!el.querySelector('.wd-fig')) el.insertAdjacentHTML('afterbegin', wdFigureSvg());
+  wdDollRender();
 }
-function wdGarment(x, slot, part, layered){
-  const {T} = W3, c = new T.Color(x.color || '#8f867a'), k = x.kind;
-  const torso = (off, hem) => wdMesh(wdLathe([[0, hem], [.19 + off, hem], [.19 + off, 1.0], [.172 + off, 1.1], [.2 + off, 1.3], [.218 + off, 1.42], [.226 + off, 1.47], [.19 + off, 1.525], [.12 + off * .4, 1.56], [.065, 1.585], [0, 1.598]]), c, part(), {z: WD_Z});
-  const sleeve = (off, len) => [-1, 1].forEach(s => { const a = part([s * WD_ARM.x, WD_ARM.y, 0], 1); a.rotation.z = s * -WD_ARM.tilt;
-    const l = Math.min(len, WD_ARM.upper);
-    wdMesh(wdLathe([[0, -l], [.052 + off, -l], [.056 + off, -.18], [.06 + off, -.04], [.046 + off, .02], [0, .03]]), c, a, {z: .9});
-    if(len > WD_ARM.upper){ const f = new T.Group(); f.position.y = -WD_ARM.upper; f.rotation.z = s * -.04; a.add(f);
-      const fl = len - WD_ARM.upper; wdMesh(wdLathe([[0, -fl], [.04 + off, -fl], [.046 + off, -.12], [.05 + off, 0], [.045 + off, .04], [0, .05]]), c, f, {z: .9}); } });
-  if(slot === 'top' || slot === 'outer'){
-    const layer = slot === 'outer', off = layer ? .03 : .016, long = k !== 'tee' && k !== 'polo', hem = layer ? .9 : .95;
-    torso(off, hem);
-    sleeve(off, long ? WD_ARM.upper + WD_ARM.fore - .02 : .22);
-    if(k === 'polo' || k === 'shirt' || k === 'jacket'){   // collar
-      const cl = wdMesh(new T.TorusGeometry(.074 + off, .02, 10, 28), c, part([0, 1.578, -.004])); cl.rotation.x = Math.PI / 2; cl.scale.y = .82;
-    }
-    if(k === 'hoodie'){                                      // the hood rests on the shoulders — outside a layer when one is worn over it
-      const h = wdMesh(new T.SphereGeometry(.15, 24, 16), c, part([0, 1.57, layered && !layer ? -.13 : -.1])); h.scale.set(layered && !layer ? 1.32 : 1.2, .62, .85);
-    }
-    if(k === 'shirt' || k === 'jacket'){                     // a placket / zip down the front
-      wdMesh(new T.BoxGeometry(k === 'jacket' ? .02 : .034, 1.5 - hem, .01), c.clone().multiplyScalar(.7), part([0, (hem + 1.5) / 2, (.2 + off) * WD_Z + .008]), {ink: false});
-    }
-    if(k === 'sweat' || k === 'hoodie'){                     // ribbed hem
-      const r = wdMesh(new T.TorusGeometry(.174 + off, .014, 10, 36), c, part([0, hem + .012, 0])); r.rotation.x = Math.PI / 2; r.scale.y = WD_Z;
-    }
-  } else if(slot === 'bottom'){
-    const shorts = k === 'shorts', hemY = shorts ? .55 : .09;
-    wdMesh(wdLathe([[0, .86], [.16, .86], [.198, .93], [.2, 1.0], [.186, 1.09], [0, 1.1]]), c, part(), {z: WD_Z});   // seat
-    [-1, 1].forEach(s => { const leg = part([s * WD_LEG.x, WD_LEG.y, 0], 1); const L = WD_LEG.y - hemY;
-      wdMesh(wdLathe([[0, -L], [shorts ? .095 : .072, -L], [.084, -.45], [.095, -.2], [.1, -.04], [.09, .02], [0, .03]]), c, leg, {z: .9}); });
-  } else if(slot === 'feet'){
-    [-1, 1].forEach(s => { const f = wdMesh(wdLathe([[0, 0], [.066, 0], [.074, .04], [.064, .085], [.04, .115], [0, .12]]), c, part([s * WD_LEG.x, 0, .075]), {z: 2.1});
-      const sole = wdMesh(new T.TorusGeometry(.064, .011, 8, 30), c.clone().multiplyScalar(.55), f, {pos: [0, .01, 0], ink: false}); sole.rotation.x = Math.PI / 2; });
-  } else if(slot === 'head'){
-    if(k === 'cap'){
-      const d = wdMesh(new T.SphereGeometry(.113, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2), c, part([0, 1.785, .008])); d.scale.set(.95, 1.05, 1.02);
-      const b = wdMesh(new T.CylinderGeometry(.125, .125, .01, 24, 1, false, -Math.PI * .4, Math.PI * .8), c.clone().multiplyScalar(.85), part([0, 1.79, .03])); b.rotation.y = Math.PI; b.rotation.x = .1;
-    } else {
-      const d = wdMesh(new T.SphereGeometry(.116, 28, 18, 0, Math.PI * 2, 0, Math.PI * .6), c, part([0, 1.775, .008])); d.scale.set(.94, 1.14, 1);
-      const band = wdMesh(new T.TorusGeometry(.108, .02, 10, 32), c, part([0, 1.728, .008])); band.rotation.x = Math.PI / 2; band.scale.set(.94, .98, 1);
-    }
+/* place every worn piece: tops hang from the shoulder line by their body length, bottoms from the waistband,
+   shoes on the ground, hats on the brow; the photo is scaled so its cut-out height equals the length in cm */
+async function wdDollRender(){
+  const el = document.getElementById('wdDoll'); if(!el) return;
+  const fit = wdFit(), B = WD_BODY, seq = (el._seq = (el._seq || 0) + 1);
+  const layer = s => el.querySelector(`.wd-g[data-slot="${s}"]`);
+  for(const slot of ['bottom', 'top', 'outer', 'feet', 'head']){
+    const x = fit[slot] ? wdById(fit[slot]) : null, cur = layer(slot);
+    if(!x){ if(cur) cur.remove(); continue; }
+    const d = wdDims(x);
+    if(cur && cur.dataset.item === x.id && cur.dataset.len === String(d.len)) continue;
+    const piece = await wdPiece(x); if(el._seq !== seq) return;
+    const old = layer(slot); if(old) old.remove();
+    const g = document.createElement('div'); g.className = 'wd-g' + (piece.cut ? '' : ' raw'); g.dataset.slot = slot; g.dataset.item = x.id; g.dataset.len = String(d.len);
+    const img = piece.canvas || Object.assign(new Image(), {src: wdBig(x), alt: ''}); g.appendChild(img);
+    const ar = piece.canvas ? piece.canvas.width / piece.canvas.height : 3 / 4;   // a raw photo is assumed 3:4
+    let hcm, wcm, left, top;
+    if(slot === 'top' || slot === 'outer'){ hcm = d.len; wcm = hcm * ar; const hem = B.shoulder - (d.body || d.len) + (slot === 'outer' ? -1 : 0); top = hem + hcm; left = WD_W / 2 - wcm / 2; }
+    else if(slot === 'bottom'){ hcm = d.len; wcm = hcm * ar; top = 106; left = WD_W / 2 - wcm / 2; }
+    else if(slot === 'head'){ wcm = d.w; hcm = wcm / ar; top = (x.kind === 'beanie' ? 174 : B.brow) + hcm - (x.kind === 'beanie' ? 4 : 2); left = WD_W / 2 - wcm / 2; }
+    else { wcm = d.len; hcm = wcm / ar; top = hcm; left = WD_W / 2 - 13 - wcm / 2; }   // shoes: a side-view pair, one each side
+    g.style.left = wdPx(left) + '%'; g.style.top = wdPy(top) + '%'; g.style.width = wdPx(wcm) + '%'; g.style.height = (hcm / WD_H * 100) + '%';
+    if(slot === 'feet'){ const g2 = g.cloneNode(false); g2.classList.add('mirror'); g2.style.left = wdPx(WD_W / 2 + 13 - wcm / 2) + '%';
+      if(piece.canvas){ const c2 = document.createElement('canvas'); c2.width = piece.canvas.width; c2.height = piece.canvas.height; c2.getContext('2d').drawImage(piece.canvas, 0, 0); g2.appendChild(c2); }
+      else g2.appendChild(Object.assign(new Image(), {src: wdBig(x), alt: ''}));
+      el.appendChild(g2); }
+    g.title = x.name + ' · ' + (d.est ? 'estimated ' : '') + Math.round(d.len) + ' cm';
+    el.appendChild(g);
+    // keep the layer order fixed whatever arrived first
+    ['bottom', 'top', 'outer', 'feet', 'head'].forEach(sl => el.querySelectorAll(`.wd-g[data-slot="${sl}"]`).forEach(n => el.appendChild(n)));
+    el.querySelector('.wd-fig.front') && el.appendChild(el.querySelector('.wd-fig.front'));
   }
+  wdFlatRender();
+}
+/* the flat lay under the figure: each worn piece on its own, with its measurements, for checking against a tape */
+function wdFlatRender(){
+  const el = document.getElementById('wdFlat'); if(!el) return;
+  const fit = wdFit(), rows = ['head', 'outer', 'top', 'bottom', 'feet'].map(s => fit[s] && wdById(fit[s])).filter(Boolean);
+  if(!W2.flat || !rows.length){ el.hidden = true; el.innerHTML = ''; return; }
+  el.hidden = false;
+  el.innerHTML = rows.map(x => { const d = wdDims(x), p = W2.cache.get(x.id);
+    return `<div class="wd-flat-p" role="button" tabindex="0" onclick="wdDetail('${x.id}')" onkeydown="if(event.key==='Enter'){wdDetail('${x.id}')}" style="--h:${d.len}">
+      <div class="wd-flat-i"></div><b>${esc(short(x.name, 28))}</b><span class="m">${Math.round(d.len)} × ${Math.round(d.w)} cm${d.est ? ' · estimated' : ''}</span></div>`; }).join('');
+  rows.forEach((x, i) => { const p = W2.cache.get(x.id), box = el.children[i].querySelector('.wd-flat-i'); if(p && p.canvas){ const c = document.createElement('canvas'); c.width = p.canvas.width; c.height = p.canvas.height; c.getContext('2d').drawImage(p.canvas, 0, 0); box.appendChild(c); }
+    else box.innerHTML = `<img src="${esc(wdBig(x))}" alt="">`; });
+}
+function wdFlatToggle(){ W2.flat = !W2.flat; document.getElementById('wdFlatBtn')?.classList.toggle('on', W2.flat); wdFlatRender(); }
+/* a tap on the figure opens the piece under the finger: topmost layer first, by the cut-out's alpha */
+function wdDollTap(e){
+  const el = document.getElementById('wdDoll'); if(!el) return;
+  const layers = [...el.querySelectorAll('.wd-g')].reverse();
+  for(const g of layers){ const r = g.getBoundingClientRect(); if(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) continue;
+    const c = g.querySelector('canvas'); if(!c){ return wdDetail(g.dataset.item); }
+    const px = (e.clientX - r.left) / r.width * c.width, py = (e.clientY - r.top) / r.height * c.height;
+    const a = c.getContext('2d').getImageData(g.classList.contains('mirror') ? c.width - 1 - px : px, py, 1, 1).data[3];
+    if(a > 30) return wdDetail(g.dataset.item); }
 }
 
 /* ================= INTRO: Atlas holds the line (plays on a cold load, before the login) =================
