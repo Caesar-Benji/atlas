@@ -356,6 +356,7 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .progress-track{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .progress-fill{height:100%;background:var(--grad);border-radius:99px}   /* no transition: every bar is re-rendered, never updated in place, so the old width transition never ran */
 .chart-box{position:relative;height:240px}
+.chart-box.short{height:170px}
 .chart-box.none{height:auto}
 .chart-box.none canvas{display:none}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:11px 20px;border-radius:11px;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:transform 400ms ease,opacity 400ms ease;z-index:50;max-width:calc(100vw - 32px);text-align:center}
@@ -938,6 +939,7 @@ main.wide{max-width:1500px}
 .wd-row .t .pill{margin-left:6px;vertical-align:1px}
 .wd-group{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:18px 6px 4px}
 .wd-group:first-child{padding-top:6px}
+.wd-group .n{margin-left:8px;font-weight:500;text-transform:none;letter-spacing:0;font-size:11.5px}
 .wd-filters{margin:4px 0 8px}
 .wd-pick-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
 .wd-pick-grid .pick{position:relative;padding:9px 6px 8px}
@@ -964,6 +966,55 @@ main.wide{max-width:1500px}
   .grid.wd-picks{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wd-pick img{aspect-ratio:1/1}
 }
+/* ---------- App screens (v72) ----------
+   Every section is a small app: a segmented control under the masthead picks one screen at a time
+   (.pane) instead of the whole section scrolling past as one long page. The first screen is the
+   section's "today" — the two or three numbers that matter and a short list that opens the
+   full one. The choice is remembered per section and lives in the hash (#gym/history). */
+.subnav{position:sticky;top:var(--tb,54px);z-index:20;display:flex;gap:2px;padding:3px;margin:-6px 0 20px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;isolation:isolate}
+.subnav button{flex:1 1 0;min-width:0;position:relative;z-index:1;border:none;background:transparent;color:var(--muted);border-radius:9px;padding:8px 6px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color var(--t-hover) ease}
+.subnav button.on{color:var(--text)}
+.subnav button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* the ink is one pill that slides under the chosen label; the labels never move */
+.subnav .subnav-ink{position:absolute;top:3px;bottom:3px;left:var(--l,3px);width:var(--w,0px);background:var(--surface);border-radius:9px;box-shadow:0 1px 2px rgba(26,26,24,.12),0 0 0 1px rgba(26,26,24,.04);transition:left var(--t-sheet) var(--ease-out),width var(--t-sheet) var(--ease-out)}
+.subnav.noink .subnav-ink{transition:none}
+@media(hover:hover) and (pointer:fine){ .subnav button:not(.on):hover{color:var(--text)} }
+.pane{display:none}
+.pane.on{display:block}
+.pane.from-r{animation:paneR 220ms var(--ease-out) both}
+.pane.from-l{animation:paneL 220ms var(--ease-out) both}
+@keyframes paneR{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes paneL{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+/* a "see all" row: the last line of a short list, quieter than the rows above it */
+.lrow.more{grid-template-columns:minmax(0,1fr) auto;color:var(--muted);font-weight:600;font-size:13.5px;padding:12px 6px 10px}
+.lrow.more .t{font-weight:600;font-size:13.5px;color:var(--muted)}
+.lrow.more:active{background:var(--surface2)}
+@media(hover:hover) and (pointer:fine){ .lrow.more:hover .t,.lrow.more:hover .chev{color:var(--text)} }
+/* a folded block: "Show 5 cashed" and the rows unfold under it */
+.fold{display:none}
+.fold.open{display:contents}
+/* the first screen of a section ends with its list; the pane itself carries no bottom rule */
+.pane .sec:last-child{margin-bottom:8px}
+@media(min-width:761px){
+  /* on a wide page the control is a compact strip at the left, not a bar across the whole width */
+  .subnav{display:inline-flex;width:auto}
+  .subnav button{flex:0 0 auto;min-width:112px;padding:8px 22px}
+}
+@media(max-width:760px){
+  /* the top bar already names the section on a phone: the masthead keeps the status line, the action and the engraving */
+  .mast h2{display:none}
+  .mast{padding-bottom:14px;margin-bottom:14px;align-items:center}
+  .mast-sub{font-size:13.5px;line-height:1.4}
+  .mast-art{height:72px}
+  .subnav{margin:-2px 0 16px;top:var(--tb,48px)}
+  .subnav button{padding:9px 4px;font-size:12.5px}
+  .lead{margin-bottom:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  .pane.from-r,.pane.from-l{animation:tileIn 150ms ease both}
+  .subnav .subnav-ink{transition:none}
+}
+
 @media(prefers-reduced-motion:reduce){
   .logo path{animation:none!important;stroke-dashoffset:0}
   .auth-hero,.auth-card{animation:fadeUp 300ms ease both}
@@ -1053,7 +1104,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v71</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v72</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1152,7 +1203,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v71');
+console.log('Atlas v72');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1244,14 +1295,21 @@ const views = {};
 let _renderSeq = 0;
 const renderStart = () => ++_renderSeq;
 const stale = seq => seq !== _renderSeq;
-window.addEventListener('hashchange', () => { const t = location.hash.slice(1) || 'home'; if(t !== window._curTab) go(t); });
+window.addEventListener('hashchange', () => {
+  const t = location.hash.slice(1) || 'home', [base, pane] = t.split('/');
+  if(base !== window._curTab) go(t);
+  else if(pane && pane !== paneCur(base)) paneShow(base, pane);   // the same section, another screen (a typed hash, or back/forward)
+});
 /* 'home' is the hub — Atlas centred with the six sections orbiting him.
-   Every other tab hides the hub and swaps in the section shell (top bar + #main). */
+   Every other tab hides the hub and swaps in the section shell (top bar + #main).
+   A hash can name a screen inside the section too: #gym/history. */
 function go(tab){
+  let pane = null; [tab, pane] = (tab || 'home').split('/');
   if(tab !== 'home' && !views[tab]) tab = 'home';
+  if(pane) paneWant(tab, pane);
   if(typeof liveOpenNow === 'function' && liveOpenNow()) liveClose(true);   // the back button minimises the workout room
   window._curTab = tab;
-  location.hash = tab;
+  location.hash = tab + (pane ? '/' + pane : '');
   const home = tab === 'home', wasOpen = !document.getElementById('shell').classList.contains('hidden');
   document.getElementById('hub').classList.toggle('hidden', !home);
   document.getElementById('shell').classList.toggle('hidden', home);
@@ -1291,6 +1349,62 @@ function navCenter(smooth){
   setTimeout(chk, 0); })();
 document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => go(b.dataset.tab)));
 document.getElementById('homeBtn').addEventListener('click', () => go('home'));
+
+/* ================= SCREENS INSIDE A SECTION (v72) =================
+   subnav(section, [[key, label], …]) renders the segmented control; each screen is a
+   <div class="pane" data-sec data-pane>. All of them are in the DOM (the render functions keep
+   writing into their ids), only the chosen one shows. paneInit() runs once the section has
+   painted: it shows the remembered screen and sizes the sliding ink. */
+const PANES = {};
+function paneWant(sec, key){ window._paneWant = window._paneWant || {}; window._paneWant[sec] = key; }
+function paneCur(sec){
+  const ps = PANES[sec] || []; let k = window._paneWant && window._paneWant[sec];
+  if(!k){ try{ k = localStorage.getItem('atlas_pane_' + sec); }catch(e){} }
+  return ps.some(p => p[0] === k) ? k : (ps[0] || [])[0];
+}
+function subnav(sec, panes){
+  PANES[sec] = panes; const cur = paneCur(sec);
+  return `<nav class="subnav noink" data-sec="${sec}" role="tablist" aria-label="${sec} screens">${panes.map(([k, l]) =>
+    `<button type="button" role="tab" class="${k === cur ? 'on' : ''}" data-pane="${k}" aria-selected="${k === cur}" onclick="paneShow('${sec}','${k}')">${l}</button>`).join('')}<span class="subnav-ink" aria-hidden="true"></span></nav>`;
+}
+const pane = (sec, key, inner, cls) => `<div class="pane${key === paneCur(sec) ? ' on' : ''}${cls ? ' ' + cls : ''}" data-sec="${sec}" data-pane="${key}" role="tabpanel">${inner}</div>`;
+function paneInk(nav){
+  const on = nav.querySelector('button.on'); if(!on) return;
+  nav.style.setProperty('--l', on.offsetLeft + 'px'); nav.style.setProperty('--w', on.offsetWidth + 'px');
+}
+function paneInit(sec){
+  const nav = document.querySelector(`.subnav[data-sec="${sec}"]`); if(!nav) return;
+  const tb = document.querySelector('.topbar'); if(tb) document.documentElement.style.setProperty('--tb', tb.offsetHeight + 'px');
+  paneInk(nav); requestAnimationFrame(() => nav.classList.remove('noink'));
+  const cur = paneCur(sec), first = (PANES[sec][0] || [])[0];
+  if(cur !== first && location.hash.slice(1) === sec) history.replaceState(null, '', '#' + sec + '/' + cur);
+}
+window.addEventListener('resize', () => document.querySelectorAll('.subnav').forEach(paneInk));
+function paneShow(sec, key, opts){
+  opts = opts || {};
+  const ps = PANES[sec] || [], nav = document.querySelector(`.subnav[data-sec="${sec}"]`);
+  const was = paneCur(sec), iOld = ps.findIndex(p => p[0] === was), iNew = ps.findIndex(p => p[0] === key);
+  if(iNew < 0) return;
+  paneWant(sec, key); try{ localStorage.setItem('atlas_pane_' + sec, key); }catch(e){}
+  if(nav){ nav.querySelectorAll('[data-pane]').forEach(b => { const on = b.dataset.pane === key; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); paneInk(nav); }
+  document.querySelectorAll(`.pane[data-sec="${sec}"]`).forEach(p => {
+    const on = p.dataset.pane === key;
+    if(on && !p.classList.contains('on')){ p.classList.remove('from-l', 'from-r'); p.classList.add('on'); void p.offsetWidth; if(iOld !== iNew) p.classList.add(iNew > iOld ? 'from-r' : 'from-l'); }
+    else if(!on) p.classList.remove('on', 'from-l', 'from-r');
+  });
+  if(window._curTab === sec) history.replaceState(null, '', '#' + sec + (iNew ? '/' + key : ''));
+  // a screen starts at its top: if the old one was scrolled past the control, come back up to it
+  if(nav && !opts.keepScroll){ const top = nav.getBoundingClientRect().top + window.scrollY - (parseFloat(getComputedStyle(nav).top) || 0) - 6; if(window.scrollY > top) window.scrollTo({top: Math.max(0, top)}); }
+  if(iOld !== iNew && typeof opts.onShow === 'function') opts.onShow();
+  // charts drawn into a hidden canvas have no size: redraw the ones on the screen that just opened
+  document.querySelectorAll(`.pane[data-sec="${sec}"].on canvas`).forEach(c => { const ch = charts[c.id]; if(ch && ch.resize) ch.resize(); });
+}
+/* the last row of a short list: opens the screen that holds all of it */
+const moreRow = (label, onclick) => `<button class="lrow more" type="button" onclick="${onclick}"><span class="body"><span class="t">${label}</span></span><span class="chev">${ICO.chevR}</span></button>`;
+/* a folded run of rows: a toggle line, the rows under it hidden until pressed */
+function foldRows(id, label, rowsHtml, open){
+  return `<button class="lrow more" type="button" aria-expanded="${!!open}" onclick="const f=document.getElementById('${id}');f.classList.toggle('open');this.setAttribute('aria-expanded',f.classList.contains('open'));this.querySelector('.t').textContent=f.classList.contains('open')?'Hide ${esc(label)}':'Show ${esc(label)}'"><span class="body"><span class="t">${open ? 'Hide' : 'Show'} ${esc(label)}</span></span><span class="chev">${ICO.chevR}</span></button><div class="fold${open ? ' open' : ''}" id="${id}">${rowsHtml}</div>`;
+}
 
 /* desktop: the stage leans toward the pointer; a frame at a time, eased by the CSS transition */
 (function(){
@@ -1340,14 +1454,20 @@ views.schedule = async function(){
         <div class="mast-acts"><button class="btn" type="button" onclick="eventSheet()">Add event</button></div></div>
       <img class="mast-art" src="hero-schedule.png" alt="" onerror="this.remove()">
     </div>
-    <div class="lead last-wide" id="schLead"></div>
-    <div class="sec" id="intakeSec"><div class="sec-h"><h3>Creatine and protein</h3></div><div class="empty">Loading…</div></div>
-    <div class="grid cols2">
+    ${subnav('schedule', [['today', 'Today'], ['calendar', 'Calendar'], ['upcoming', 'Upcoming']])}
+    ${pane('schedule', 'today', `
+      <div class="lead last-wide" id="schLead"></div>
+      <div class="sec" id="intakeSec"><div class="sec-h"><h3>Creatine and protein</h3></div><div class="empty">Loading…</div></div>
+      <div class="sec"><div class="sec-h"><h3>Coming up</h3></div><div class="ledger" id="evSoon"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('schedule', 'calendar', `
       <div class="sec" id="calCard"></div>
-      <div class="sec"><div class="sec-h"><h3 id="evListTitle">Upcoming</h3>
-          <button class="btn-ghost hidden" type="button" id="evListBack" onclick="calPick(window._selDate)">All upcoming</button></div>
-        <div class="ledger" id="evList"><div class="empty">Loading…</div></div></div>
-    </div>`;
+      <div class="sec" id="calDaySec" hidden><div class="sec-h"><h3 id="evListTitle">Day</h3>
+          <button class="btn-ghost" type="button" id="evListBack" onclick="calPick(window._selDate)">Clear day</button></div>
+        <div class="ledger" id="evDay"></div></div>`)}
+    ${pane('schedule', 'upcoming', `
+      <div class="sec"><div class="sec-h"><h3>Upcoming</h3><span class="n" id="evUpN"></span></div>
+        <div class="ledger" id="evList"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('schedule');
   window._intakeEdit = false;
   const since = new Date(Date.now() - 400 * 864e5).toLocaleDateString('en-CA');
   const [{data, error}, plan, logs] = await Promise.all([
@@ -1467,10 +1587,10 @@ function renderIntake(){
         return tick(on, i, `Creatine ${p.dose} g`, `${esc(t)} · ${st.loading ? 'dose ' + (i + 1) + ' of ' + st.times.length : 'with a meal or a shake'}`, ds === today && !on && nowHM >= t); }).join('')
       + tick(st.protein, "'p'", `Protein ${p.protein} g`, `Whole day · about ${perMeal} g at each of 4 meals`, false);
   }
-  c.innerHTML = head(`Creatine and protein · ${ds === today ? 'today' : fmtDate(ds)}`, phase,
+  c.innerHTML = head(`Creatine and protein${ds === today ? '' : ' · ' + fmtDate(ds)}`, phase,
       ds === today ? `<button class="btn-ghost" type="button" onclick="programSheet()">Program</button>`
                    : `<button class="btn-ghost" type="button" onclick="calPick('${ds}')">Back to today</button>`)
-    + (note ? `<div class="sec-note">${note}</div>` : '') + `<div class="ledger">${rows}</div>`;
+    + (note && st && st.loading ? `<div class="sec-note">${note}</div>` : '') + `<div class="ledger">${rows}</div>`;   // the standing-dose note lives in the Program sheet
 }
 /* the program, phase by phase, with the way to change or end it */
 function programSheet(){
@@ -1601,22 +1721,33 @@ function calPick(ds){
   if(intakePlan() && !window._intakeEdit) renderIntake();   // an open setup/edit form keeps what was typed
 }
 const EV_PAGE = 40;
-function renderEvList(upTo){
-  const sel = window._selDate; upTo = upTo || EV_PAGE;
-  const evs = (window._events||[]).filter(e => {
-    const ds = new Date(e.starts_at).toLocaleDateString('en-CA');
-    return sel ? ds === sel : new Date(e.starts_at) >= new Date(Date.now() - 864e5);
-  });
-  const t = document.getElementById('evListTitle'), back = document.getElementById('evListBack');
-  if(t) t.textContent = sel ? fmtDate(sel) : 'Upcoming';
-  if(back) back.classList.toggle('hidden', !sel);
-  const more = evs.length - upTo;
-  document.getElementById('evList').innerHTML = (evs.length ? evs.slice(0, upTo).map(e => `
+const evRow = e => `
     <div class="lrow${e.done ? ' done' : ''}" role="button" tabindex="0" onclick="eventSheet('${e.id}')" onkeydown="if(event.key==='Enter'){eventSheet('${e.id}')}">
       <button class="checkbox${e.done ? ' checked' : ''}" type="button" title="${e.done ? 'Mark not done' : 'Mark done'}" aria-label="${e.done ? 'Mark not done' : 'Mark done'}" onclick="event.stopPropagation();toggleEvent('${e.id}',${!e.done})">${e.done ? ICO.tickSm : ''}</button>
       <span class="body"><span class="t">${titleOf(e.title)}</span><span class="m">${fmtDT(e.starts_at)}</span></span>
-      <span class="chev">${ICO.chevR}</span></div>`).join('') : `<div class="empty">${sel ? 'Nothing on this day yet' : 'No upcoming events'}</div>`)
+      <span class="chev">${ICO.chevR}</span></div>`;
+/* three lists from one set of events: the chosen day under the calendar, the full upcoming list, and the next three on Today */
+function renderEvList(upTo){
+  const sel = window._selDate; upTo = upTo || EV_PAGE;
+  const dsOf = e => new Date(e.starts_at).toLocaleDateString('en-CA');
+  const up = (window._events||[]).filter(e => new Date(e.starts_at) >= new Date(Date.now() - 864e5));
+  // the chosen day (the calendar screen)
+  const daySec = document.getElementById('calDaySec'), t = document.getElementById('evListTitle'), day = document.getElementById('evDay');
+  if(daySec){ daySec.hidden = !sel;
+    if(sel){ const evs = (window._events||[]).filter(e => dsOf(e) === sel);
+      if(t) t.textContent = new Date(sel + 'T00:00').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
+      day.innerHTML = (evs.length ? evs.map(evRow).join('') : '<div class="empty">Nothing on this day yet</div>')
+        + `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="eventSheet()">Add an event on this day</button>`; } }
+  // everything ahead (the upcoming screen)
+  const list = document.getElementById('evList'), n = document.getElementById('evUpN'), more = up.length - upTo;
+  if(n) n.textContent = up.length ? plural(up.length, 'event') : '';
+  if(list) list.innerHTML = (up.length ? up.slice(0, upTo).map(evRow).join('') : '<div class="empty">No upcoming events</div>')
     + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="renderEvList(${upTo + EV_PAGE})">Show ${Math.min(more, EV_PAGE)} more · ${more} left</button>` : '');
+  // the next three (Today)
+  const soon = document.getElementById('evSoon');
+  if(soon){ const open = up.filter(e => !e.done);
+    soon.innerHTML = (open.length ? open.slice(0, 3).map(evRow).join('') : '<div class="empty">Nothing coming up — add an event above</div>')
+      + (open.length > 3 ? moreRow(`All ${plural(open.length, 'upcoming event')}`, "paneShow('schedule','upcoming')") : ''); }
 }
 /* one sheet reads, edits and adds an event */
 function eventSheet(id){
@@ -1873,21 +2004,27 @@ views.gym = async function(){
       <img class="mast-art" src="hero-gym.png" alt="" onerror="this.remove()">
     </div>
     <div class="card hidden" style="margin-bottom:20px" id="sessCard"></div>
-    <div class="lead">
-      <div class="mstat"><div class="lbl">This week</div><div class="v" id="weekCount">—</div><div id="weekStrip"></div></div>
-      <div class="mstat"><div class="lbl">Last session</div><div class="v" id="leadLast">—</div><div class="s" id="leadLastSub"></div></div>
-      <div class="mstat"><div class="lbl" id="leadMonthLbl">This month</div><div class="v" id="leadMonth">—</div><div class="s" id="leadMonthSub"></div></div>
-    </div>
-    <div class="sec"><div class="sec-h"><h3>History</h3><span class="n" id="woCount"></span></div>
-      <div class="ledger" id="woList"><div class="empty">Loading…</div></div></div>
-    <div class="grid cols2" style="margin-bottom:16px">
+    ${subnav('gym', [['today', 'Today'], ['history', 'History'], ['progress', 'Progress'], ['records', 'Records']])}
+    ${pane('gym', 'today', `
+      <div class="lead">
+        <div class="mstat"><div class="lbl">This week</div><div class="v" id="weekCount">—</div><div id="weekStrip"></div></div>
+        <div class="mstat"><div class="lbl">Last session</div><div class="v" id="leadLast">—</div><div class="s" id="leadLastSub"></div></div>
+        <div class="mstat"><div class="lbl" id="leadMonthLbl">This month</div><div class="v" id="leadMonth">—</div><div class="s" id="leadMonthSub"></div></div>
+      </div>
+      <div class="sec"><div class="sec-h"><h3>Recent</h3></div>
+        <div class="ledger" id="woRecent"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('gym', 'history', `
+      <div class="sec"><div class="sec-h"><h3>History</h3><span class="n" id="woCount"></span></div>
+        <div class="ledger" id="woList"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('gym', 'progress', `
       <div class="sec"><div class="sec-h"><h3>Progress</h3></div>
         <div class="chart-ctl"><select id="exSelect" onchange="drawGymChart()"></select>
           <div class="seg" id="exMetric"><button type="button" class="on" data-m="max" onclick="gymMetric('max')">Top weight</button><button type="button" data-m="vol" onclick="gymMetric('vol')">Volume</button></div></div>
-        <div class="chart-box"><canvas id="gymChart"></canvas></div></div>
+        <div class="chart-box"><canvas id="gymChart"></canvas></div></div>`)}
+    ${pane('gym', 'records', `
       <div class="sec"><div class="sec-h"><h3>Records</h3><span class="n">heaviest set per exercise</span></div>
-        <div class="ledger" id="prList"><div class="empty">Loading…</div></div></div>
-    </div>`;
+        <div class="ledger" id="prList"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('gym');
   renderSession();
   // a running session reopens its room unless it was minimised on purpose this visit
   if(gymDraft && gymDraft.started && !gymDraft.id && !_liveMin) liveOpen();
@@ -2714,7 +2851,7 @@ function renderHistory(){
   (window._allSets || []).forEach(s => (byWo[s.workout_id] = byWo[s.workout_id] || []).push(s));
   const cnt = document.getElementById('woCount'), total = Object.keys(window._woDates || {}).length;
   if(cnt) cnt.textContent = total ? plural(total, 'workout') + (total > window._gymWos.length ? ' · latest ' + window._gymWos.length : '') : '';
-  el.innerHTML = (window._gymWos || []).length ? window._gymWos.map(w => {
+  const row = w => {
     const ss = byWo[w.id] || [], st = woStats(w.id), d = new Date(w.workout_date + 'T00:00');
     const names = ss.map(s => esc(exCanon(s.exercise))).join(', ') || 'No exercises';
     const sub = [st.sets ? plural(st.sets, 'set') : '', w.duration_min ? w.duration_min + ' min' : ''].filter(Boolean).join(' · ');
@@ -2723,7 +2860,12 @@ function renderHistory(){
       <span class="body"><span class="t">${esc(kindTitle(w.notes, woKind(w.id)))}${(w.notes || '').trim() && woKind(w.id) ? `<span class="pill grey">${KINDS[woKind(w.id)].label}</span>` : ''}</span><span class="m">${names}</span></span>
       <span class="r"><b>${st.vol ? kgFmt(st.vol) : plural(st.n, 'exercise')}</b>${sub ? `<span>${sub}</span>` : ''}</span>
       <span class="chev">${ICO.chevR}</span></button>`;
-  }).join('') : '<div class="empty">No workouts yet — press Start workout to log the first</div>';
+  };
+  const wos = window._gymWos || [], empty = '<div class="empty">No workouts yet — press Start workout to log the first</div>';
+  el.innerHTML = wos.length ? wos.map(row).join('') : empty;
+  // Today shows the last three; the rest live on the History screen
+  const rc = document.getElementById('woRecent');
+  if(rc) rc.innerHTML = wos.length ? wos.slice(0, 3).map(row).join('') + (total > 3 ? moreRow(`All ${plural(total, 'workout')}`, "paneShow('gym','history')") : '') : empty;
 }
 /* ---------- session sheet: the whole workout, each lift against its previous outing, and the actions ---------- */
 function woSheet(id){
@@ -3063,31 +3205,33 @@ views.money = async function(){
         <div class="mast-acts"><button class="btn" type="button" onclick="expenseSheet()">Add expense</button>
           <button class="btn-ghost" type="button" onclick="importSheet()">Import statement</button></div></div>
       <img class="mast-art" src="hero-money.png" alt="" onerror="this.remove()">
-      <div class="mast-ctl scope-pick">
-        <button class="${!year?'on':''}" type="button" onclick="window._moneyScope='month';views.money()">Month</button>
-        <button class="${year?'on':''}" type="button" onclick="window._moneyScope='year';views.money()">All time</button>
-        <input type="month" value="${month}" ${year?'disabled':''} aria-label="Month"
-          onchange="window._moneyMonth=this.value||todayStr().slice(0,7);views.money()">
+    </div>
+    ${subnav('money', [['overview', 'Overview'], ['charges', 'Charges'], ['insights', 'Insights'], ['recurring', 'Recurring']])}
+    ${pane('money', 'overview', `
+      <div class="lead four" id="moLead"></div>
+      <div class="sec"><div class="sec-h"><h3>Pace</h3><span class="n" id="paceN"></span></div>
+        <div class="chart-box short"><canvas id="burnChart"></canvas></div></div>
+      <div class="sec"><div class="sec-h"><h3>Latest</h3></div>
+        <div class="ledger" id="exRecent"><div class="empty">Loading…</div></div><div class="ledger" id="moOtherHint"></div></div>`)}
+    ${pane('money', 'charges', `
+      ${scopeCtl(scope, month)}
+      <div class="sec hidden" id="moOtherCard"><div class="sec-h"><h3>Uncategorised</h3><span class="n" id="othTotal"></span></div><div class="ledger" id="moOther"></div></div>
+      <div class="sec"><div class="sec-h"><h3 id="listTitle">Spending</h3><span class="n" id="listN"></span>
+          <button class="btn-ghost" type="button" title="Download as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></div>
+        <div class="ledger" id="exList"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('money', 'insights', `
+      ${scopeCtl(scope, month)}
+      <div class="grid cols2" style="margin-bottom:12px">
+        <div class="sec"><div class="sec-h"><h3>Where it goes</h3><span class="n" id="moTotal"></span></div>
+          <div class="chart-box"><canvas id="catChart"></canvas></div><div id="catLegend" class="cat-legend"></div></div>
+        <div class="sec"><div class="sec-h"><h3>Month by month</h3></div><div class="chart-box"><canvas id="trendChart"></canvas></div></div>
       </div>
-    </div>
-    <div class="lead four" id="moLead"></div>
-    <div class="sec hidden" id="moOtherCard"><div class="sec-h"><h3>Uncategorised</h3><span class="n" id="othTotal"></span></div><div class="ledger" id="moOther"></div></div>
-    <div class="grid cols2" style="margin-bottom:12px">
-      <div class="sec"><div class="sec-h"><h3>Where it goes</h3><span class="n" id="moTotal"></span></div>
-        <div class="chart-box"><canvas id="catChart"></canvas></div><div id="catLegend" class="cat-legend"></div></div>
-      <div class="sec"><div class="sec-h"><h3>${year ? 'Month by month' : 'Pace'}</h3><span class="n" id="paceN"></span></div>
-        <div class="chart-box"><canvas id="${year ? 'trendChart' : 'burnChart'}"></canvas></div></div>
-    </div>
-    <div class="sec"><div class="sec-h"><h3 id="listTitle">Spending</h3><span class="n" id="listN"></span>
-        <button class="btn-ghost" type="button" title="Download as a CSV spreadsheet" onclick="exportCsv()">Export CSV</button></div>
-      <div class="ledger" id="exList"><div class="empty">Loading…</div></div></div>
-    <div class="grid cols2" style="margin-bottom:12px">
-      <div class="sec"><div class="sec-h"><h3>Patterns</h3></div><div id="moInsights"><div class="empty">Reading your history…</div></div></div>
-      ${year ? '' : `<div class="sec"><div class="sec-h"><h3>Month by month</h3></div><div class="chart-box"><canvas id="trendChart"></canvas></div></div>`}
-    </div>
-    <div class="sec"><div class="sec-h"><h3>Recurring</h3><span class="n" id="fxTotal"></span>
-        <button class="btn-ghost" type="button" onclick="subSheet()">Add subscription</button></div>
-      <div class="ledger" id="moFixed"><div class="empty">Loading…</div></div></div>`;
+      <div class="sec"><div class="sec-h"><h3>Patterns</h3></div><div id="moInsights"><div class="empty">Reading your history…</div></div></div>`)}
+    ${pane('money', 'recurring', `
+      <div class="sec"><div class="sec-h"><h3>Recurring</h3><span class="n" id="fxTotal"></span>
+          <button class="btn-ghost" type="button" onclick="subSheet()">Add subscription</button></div>
+        <div class="ledger" id="moFixed"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('money');
 
   const [allq, st, subs, rules] = await Promise.all([
     fetchAll(() => sb.from('expenses').select('*').order('spent_at', {ascending: false}).order('created_at', {ascending: false})),
@@ -3105,26 +3249,37 @@ views.money = async function(){
   const from = month + '-01';
   const to = new Date(new Date(from+'T00:00').getFullYear(), new Date(from+'T00:00').getMonth()+1, 1).toLocaleDateString('en-CA');
   const shown = year ? all : all.filter(x => x.spent_at >= from && x.spent_at < to);
-  window._monthExpenses = shown;
+  // the Overview is always the running month, whatever period the Charges and Insights screens look at
+  const nowM = todayStr().slice(0,7), nowFrom = nowM + '-01';
+  const nowTo = new Date(new Date(nowFrom+'T00:00').getFullYear(), new Date(nowFrom+'T00:00').getMonth()+1, 1).toLocaleDateString('en-CA');
+  const shownNow = all.filter(x => x.spent_at >= nowFrom && x.spent_at < nowTo);
+  window._monthExpenses = all;   // every sheet can open any charge, whichever screen listed it
   // the donut only has positive slices, so its heading is the positive total too
   document.getElementById('moTotal').textContent = NIS0(shown.reduce((s,x) => s + Math.max(0, +x.amount), 0));
   document.getElementById('listTitle').textContent = year ? 'All spending' : new Date(from+'T00:00').toLocaleDateString('en-GB', {month: 'long', year: 'numeric'});
   document.getElementById('listN').textContent = plural(shown.length, 'charge');
 
-  renderMoLead(all, shown, scope, month, budget);
+  renderMoLead(all, shownNow, 'month', nowM, budget);
   renderInsights(all);
   renderRecurring(all, window._subs);
   renderOtherFix(shown);
-  renderExpenseList(shown);
+  renderExpenseList(shown, undefined, all);
   drawCatChart(shown);
   drawTrendChart(all);
-  if(!year){
-    drawBurnChart(shown, budget, month);
-    const proj = projectMonth(shown, month), n = document.getElementById('paceN');
-    if(n) n.textContent = proj ? 'on pace for ' + NIS0(proj) : budget ? 'against a ' + NIS0(budget) + ' budget' : '';
-  }
+  drawBurnChart(shownNow, budget, nowM);
+  const proj = projectMonth(shownNow, nowM), n = document.getElementById('paceN');
+  if(n) n.textContent = proj ? 'on pace for ' + NIS0(proj) : budget ? 'against a ' + NIS0(budget) + ' budget' : '';
   if(keepY != null) window.scrollTo(0, keepY);
 };
+/* the period the Charges and Insights screens look at: one month, or everything */
+function scopeCtl(scope, month){
+  const year = scope === 'year';
+  return `<div class="scope-pick" style="margin-bottom:16px">
+    <button class="${!year?'on':''}" type="button" onclick="window._moneyScope='month';window._moneyKeep=true;views.money()">Month</button>
+    <button class="${year?'on':''}" type="button" onclick="window._moneyScope='year';window._moneyKeep=true;views.money()">All time</button>
+    <input type="month" value="${month}" ${year?'disabled':''} aria-label="Month"
+      onchange="window._moneyMonth=this.value||todayStr().slice(0,7);window._moneyKeep=true;views.money()"></div>`;
+}
 /* whole shekels for headlines; the charge list keeps its agorot */
 const NIS0 = n => '₪' + Math.round(+n || 0).toLocaleString('en-GB');
 const nisTick = v => '₪' + (Math.abs(v) >= 1e6 ? +(v / 1e6).toFixed(1) + 'M' : Math.abs(v) >= 1000 ? +(v / 1000).toFixed(1) + 'k' : v);
@@ -3222,6 +3377,9 @@ function renderOtherFix(shown){
   const by = {};
   oth.forEach(x => { const v = by[x.merchant_key] || (by[x.merchant_key] = {n:0, s:0, name: x.description || x.merchant}); v.n++; v.s += +x.amount; });
   const list = Object.entries(by).sort((a,b) => b[1].s - a[1].s).slice(0, 8);
+  // the Overview gets one line pointing at the work; the pick-a-category rows stay on the Charges screen
+  const hint = document.getElementById('moOtherHint');
+  if(hint) hint.innerHTML = list.length ? moreRow(`${plural(Object.keys(by).length, 'merchant')} to file · ${NIS0(oth.reduce((s,x)=>s+ +x.amount,0))} uncategorised`, "paneShow('money','charges')") : '';
   if(!list.length){ card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
   document.getElementById('othTotal').textContent = `${NIS(oth.reduce((s,x)=>s+ +x.amount,0))} across ${Object.keys(by).length} merchants`;
@@ -3244,12 +3402,12 @@ async function bulkCategorise(key, cat){
   window._moneyKeep = true; views.money();
 }
 const EX_PAGE = 150;
-function renderExpenseList(shown, upTo){
+function renderExpenseList(shown, upTo, all){
   const el = document.getElementById('exList'); if(!el) return;
   upTo = upTo || EX_PAGE;
   window._exShown = shown;
   const more = shown.length - upTo;
-  el.innerHTML = (shown.length ? shown.slice(0, upTo).map(x => {
+  const exRow = x => {
     const col = catColor(x.category), name = x.description || x.merchant || '';
     return `<button class="lrow" type="button" style="--cc:${col}" onclick="expenseSheet('${x.id}')">
       <span class="mer-ico" style="color:${col}">${merIcon(name, x.category)}</span>
@@ -3257,8 +3415,13 @@ function renderExpenseList(shown, upTo){
         <span class="m"><span class="cat">${esc(x.category)}</span> · ${fmtDate(x.spent_at)}${x.source === 'applepay' ? '<span class="tap-tag" title="Captured from an Apple Pay tap">' + ICO.tap + 'tap</span>' : ''}</span></span>
       <span class="r"><b${+x.amount < 0 ? ' class="refund"' : ''}>${+x.amount < 0 ? '+' + NIS(Math.abs(x.amount)) : NIS(x.amount)}</b></span>
       <span class="chev">${ICO.chevR}</span></button>`;
-  }).join('') : '<div class="empty">Nothing here for this period</div>')
-  + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="renderExpenseList(window._exShown, ${upTo + EX_PAGE})">Show ${Math.min(more, EX_PAGE)} more · ${more} left</button>` : '');
+  };
+  el.innerHTML = (shown.length ? shown.slice(0, upTo).map(exRow).join('') : '<div class="empty">Nothing here for this period</div>')
+  + (more > 0 ? `<button class="btn-ghost" type="button" style="align-self:center;margin-top:10px" onclick="renderExpenseList(window._exShown, ${upTo + EX_PAGE}, window._monthExpenses)">Show ${Math.min(more, EX_PAGE)} more · ${more} left</button>` : '');
+  // the Overview keeps the last five; the whole period lives on the Charges screen
+  const rc = document.getElementById('exRecent'), recent = all || shown;
+  if(rc) rc.innerHTML = recent.length ? recent.slice(0, 5).map(exRow).join('') + (recent.length > 5 ? moreRow(`All ${plural(recent.length, 'charge')}`, "paneShow('money','charges')") : '')
+    : '<div class="empty">No charges yet — add one above or import a statement</div>';
 }
 
 /* ---------- sheets: every Money form lives in one of these, never on the page ---------- */
@@ -3563,7 +3726,7 @@ async function saveBudget(){
   error ? err(error) : (toast('Budget saved'), closeSheet(), window._moneyKeep = true, views.money());
 }
 function exportCsv(){
-  const rows = window._monthExpenses || [];
+  const rows = window._exShown || [];   // the period the Charges screen shows
   if(!rows.length) return toast('Nothing to export for this period');
   const csv = 'date,amount_ils,category,description\n' + rows.map(r =>
     [r.spent_at, r.amount, r.category, '"' + (r.description || '').replace(/"/g, '""') + '"'].join(',')).join('\n');
@@ -3582,10 +3745,14 @@ views.goals = async function(){
         <div class="mast-acts"><button class="btn" type="button" onclick="goalSheet()">New goal</button></div></div>
       <img class="mast-art" src="hero-goals.png" alt="" onerror="this.remove()">
     </div>
-    <div class="lead" id="goLead"></div>
-    <div class="sec"><div class="sec-h"><h3>Active</h3><span class="n">the marker on each bar is where today falls between start and target</span></div>
-      <div class="ledger" id="goList"><div class="empty">Loading…</div></div></div>
-    <div class="sec hidden" id="goDoneSec"><div class="sec-h"><h3>Completed</h3></div><div class="ledger" id="goDone"></div></div>`;
+    ${subnav('goals', [['active', 'Active'], ['done', 'Completed']])}
+    ${pane('goals', 'active', `
+      <div class="lead" id="goLead"></div>
+      <div class="sec"><div class="sec-h"><h3>In progress</h3><span class="n" id="goNote"></span></div>
+        <div class="ledger" id="goList"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('goals', 'done', `
+      <div class="sec" id="goDoneSec"><div class="sec-h"><h3>Completed</h3><span class="n" id="goDoneN"></span></div><div class="ledger" id="goDone"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('goals');
   const {data, error} = await sb.from('goals').select('*').order('created_at');
   if(stale(seq)) return;
   if(error) return err(error);
@@ -3615,8 +3782,9 @@ function renderGoals(){
   const el = document.getElementById('goList'), lead = document.getElementById('goLead'), sub = document.getElementById('goSub'); if(!el) return;
   const all = window._goals || [], active = all.filter(g => g.status !== 'done'), done = all.filter(g => g.status === 'done');
   el.innerHTML = active.length ? active.map(goalRow).join('') : '<div class="empty">No active goals — press New goal to set one</div>';
-  const ds = document.getElementById('goDoneSec'); ds.classList.toggle('hidden', !done.length);
-  document.getElementById('goDone').innerHTML = done.map(goalRow).join('');
+  const note = document.getElementById('goNote'); if(note) note.textContent = active.some(g => g.target_date) ? 'the mark on a bar is where today falls' : '';
+  document.getElementById('goDone').innerHTML = done.length ? done.map(goalRow).join('') : '<div class="empty">Nothing completed yet — it will land here</div>';
+  const dn = document.getElementById('goDoneN'); if(dn) dn.textContent = done.length ? plural(done.length, 'goal') : '';
   const behind = active.filter(g => { const pc = goalPace(g); return pc && (pc.behind || pc.overdue); }).length;
   const avg = active.length ? Math.round(active.reduce((a, g) => a + goalProg(g), 0) / active.length) : 0;
   const next = active.filter(g => g.target_date).sort((a, b) => a.target_date.localeCompare(b.target_date))[0];
@@ -3686,9 +3854,15 @@ views.chores = async function(){
         <div class="mast-acts"><button class="btn" type="button" onclick="choreSheet()">Add chore</button></div></div>
       <img class="mast-art" src="hero-chores.png" alt="" onerror="this.remove()">
     </div>
-    <div class="lead" id="chLead"></div>
-    <div class="sec"><div class="sec-h"><h3>All chores</h3><span class="n">soonest first · tick one off when it's done</span></div>
-      <div class="ledger" id="chList"><div class="empty">Loading…</div></div></div>`;
+    ${subnav('chores', [['due', 'Due'], ['all', 'All']])}
+    ${pane('chores', 'due', `
+      <div class="lead" id="chLead"></div>
+      <div class="sec"><div class="sec-h"><h3>This week</h3><span class="n">tick one off when it's done</span></div>
+        <div class="ledger" id="chDue"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('chores', 'all', `
+      <div class="sec"><div class="sec-h"><h3>All chores</h3><span class="n" id="chN"></span></div>
+        <div class="ledger" id="chList"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('chores');
   const {data, error} = await sb.from('chores').select('*');
   if(stale(seq)) return;
   if(error) return err(error);
@@ -3698,13 +3872,19 @@ views.chores = async function(){
 function renderChores(){
   const el = document.getElementById('chList'); if(!el) return;
   const data = [...(window._chores || [])].sort((a,b) => choreDueDays(a) - choreDueDays(b)), today = todayStr();
-  el.innerHTML = data.length ? data.map(c => { const doneToday = c.last_done === today;
+  const row = c => { const doneToday = c.last_done === today;
     return `<div class="lrow" role="button" tabindex="0" onclick="choreSheet('${c.id}')" onkeydown="if(event.key==='Enter'){choreSheet('${c.id}')}">
       <button class="checkbox${doneToday ? ' checked' : ''}" type="button" title="${doneToday ? 'Done today' : 'Mark done today'}" aria-label="${doneToday ? 'Done today' : 'Mark done today'}" onclick="event.stopPropagation();${doneToday ? '' : `doneChore('${c.id}')`}">${doneToday ? ICO.tickSm : ''}</button>
       <span class="body"><span class="t">${titleOf(c.name, 'chore')}</span>
         <span class="m">every ${fmtDays(c.frequency_days)} · last ${c.last_done ? (doneToday ? 'today' : fmtDate(c.last_done)) : 'never'}</span></span>
-      <span class="r">${chorePill(c)}</span><span class="chev">${ICO.chevR}</span></div>`; }).join('')
-    : '<div class="empty">No chores yet — press Add chore to start the list</div>';
+      <span class="r">${chorePill(c)}</span><span class="chev">${ICO.chevR}</span></div>`; };
+  el.innerHTML = data.length ? data.map(row).join('') : '<div class="empty">No chores yet — press Add chore to start the list</div>';
+  const cn = document.getElementById('chN'); if(cn) cn.textContent = data.length ? plural(data.length, 'chore') + ' · soonest first' : '';
+  // Due: what has slipped, what is due today, and what comes within the week — done-today rows stay so the tick shows
+  const dueEl = document.getElementById('chDue');
+  if(dueEl){ const soon = data.filter(c => choreDueDays(c) <= 7 || c.last_done === today);
+    dueEl.innerHTML = (soon.length ? soon.map(row).join('') : '<div class="empty">Nothing due this week — all caught up</div>')
+      + (data.length > soon.length ? moreRow(`All ${plural(data.length, 'chore')}`, "paneShow('chores','all')") : ''); }
   // lead tiles and the status line
   const lead = document.getElementById('chLead'), sub = document.getElementById('chSub');
   const late = data.filter(c => choreDueDays(c) < 0), due = data.filter(c => choreDueDays(c) === 0), week = data.filter(c => { const d = choreDueDays(c); return d > 0 && d <= 7; });
@@ -3778,8 +3958,11 @@ views.rent = async function(){
       <div class="mast-txt"><h2>Rent</h2><div class="mast-sub" id="rtSub">Loading…</div><div class="mast-acts" id="rtActs"></div></div>
       <img class="mast-art" src="hero-rent.png" alt="" onerror="this.remove()">
     </div>
-    <div class="lead" id="rtLead"></div>
-    <div id="rentBody"><div class="empty">Loading…</div></div>`;
+    ${subnav('rent', [['checks', 'Checks'], ['electricity', 'Electricity'], ['water', 'Water']])}
+    ${pane('rent', 'checks', `<div class="lead" id="rtLead"></div><div id="leaseBlock"><div class="empty">Loading…</div></div>`)}
+    ${pane('rent', 'electricity', `<div id="meter-electricity"><div class="empty">Loading…</div></div>`)}
+    ${pane('rent', 'water', `<div id="meter-water"><div class="empty">Loading…</div></div>`)}`;
+  paneInit('rent');
   const [ls, ms, rd] = await Promise.all([
     sb.from('rent_leases').select('*').eq('archived', false).order('created_at', {ascending: false}),
     sb.from('rent_months').select('*').order('month'),
@@ -3789,15 +3972,14 @@ views.rent = async function(){
   const bad = [ls, ms, rd].find(r => r.error);
   if(bad){
     document.getElementById('rtSub').textContent = 'Couldn\'t load';
-    document.getElementById('rentBody').innerHTML =
-      `<div class="empty">Couldn't load your rent data — ${esc(bad.error.message)}.<br>The backend may be waking up.
+    const fail = `<div class="empty">Couldn't load your rent data — ${esc(bad.error.message)}.<br>The backend may be waking up.
        <button class="linkish" type="button" onclick="views.rent()">Retry</button></div>`;
+    ['leaseBlock', 'meter-electricity', 'meter-water'].forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = fail; });
     return;
   }
   window._lease = (ls.data || [])[0] || null;
   window._rentMonths = window._lease ? (ms.data || []).filter(m => m.lease_id === window._lease.id) : [];
   window._meters = rd.data || [];
-  document.getElementById('rentBody').innerHTML = `<div id="leaseBlock"></div><div id="meterBlock"></div>`;
   renderLease();
   renderMeters();
 };
@@ -3820,7 +4002,7 @@ function renderLease(){
   if(!L){
     sub.textContent = 'No lease set up';
     acts.innerHTML = `<button class="btn" type="button" onclick="leaseSetupSheet()">Set up lease</button><button class="btn-ghost" type="button" onclick="readingSheet('electricity')">Log reading</button>`;
-    lead.innerHTML = Object.keys(METERS).map(k => meterTile(k)).join('');
+    lead.innerHTML = '';
     el.innerHTML = `<div class="sec"><div class="sec-h"><h3>Lease</h3></div>
       <div class="empty">One row per month of the lease, ticked when the owner actually cashes that check.
         <div style="margin-top:12px"><button class="btn-ghost" type="button" onclick="leaseSetupSheet()">Set up the lease</button></div></div></div>`;
@@ -3837,9 +4019,16 @@ function renderLease(){
       <div class="s">${S.owing.length ? (S.late.length ? `${plural(S.late.length, 'month')} overdue · oldest ${monthLabel(S.owing[0].month)}` : 'only this month\'s check is open') : 'all due checks are cashed'}</div></div>
     <button class="mstat act" type="button" onclick="leaseSheet()" title="The lease"><div class="lbl">Lease</div><div class="v" style="font-size:19px">${S.span}</div>
       <div class="s">${plural(S.left, 'month')} left${L.landlord ? ' · ' + esc(short(L.landlord, 24)) : ''}</div></button>`;
+  // cashed months fold away above, the far future folds away below: what's open and the next two stay in view
+  const past = S.ms.filter(m => m.claimed), open = S.ms.filter(m => !m.claimed);
+  const dueNow = open.filter(m => m.month <= S.cur), ahead = open.filter(m => m.month > S.cur), near = ahead.slice(0, Math.max(0, 3 - dueNow.length)), far = ahead.slice(near.length);
   el.innerHTML = `<div class="sec"><div class="sec-h"><h3>Monthly checks</h3>
       <span class="n">${S.nextOpen ? `next up <b>${monthLabel(S.nextOpen.month)}</b> · ${NIS(S.nextOpen.amount)}` : 'every check cashed'}</span></div>
-    <div class="ledger" id="rentList">${S.ms.length ? S.ms.map(rentRow).join('') : '<div class="empty">No months yet</div>'}</div></div>`;
+    <div class="ledger" id="rentList">${S.ms.length
+      ? (past.length ? foldRows('rentPast', plural(past.length, 'cashed month'), past.map(rentRow).join(''), !open.length) : '')
+        + dueNow.concat(near).map(rentRow).join('')
+        + (far.length ? foldRows('rentFar', plural(far.length, 'later month'), far.map(rentRow).join('')) : '')
+      : '<div class="empty">No months yet</div>'}</div></div>`;
 }
 function rentPill(m){
   const cur = monthKey(todayStr());
@@ -3963,8 +4152,7 @@ function meterSeries(kind){
   });
 }
 function renderMeters(){
-  const el = document.getElementById('meterBlock'); if(!el) return;
-  el.innerHTML = `<div class="grid cols2">${Object.keys(METERS).map(meterSec).join('')}</div>`;
+  Object.keys(METERS).forEach(kind => { const el = document.getElementById('meter-' + kind); if(el) el.innerHTML = meterSec(kind); });
   drawMeterCharts();
 }
 /* latest reading in one line, for the lead tile (no lease) and the section heading */
@@ -3976,19 +4164,23 @@ function meterTile(kind){
 }
 function meterSec(kind){
   const M = METERS[kind], s = meterSeries(kind), latest = s[s.length - 1];
-  const recent = s.slice(-6).reverse();
-  const n = latest ? `<b>${fmtNum(latest.reading)} ${M.unit}</b> · read ${fmtDate(latest.read_on)}${
-      latest.used == null ? '' : latest.used < 0 ? ' · <span style="color:var(--red)">reading dropped</span>' : ` · +${fmtNum(latest.used)} over ${latest.days}d (${fmtNum(latest.perDay)}/day)`}` : 'no readings yet';
-  return `<div class="sec">
-    <div class="sec-h"><h3>${M.label}</h3><span class="n">${n}</span><button class="btn-ghost" type="button" onclick="readingSheet('${kind}')">Log</button></div>
-    ${s.filter(r => r.used > 0).length >= 2 ? `<div class="chart-box" style="height:170px;margin:6px 0 10px"><canvas id="${M.chart}"></canvas></div>` : ''}
-    <div class="ledger">${recent.length ? recent.map(r => `
+  const all = [...s].reverse(), recent = all.slice(0, 6), older = all.slice(6);
+  // the month's usage against the one before it: the second number that matters
+  const used = s.filter(r => r.used > 0), last = used[used.length - 1], prev = used[used.length - 2];
+  const trend = last && prev ? Math.round((last.perDay - prev.perDay) / prev.perDay * 100) : null;
+  const row = r => `
       <div class="lrow" role="button" tabindex="0" onclick="readingSheet('${kind}','${r.id}')" onkeydown="if(event.key==='Enter'){readingSheet('${kind}','${r.id}')}">
         <span class="body"><span class="t">${fmtNum(r.reading)} ${M.unit}</span>
           <span class="m">${fmtDate(r.read_on)}${r.used == null ? ' · first reading' : r.used < 0 ? ' · reading dropped' : ` · +${fmtNum(r.used)} in ${r.days}d`}</span></span>
-        <span class="r">${r.used > 0 ? `<b>${fmtNum(r.perDay)}</b><span>${M.unit}/day</span>` : ''}</span><span class="chev">${ICO.chevR}</span></div>`).join('')
-      : `<div class="empty">Log the ${M.label.toLowerCase()} meter count to start tracking usage</div>`}</div>
-  </div>`;
+        <span class="r">${r.used > 0 ? `<b>${fmtNum(r.perDay)}</b><span>${M.unit}/day</span>` : ''}</span><span class="chev">${ICO.chevR}</span></div>`;
+  return `<div class="lead">${meterTile(kind)}
+      <div class="mstat"><div class="lbl">Per day</div><div class="v">${last ? fmtNum(last.perDay) + ' <small style="font-size:13px;color:var(--muted);font-weight:500">' + M.unit + '</small>' : '—'}</div>
+        <div class="s${!trend ? '' : trend > 0 ? ' warn' : ' good'}">${trend == null ? (last ? 'over the last ' + plural(last.days, 'day') : 'two readings tell the rate') : !trend ? 'same pace as the period before' : (trend > 0 ? '▲ ' : '▼ ') + Math.abs(trend) + '% on the period before'}</div></div>
+      <div class="mstat"><div class="lbl">Readings</div><div class="v">${s.length}</div><div class="s">${s.length ? 'since ' + fmtDate(s[0].read_on) : 'none yet'}</div></div></div>
+    ${used.length >= 2 ? `<div class="sec"><div class="sec-h"><h3>Usage</h3><span class="n">${M.unit} between readings</span></div><div class="chart-box short"><canvas id="${M.chart}"></canvas></div></div>` : ''}
+    <div class="sec"><div class="sec-h"><h3>Readings</h3><button class="btn-ghost" type="button" onclick="readingSheet('${kind}')">Log</button></div>
+    <div class="ledger">${recent.length ? recent.map(row).join('') + (older.length ? foldRows('mtOld-' + kind, plural(older.length, 'older reading'), older.map(row).join('')) : '')
+      : `<div class="empty">Log the ${M.label.toLowerCase()} meter count to start tracking usage</div>`}</div></div>`;
 }
 /* one sheet logs a reading (no id) or shows one with the way to delete it */
 function readingSheet(kind, id){
@@ -6244,22 +6436,27 @@ views.wardrobe = async function(){
           <button class="btn-ghost" type="button" id="wdPrepBtn" hidden onclick="wdPrepareAll()">Prepare photos</button></div></div>
       <img class="mast-art" src="hero-wardrobe.png" alt="" onerror="this.remove()">
     </div>
-    <div class="wd-stage">
-      <div class="wd-doll" id="wdDoll" onclick="wdDollTap(event)"><div class="wd-ctl"><button class="hd-ib" type="button" id="wdFlatBtn" onclick="wdFlatToggle()" title="Flat lay with measurements">${ICO.edit}<span>Flat lay</span></button></div></div>
-      <div class="wd-side">
-        <div class="wd-slots" id="wdSlots"></div>
-        <div class="wd-outfits" id="wdOutfits"></div>
-      </div>
-      <div class="wd-flat" id="wdFlat" hidden></div>
-    </div>
-    <div class="lead" id="wdLead"></div>
-    <div class="sec"><div class="sec-h"><h3>Matches for what you have</h3><span class="n">in stock in your sizes · found 1 Nov</span></div>
-      <div class="grid cols3 wd-picks">${WARDROBE_PICKS.map(p => `<a class="wd-pick" href="${p.url}" target="_blank" rel="noopener">
-        <img src="${p.img}" alt="" loading="lazy"><div class="wd-pick-b"><span class="m">${esc(p.brand)} · ${esc(p.color)} · ${esc(p.size)}</span><b>${esc(p.name)}</b>
-        <span class="why">${esc(p.why)}</span><span class="r">${wdNis(p.price)} <span class="shop">at ${WD_SHOP[p.shop]}</span></span></div></a>`).join('')}</div></div>
-    <div class="sec"><div class="sec-h"><h3>Everything</h3><span class="n" id="wdCount"></span></div>
-      <div class="seg wd-filters" id="wdFilters"></div>
-      <div class="ledger" id="wdList"><div class="empty">Loading…</div></div></div>`;
+    ${subnav('wardrobe', [['figure', 'Figure'], ['closet', 'Closet'], ['matches', 'Matches']])}
+    ${pane('wardrobe', 'figure', `
+      <div class="wd-stage">
+        <div class="wd-doll" id="wdDoll" onclick="wdDollTap(event)"><div class="wd-ctl"><button class="hd-ib" type="button" id="wdFlatBtn" onclick="wdFlatToggle()" title="Flat lay with measurements">${ICO.edit}<span>Flat lay</span></button></div></div>
+        <div class="wd-side">
+          <div class="wd-slots" id="wdSlots"></div>
+          <div class="wd-outfits" id="wdOutfits"></div>
+        </div>
+        <div class="wd-flat" id="wdFlat" hidden></div>
+      </div>`)}
+    ${pane('wardrobe', 'closet', `
+      <div class="lead" id="wdLead"></div>
+      <div class="sec"><div class="sec-h"><h3 id="wdListTitle">Everything</h3><span class="n" id="wdCount"></span></div>
+        <div class="seg wd-filters" id="wdFilters"></div>
+        <div class="ledger" id="wdList"><div class="empty">Loading…</div></div></div>`)}
+    ${pane('wardrobe', 'matches', `
+      <div class="sec"><div class="sec-h"><h3>Matches for what you have</h3><span class="n">in stock in your sizes · found 1 Nov</span></div>
+        <div class="grid cols3 wd-picks">${WARDROBE_PICKS.map(p => `<a class="wd-pick" href="${p.url}" target="_blank" rel="noopener">
+          <img src="${p.img}" alt="" loading="lazy"><div class="wd-pick-b"><span class="m">${esc(p.brand)} · ${esc(p.color)} · ${esc(p.size)}</span><b>${esc(p.name)}</b>
+          <span class="why">${esc(p.why)}</span><span class="r">${wdNis(p.price)} <span class="shop">at ${WD_SHOP[p.shop]}</span></span></div></a>`).join('')}</div></div>`)}`;
+  paneInit('wardrobe');
   const [it, of] = await Promise.all([fetchAll(() => sb.from('wardrobe_items').select('*').order('bought_on', {ascending: false})), sb.from('outfits').select('*').order('created_at')]);
   if(stale(seq)) return;
   if(it.error){ return wdMissing(it.error); }
@@ -6316,19 +6513,31 @@ function wdRender(){
   const all = window._wd || [], mine = all.filter(x => x.status === 'active');
   const list = document.getElementById('wdList'), f = window._wdFilter;
   const fl = document.getElementById('wdFilters');
+  // a filter is a slot (Tops, Shoes…), 'returned', or one kind ('kind:tee') reached from a group's "All 23 T-shirts" line
+  const kindF = f.startsWith('kind:') ? f.slice(5) : null;
   if(fl) fl.innerHTML = WD_FILTERS.map(([k, l]) => `<button class="${f === k ? 'on' : ''}" type="button" onclick="window._wdFilter='${k}';wdRender()">${l}</button>`).join('');
+  const title = document.getElementById('wdListTitle'); if(title) title.textContent = kindF ? (WD_PLURAL[kindF] || WD_PLURAL.other) : f === 'all' ? 'Everything' : (WD_FILTERS.find(x => x[0] === f) || ['', 'Everything'])[1];
   if(!list) return;
   if(!all.length){
     list.innerHTML = `<div class="empty">Nothing here yet.<br><button class="btn" type="button" style="margin-top:12px" onclick="wdImport(this)">Import ${WARDROBE_SEED.length} pieces from your Terminal X, adidas and Nike orders</button>
       <div class="n" style="margin-top:8px">or add pieces one by one</div></div>`;
   } else {
     let rows = f === 'all' ? all.filter(x => x.status !== 'returned') : f === 'returned' ? all.filter(x => x.status === 'returned')
+      : kindF ? all.filter(x => x.kind === kindF && x.status !== 'returned')
       : f === 'bag' ? all.filter(x => x.kind === 'bag' && x.status !== 'returned') : all.filter(x => wdSlotOf(x.kind) === f && x.status !== 'returned');
     rows = [...rows].sort((a, b) => (WD_KIND[a.kind] || WD_KIND.other)[2] - (WD_KIND[b.kind] || WD_KIND.other)[2] || (a.status === 'gift') - (b.status === 'gift') || (b.bought_on || '').localeCompare(a.bought_on || ''));
-    let last = '';
-    list.innerHTML = rows.length ? rows.map(x => { const k = WD_PLURAL[x.kind] || WD_PLURAL.other;
-      const head = (f === 'all' || f === 'returned') && k !== last ? `<div class="wd-group">${k}</div>` : ''; last = k;
-      return head + wdRow(x); }).join('') : '<div class="empty">Nothing in this group</div>';
+    if(f === 'all' || f === 'returned'){
+      // Everything is grouped by kind, each group showing its newest four; the line under a group opens the whole of it
+      const groups = []; rows.forEach(x => { const g = groups[groups.length - 1]; if(g && g.kind === x.kind) g.rows.push(x); else groups.push({kind: x.kind, rows: [x]}); });
+      const CAP = f === 'all' ? 4 : 99;
+      list.innerHTML = rows.length ? groups.map(g => { const k = WD_PLURAL[g.kind] || WD_PLURAL.other;
+        return `<div class="wd-group">${k}<span class="n">${g.rows.length}</span></div>` + g.rows.slice(0, CAP).map(wdRow).join('')
+          + (g.rows.length > CAP ? moreRow(`All ${g.rows.length} ${k.toLowerCase()}`, `window._wdFilter='kind:${g.kind}';wdRender();paneShow('wardrobe','closet')`) : ''); }).join('')
+        : '<div class="empty">Nothing in this group</div>';
+    } else {
+      list.innerHTML = (rows.length ? rows.map(wdRow).join('') : '<div class="empty">Nothing in this group</div>')
+        + (kindF ? moreRow('Back to everything', "window._wdFilter='all';wdRender();paneShow('wardrobe','closet')") : '');
+    }
   }
   const cnt = document.getElementById('wdCount'); if(cnt) cnt.textContent = all.length ? plural(mine.length, 'piece') + (all.length - mine.length ? ' · ' + (all.length - mine.length) + ' returned or not yours' : '') : '';
   // lead + status
