@@ -883,7 +883,7 @@ main.wide{max-width:1500px}
 /* ---------- Wardrobe (v67): the figure, the slots beside it, product rows ---------- */
 .wd-stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:18px;margin-bottom:26px}
 /* the paper doll: a 130 × 200 cm stage, everything placed in percent so it scales with the box */
-.wd-doll{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:130/200;max-height:620px;overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default}
+.wd-doll{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:130/210;max-height:620px;overflow:hidden;user-select:none;-webkit-user-select:none;cursor:default}
 .wd-doll .wd-fig{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .wd-doll .wd-fig .body{fill:var(--surface);stroke:var(--text);stroke-width:.6;stroke-linejoin:round}
 .wd-doll .wd-fig .ink path{fill:none;stroke:var(--text);stroke-width:9.6;stroke-linecap:round;stroke-linejoin:round}
@@ -897,6 +897,11 @@ main.wide{max-width:1500px}
 .wd-g.mirror canvas,.wd-g.mirror img{transform:scaleX(-1)}
 .wd-doll::after{content:"tap a piece";position:absolute;right:12px;top:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
 .wd-ctl{position:absolute;left:10px;bottom:10px;display:flex;align-items:center;gap:8px;z-index:2}
+.wd-photos{display:flex;flex-wrap:wrap;gap:10px}
+.wd-photo{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:6px;min-width:120px;height:234px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color var(--t-hover) ease}
+.wd-photo.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.wd-photo canvas{display:block;border-radius:8px;max-width:100%}
+.wd-photo .n{font-size:12px;color:var(--muted)}
 /* the flat lay: each worn piece on its own, height proportional to its length */
 .wd-flat[hidden]{display:none}
 .wd-flat{grid-column:1/-1;display:flex;gap:14px;align-items:flex-end;overflow-x:auto;padding:14px 6px 6px;border-top:1px solid var(--border)}
@@ -6434,6 +6439,7 @@ function wdDetail(id){
         ${x.status !== 'active' ? `<span>Status</span><span>${x.status === 'returned' ? 'Returned for a refund' : x.status === 'gift' ? 'Not yours' : esc(x.status)}</span>` : ''}
         ${x.notes ? `<span>Notes</span><span>${esc(x.notes)}</span>` : ''}</div></div>`,
     foot: `<span class="n"><button class="linkish danger" type="button" onclick="sheetDel('wardrobe_items','${x.id}','wardrobe')">Delete</button></span>
+      ${x.source === 'terminalx' && x.img ? `<button class="btn-ghost" type="button" onclick="closeSheet();wdPhotoSheet('${x.id}')">Change photo</button>` : ''}
       <button class="btn-ghost" type="button" onclick="closeSheet();wdItemSheet('${x.id}')">Edit</button>
       ${slot && x.status === 'active' ? (on ? `<button class="btn-ghost" type="button" onclick="wdWear('${on}',null);closeSheet()">Take off</button>`
         : `<button class="btn" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet();document.getElementById('wdDoll')?.scrollIntoView({behavior:'smooth',block:'center'})">Wear it</button>`) : ''}`});
@@ -6487,7 +6493,7 @@ function wdDims(x){ const d = WD_DIMS[x.kind] || WD_DIMS.other, adj = WD_SIZE_AD
   return {len: +x.length_cm || d.len + (x.kind === 'shoes' ? 0 : adj), w: +x.width_cm || d.w, body: d.body, est: !(+x.length_cm)}; }
 /* the figure, in cm from the ground; the stage is 130 cm wide and 200 cm tall */
 const WD_BODY = {height: 189, shoulder: 155, armpit: 141, chest: 136, waist: 112, hip: 98, crotch: 86, knee: 52, ankle: 8, chin: 166, eye: 177, brow: 180};
-const WD_W = 130, WD_H = 200;
+const WD_W = 130, WD_H = 210;
 const wdPx = cm => cm / WD_W * 100, wdPy = cm => (WD_H - cm) / WD_H * 100;   // cm → percent of the stage
 function wdFigureSvg(){
   const B = WD_BODY, cx = WD_W / 2, Y = cm => WD_H - cm;
@@ -6557,22 +6563,40 @@ async function wdCutout(bmp, kind){
         let person = 0, cloth = 0;
         for(let i = 0; i < W * H; i++){ if(bg[i]) continue; const k = cat(i); if(k === 1 || k === 2 || k === 3){ bg[i] = 1; person++; } else if(k === 4 || k === 5) cloth++; }
         if(person > W * H * .01 && cloth > W * H * .02){
-          // grow from the garment's centre through similar colours; holes (logos, hands) are filled afterwards
-          const seedY = Math.round(H * (kind === 'pants' || kind === 'shorts' ? .55 : kind === 'cap' || kind === 'beanie' ? .3 : .42));
-          let seed = seedY * W + (W >> 1); for(let t = 0; t < W / 2 && (bg[seed] || cat(seed) < 4); t++) seed += (t % 2 ? -t : t);
-          const o = seed * 4, sr = d[o], sg = d[o + 1], sb = d[o + 2];
-          const near = i => { const q = i * 4, r = d[q], g = d[q + 1], b = d[q + 2]; return Math.abs((r - g) - (sr - sg)) + Math.abs((g - b) - (sg - sb)) + .4 * Math.abs((r + g + b) - (sr + sg + sb)) < 64; };
-          const keep = new Uint8Array(W * H), q = [seed]; keep[seed] = 1; let n = 0;
-          while(q.length){ const i = q.pop(); n++; const xx = i % W;
-            [xx ? i - 1 : -1, xx < W - 1 ? i + 1 : -1, i >= W ? i - W : -1, i < W * (H - 1) ? i + W : -1].forEach(j => { if(j < 0 || keep[j] || bg[j] || cat(j) < 4 || !near(j)) return; keep[j] = 1; q.push(j); }); }
-          if(n > cloth * .3){
-            // fill enclosed holes: whatever the outside can't reach is part of the garment
+          // the garment is the dominant clothes colour in its own band of the photo (so an open shirt wins over
+          // the tee showing under it); then every clothes pixel near that colour, specks dropped, holes filled
+          const band = kind === 'pants' || kind === 'shorts' ? [.4, .98] : kind === 'cap' || kind === 'beanie' ? [0, .35] : [.2, .65];
+          const hist = new Map(); let best = null, bestN = 0;
+          for(let i = 0; i < W * H; i += 3){ if(bg[i] || cat(i) < 4) continue; const yy = (i / W) | 0; if(yy < band[0] * H || yy > band[1] * H) continue;
+            const o = i * 4, r = d[o], g = d[o + 1], b = d[o + 2], key = (((r - g + 255) >> 5) << 10) | (((g - b + 255) >> 5) << 5) | ((r + g + b) / 3) >> 4;
+            const e = hist.get(key) || [0, 0, 0, 0]; e[0]++; e[1] += r; e[2] += g; e[3] += b; hist.set(key, e); if(e[0] > bestN){ bestN = e[0]; best = e; } }
+          const sr = best[1] / best[0], sg = best[2] / best[0], sb = best[3] / best[0];
+          const near = i => { const q = i * 4, r = d[q], g = d[q + 1], b = d[q + 2]; return Math.abs((r - g) - (sr - sg)) + Math.abs((g - b) - (sg - sb)) + .4 * Math.abs((r + g + b) - (sr + sg + sb)) < 70; };
+          const keep = new Uint8Array(W * H); let n = 0;
+          for(let i = 0; i < W * H; i++){ if(!bg[i] && cat(i) >= 4 && near(i)){ keep[i] = 1; n++; } }
+          if(n > cloth * .15){
+            // connected pieces: keep the big ones (the garment, its sleeves), drop specks under 4 % of the largest
+            const comp = new Int32Array(W * H).fill(-1), sizes = []; const qq = [];
+            for(let i = 0; i < W * H; i++){ if(!keep[i] || comp[i] >= 0) continue; const id2 = sizes.length; sizes.push(0); comp[i] = id2; qq.push(i);
+              while(qq.length){ const k = qq.pop(); sizes[id2]++; const xx = k % W;
+                [xx ? k - 1 : -1, xx < W - 1 ? k + 1 : -1, k >= W ? k - W : -1, k < W * (H - 1) ? k + W : -1].forEach(j => { if(j >= 0 && keep[j] && comp[j] < 0){ comp[j] = id2; qq.push(j); } }); } }
+            const big = Math.max(...sizes) * .04;
+            for(let i = 0; i < W * H; i++){ if(keep[i] && sizes[comp[i]] < big) keep[i] = 0; }
             const out = new Uint8Array(W * H), s2 = [];
             for(let i = 0; i < W; i++){ s2.push(i, (H - 1) * W + i); } for(let j = 0; j < H; j++){ s2.push(j * W, j * W + W - 1); }
             while(s2.length){ const i = s2.pop(); if(out[i] || keep[i]) continue; out[i] = 1; const xx = i % W;
               if(xx) s2.push(i - 1); if(xx < W - 1) s2.push(i + 1); if(i >= W) s2.push(i - W); if(i < W * (H - 1)) s2.push(i + W); }
-            for(let i = 0; i < W * H; i++){ if(!keep[i] && out[i]) bg[i] = 1; else if(!keep[i] && !out[i] && cat(i) >= 1 && cat(i) <= 3) bg[i] = 1; else bg[i] = 0; }
-          } else { for(let i = 0; i < W * H; i++){ if(!bg[i] && cat(i) < 4) bg[i] = 1; } }   // a print: keep all the clothes
+            for(let i = 0; i < W * H; i++){ bg[i] = keep[i] ? 0 : out[i] ? 1 : (cat(i) >= 1 && cat(i) <= 3) ? 1 : 0; }
+          } else { for(let i = 0; i < W * H; i++){ if(!bg[i] && cat(i) < 4) bg[i] = 1; } }   // nothing dominant: keep all the clothes
+          // the 256 px mask leaves stair-steps: blur the edge at quarter size and re-threshold
+          const qw = Math.max(1, W >> 2), qh = Math.max(1, H >> 2), qc = document.createElement('canvas'); qc.width = qw; qc.height = qh;
+          const qx = qc.getContext('2d'), qd = qx.createImageData(qw, qh);
+          for(let y = 0; y < qh; y++) for(let xq = 0; xq < qw; xq++){ const i = (y * 4) * W + xq * 4; const v = bg[i] ? 0 : 255; const o = (y * qw + xq) * 4; qd.data[o] = qd.data[o + 1] = qd.data[o + 2] = v; qd.data[o + 3] = 255; }
+          qx.putImageData(qd, 0, 0);
+          const fc = document.createElement('canvas'); fc.width = W; fc.height = H; const fx = fc.getContext('2d', {willReadFrequently: true});
+          fx.imageSmoothingEnabled = true; fx.imageSmoothingQuality = 'high'; fx.filter = 'blur(' + Math.max(1, Math.round(W / 300)) + 'px)'; fx.drawImage(qc, 0, 0, W, H);
+          const fd = fx.getImageData(0, 0, W, H).data;
+          for(let i = 0; i < W * H; i++){ if(d[i * 4 + 3] >= 12 && open(i) === false) bg[i] = fd[i * 4] < 128 ? 1 : 0; }
         }
       }
       if(res.close) res.close();
@@ -6605,7 +6629,7 @@ async function wdPiece(x){
   if(W2.cache.has(x.id)) return W2.cache.get(x.id);
   if(W2.jobs.has(x.id)) return W2.jobs.get(x.id);
   const job = (async () => { let cv = null, cut = true;
-    const key = x.id + '|' + wdBig(x) + '|v1';
+    const key = x.id + '|' + wdBig(x) + '|v2';
     try{
       const saved = await wdStore('get', key);
       if(saved){ const bmp = await createImageBitmap(saved); cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height; cv.getContext('2d').drawImage(bmp, 0, 0); }
@@ -6639,7 +6663,7 @@ async function wdDollRender(){
     let hcm, wcm, left, top;
     if(slot === 'top' || slot === 'outer'){ hcm = d.len; wcm = hcm * ar; const hem = B.shoulder - (d.body || d.len) + (slot === 'outer' ? -1 : 0); top = hem + hcm; left = WD_W / 2 - wcm / 2; }
     else if(slot === 'bottom'){ hcm = d.len; wcm = hcm * ar; top = 106; left = WD_W / 2 - wcm / 2; }
-    else if(slot === 'head'){ wcm = d.w; hcm = wcm / ar; top = (x.kind === 'beanie' ? 174 : B.brow) + hcm - (x.kind === 'beanie' ? 4 : 2); left = WD_W / 2 - wcm / 2; }
+    else if(slot === 'head'){ wcm = d.w; hcm = wcm / ar; top = B.brow + hcm - 1; left = WD_W / 2 - wcm / 2; }   // the brim or band sits on the brow
     else { wcm = d.len; hcm = wcm / ar; top = hcm; left = WD_W / 2 - 13 - wcm / 2; }   // shoes: a side-view pair, one each side
     g.style.left = wdPx(left) + '%'; g.style.top = wdPy(top) + '%'; g.style.width = wdPx(wcm) + '%'; g.style.height = (hcm / WD_H * 100) + '%';
     if(slot === 'feet'){ const g2 = g.cloneNode(false); g2.classList.add('mirror'); g2.style.left = wdPx(WD_W / 2 + 13 - wcm / 2) + '%';
@@ -6653,6 +6677,26 @@ async function wdDollRender(){
     el.querySelector('.wd-fig.front') && el.appendChild(el.querySelector('.wd-fig.front'));
   }
   wdFlatRender();
+}
+/* the shop's other photos of the same product (Terminal X numbers them -1…, -2…, -3…): pick the flat one, or the
+   angle the cut-out handles best; the choice is saved on the piece */
+async function wdPhotoSheet(id){
+  const x = wdById(id); if(!x || !x.img) return;
+  const m = x.img.match(/^(.*\/)([a-z]\d{9})-(\d)(\d+(?:_\d+)?\.jpg)$/); if(!m) return toast('No gallery for this piece');
+  const urls = [1, 2, 3, 4, 5, 6, 7, 8].map(n => m[1] + m[2] + '-' + n + m[4]);
+  openSheet({title: 'Choose the photo', sub: 'The flat shot cuts out best; a shot on a model is cut around the garment', cls: 'wide',
+    body: `<div class="wd-photos" id="wdPhotos">${urls.map((u, i) => `<button class="wd-photo${u === x.img ? ' on' : ''}" type="button" data-u="${esc(u)}" onclick="wdPhotoPick('${x.id}', this.dataset.u)"><span class="n">Loading…</span></button>`).join('')}</div>`,
+    foot: `<span class="n">Photos come from the shop; a missing number just means the shop has fewer</span>`});
+  const box = document.getElementById('wdPhotos'); if(!box) return;
+  await Promise.all(urls.map(async (u, i) => { const b = box.children[i]; if(!b) return;
+    try{ const bmp = await wdBitmap(u); const c = document.createElement('canvas'); const k = 220 / bmp.height; c.width = Math.round(bmp.width * k); c.height = 220; c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); b.innerHTML = ''; b.appendChild(c); }
+    catch(e){ b.remove(); } }));
+  if(!box.children.length) box.innerHTML = '<div class="empty">The shop has no other photos of this piece</div>';
+}
+async function wdPhotoPick(id, url){
+  const x = wdById(id); if(!x) return;
+  const {error} = await sb.from('wardrobe_items').update({img: url}).eq('id', id); if(error) return err(error);
+  x.img = url; W2.cache.delete(id); closeSheet(); toast('Photo changed'); wdDollRender(); wdRender();
 }
 /* the flat lay under the figure: each worn piece on its own, with its measurements, for checking against a tape */
 function wdFlatRender(){
