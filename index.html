@@ -6517,9 +6517,27 @@ async function wdBitmap(url){
   if(!r.ok) throw new Error('image ' + r.status);
   return createImageBitmap(await r.blob());
 }
-/* cut the garment out: flood the near-white (or transparent) background in from the edges, keep the rest,
-   then draw a thin ink line round it so a white tee still reads on paper. Returns the cropped canvas. */
-function wdCutout(bmp){
+/* person/clothes segmentation for photos shot on a model: MediaPipe's multiclass selfie model (background, hair,
+   body skin, face, clothes, accessories) loaded once from the CDN; null when it can't be had, and the cut-out then
+   relies on the white flood alone */
+let W2seg = null;
+function wdSegmenter(){
+  if(W2seg) return W2seg;
+  W2seg = (async () => { try{
+    const v = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
+    const files = await v.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    return await v.ImageSegmenter.createFromOptions(files, {baseOptions: {modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite'},
+      runningMode: 'IMAGE', outputCategoryMask: true, outputConfidenceMasks: false});
+  }catch(e){ console.warn('Wardrobe: segmentation unavailable, white flood only', e && e.message); return null; } })();
+  return W2seg;
+}
+/* cut the garment out of a shop photo:
+   1. flood the near-white (or transparent) background in from the edges;
+   2. if the photo is on a model, drop hair, skin and face, then grow a region from the garment's own centre
+      through similar colours so the model's other clothes stay behind (a print that defeats the grow falls back
+      to everything the model classed as clothes);
+   3. a thin ink line round the result so a white tee still reads on paper. Returns the cropped canvas. */
+async function wdCutout(bmp, kind){
   const W = bmp.width, H = bmp.height, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(bmp, 0, 0);
   const id = x.getImageData(0, 0, W, H), d = id.data, bg = new Uint8Array(W * H), st = [];
@@ -6527,6 +6545,40 @@ function wdCutout(bmp){
   for(let i = 0; i < W; i++){ st.push(i, (H - 1) * W + i); } for(let j = 0; j < H; j++){ st.push(j * W, j * W + W - 1); }
   while(st.length){ const i = st.pop(); if(bg[i] || !open(i)) continue; bg[i] = 1; const xx = i % W;
     if(xx) st.push(i - 1); if(xx < W - 1) st.push(i + 1); if(i >= W) st.push(i - W); if(i < W * (H - 1)) st.push(i + W); }
+  // 2. a model in the photo?
+  const seg = kind === 'shoes' || kind === 'bag' ? null : await wdSegmenter();
+  if(seg){
+    try{
+      const sc = Math.min(1, 512 / Math.max(W, H)), sw = Math.round(W * sc), sh = Math.round(H * sc);
+      const small = document.createElement('canvas'); small.width = sw; small.height = sh; small.getContext('2d').drawImage(bmp, 0, 0, sw, sh);
+      const res = seg.segment(small), mask = res.categoryMask ? res.categoryMask.getAsUint8Array() : null, mw = res.categoryMask ? res.categoryMask.width : sw, mh = res.categoryMask ? res.categoryMask.height : sh;
+      if(mask){
+        const cat = i => mask[Math.min(mh - 1, Math.floor(((i / W) | 0) * mh / H)) * mw + Math.min(mw - 1, Math.floor((i % W) * mw / W))];
+        let person = 0, cloth = 0;
+        for(let i = 0; i < W * H; i++){ if(bg[i]) continue; const k = cat(i); if(k === 1 || k === 2 || k === 3){ bg[i] = 1; person++; } else if(k === 4 || k === 5) cloth++; }
+        if(person > W * H * .01 && cloth > W * H * .02){
+          // grow from the garment's centre through similar colours; holes (logos, hands) are filled afterwards
+          const seedY = Math.round(H * (kind === 'pants' || kind === 'shorts' ? .55 : kind === 'cap' || kind === 'beanie' ? .3 : .42));
+          let seed = seedY * W + (W >> 1); for(let t = 0; t < W / 2 && (bg[seed] || cat(seed) < 4); t++) seed += (t % 2 ? -t : t);
+          const o = seed * 4, sr = d[o], sg = d[o + 1], sb = d[o + 2];
+          const near = i => { const q = i * 4, r = d[q], g = d[q + 1], b = d[q + 2]; return Math.abs((r - g) - (sr - sg)) + Math.abs((g - b) - (sg - sb)) + .4 * Math.abs((r + g + b) - (sr + sg + sb)) < 64; };
+          const keep = new Uint8Array(W * H), q = [seed]; keep[seed] = 1; let n = 0;
+          while(q.length){ const i = q.pop(); n++; const xx = i % W;
+            [xx ? i - 1 : -1, xx < W - 1 ? i + 1 : -1, i >= W ? i - W : -1, i < W * (H - 1) ? i + W : -1].forEach(j => { if(j < 0 || keep[j] || bg[j] || cat(j) < 4 || !near(j)) return; keep[j] = 1; q.push(j); }); }
+          if(n > cloth * .3){
+            // fill enclosed holes: whatever the outside can't reach is part of the garment
+            const out = new Uint8Array(W * H), s2 = [];
+            for(let i = 0; i < W; i++){ s2.push(i, (H - 1) * W + i); } for(let j = 0; j < H; j++){ s2.push(j * W, j * W + W - 1); }
+            while(s2.length){ const i = s2.pop(); if(out[i] || keep[i]) continue; out[i] = 1; const xx = i % W;
+              if(xx) s2.push(i - 1); if(xx < W - 1) s2.push(i + 1); if(i >= W) s2.push(i - W); if(i < W * (H - 1)) s2.push(i + W); }
+            for(let i = 0; i < W * H; i++){ if(!keep[i] && out[i]) bg[i] = 1; else if(!keep[i] && !out[i] && cat(i) >= 1 && cat(i) <= 3) bg[i] = 1; else bg[i] = 0; }
+          } else { for(let i = 0; i < W * H; i++){ if(!bg[i] && cat(i) < 4) bg[i] = 1; } }   // a print: keep all the clothes
+        }
+      }
+      if(res.close) res.close();
+    }catch(e){ console.warn('Wardrobe: segmentation failed on a photo', e && e.message); }
+  }
+  // 3. alpha, outline, crop
   let x0 = W, y0 = H, x1 = -1, y1 = -1; const edge = [];
   for(let i = 0; i < W * H; i++){
     if(bg[i]){ d[i * 4 + 3] = 0; continue; }
@@ -6541,12 +6593,25 @@ function wdCutout(bmp){
   out.getContext('2d').drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
   return out;
 }
+/* cut-outs are kept in IndexedDB so a photo is fetched and segmented once per device */
+function wdStore(mode, key, val){
+  return new Promise(res => { try{ const rq = indexedDB.open('atlas-wardrobe', 1); rq.onupgradeneeded = () => rq.result.createObjectStore('cutouts');
+    rq.onerror = () => res(null);
+    rq.onsuccess = () => { const db = rq.result, tx = db.transaction('cutouts', mode === 'get' ? 'readonly' : 'readwrite'), os = tx.objectStore('cutouts');
+      const r = mode === 'get' ? os.get(key) : os.put(val, key); r.onsuccess = () => { res(mode === 'get' ? r.result || null : true); db.close(); }; r.onerror = () => { res(null); db.close(); }; }; }catch(e){ res(null); } });
+}
 const wdBig = x => x.img && x.img.startsWith(WD_TX_IMG) ? x.img.replace(WD_TX_IMG, WD_TX_BIG) : x.img;
 async function wdPiece(x){
   if(W2.cache.has(x.id)) return W2.cache.get(x.id);
   if(W2.jobs.has(x.id)) return W2.jobs.get(x.id);
   const job = (async () => { let cv = null, cut = true;
-    try{ cv = wdCutout(await wdBitmap(wdBig(x))); }catch(e){ cut = false; cv = null; }
+    const key = x.id + '|' + wdBig(x) + '|v1';
+    try{
+      const saved = await wdStore('get', key);
+      if(saved){ const bmp = await createImageBitmap(saved); cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height; cv.getContext('2d').drawImage(bmp, 0, 0); }
+      else { cv = await wdCutout(await wdBitmap(wdBig(x)), x.kind); if(cv) cv.toBlob(b => { if(b) wdStore('put', key, b); }, 'image/png'); }
+    }catch(e){ cut = false; cv = null; }
+    if(!cv) cut = false;
     const r = {canvas: cv, cut}; W2.cache.set(x.id, r); W2.jobs.delete(x.id); return r; })();
   W2.jobs.set(x.id, job); return job;
 }
@@ -6560,14 +6625,14 @@ function wdDoll(){
 async function wdDollRender(){
   const el = document.getElementById('wdDoll'); if(!el) return;
   const fit = wdFit(), B = WD_BODY, seq = (el._seq = (el._seq || 0) + 1);
-  const layer = s => el.querySelector(`.wd-g[data-slot="${s}"]`);
+  const layer = s => el.querySelector(`.wd-g[data-slot="${s}"]`), drop = s => el.querySelectorAll(`.wd-g[data-slot="${s}"]`).forEach(n => n.remove());
   for(const slot of ['bottom', 'top', 'outer', 'feet', 'head']){
     const x = fit[slot] ? wdById(fit[slot]) : null, cur = layer(slot);
-    if(!x){ if(cur) cur.remove(); continue; }
+    if(!x){ drop(slot); continue; }
     const d = wdDims(x);
     if(cur && cur.dataset.item === x.id && cur.dataset.len === String(d.len)) continue;
     const piece = await wdPiece(x); if(el._seq !== seq) return;
-    const old = layer(slot); if(old) old.remove();
+    drop(slot);
     const g = document.createElement('div'); g.className = 'wd-g' + (piece.cut ? '' : ' raw'); g.dataset.slot = slot; g.dataset.item = x.id; g.dataset.len = String(d.len);
     const img = piece.canvas || Object.assign(new Image(), {src: wdBig(x), alt: ''}); g.appendChild(img);
     const ar = piece.canvas ? piece.canvas.width / piece.canvas.height : 3 / 4;   // a raw photo is assumed 3:4
