@@ -279,6 +279,7 @@ input[type=range]{padding:0;background:transparent;border:0;height:30px;accent-c
 .hub-col.right .tile:nth-child(1){animation-delay:100ms}
 .hub-col.right .tile:nth-child(2){animation-delay:140ms}
 .hub-col.right .tile:nth-child(3){animation-delay:180ms}
+.hub-col.right .tile:nth-child(4){animation-delay:220ms}
 /* the figure is taller than the disc: head above its rim, body fading out below it */
 /* pointer-events:none — the figure's box overlaps the tiles beside it; clicks must fall through to them */
 .hub-figure{pointer-events:none;position:absolute;left:50%;top:calc(50% - var(--figh) * .63);transform:translateX(-50%) translateZ(50px);display:flex;align-items:flex-start;justify-content:center;width:calc(var(--figh) * 1.02);height:calc(var(--figh) * 1.36)}
@@ -879,6 +880,67 @@ main.wide{max-width:1500px}
 .hub-foot .linkish{font-size:10px;font-weight:500;color:var(--muted);margin-left:8px}
 
 /* ---------- reduced motion: fewer and gentler, not none ---------- */
+/* ---------- Wardrobe (v67): the figure, the slots beside it, product rows ---------- */
+.wd-stage{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr);gap:18px;margin-bottom:26px}
+.wd-3d{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);aspect-ratio:4/5;max-height:560px;overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+.wd-3d:active{cursor:grabbing}
+.wd-3d canvas{display:block;width:100%!important;height:100%!important}
+.wd-3d-note{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;text-align:center;padding:20px}
+.wd-3d::after{content:"drag to turn";position:absolute;right:12px;bottom:10px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.7;pointer-events:none}
+.wd-side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.wd-slots{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px}
+.wd-slot{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 2px;border-top:1px solid var(--border);cursor:pointer;transition:background-color var(--t-hover) ease}
+.wd-slot:first-child{border-top-color:transparent}
+.wd-slot .body{min-width:0;display:block}
+.wd-slot .lbl{margin-bottom:2px}
+.wd-slot .t{display:block;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-slot.empty .t{color:var(--muted);font-weight:500}
+.wd-slot .m{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.wd-slot .chev{color:var(--muted);display:flex}
+.wd-slot:active{background:var(--surface2)}
+@media(hover:hover) and (pointer:fine){ .wd-slot:hover{background:var(--surface2)} }
+.icon-btn.sm{padding:4px}
+.wd-outfits .lbl{margin-bottom:6px}
+.wd-outfits .n{font-size:12.5px;color:var(--muted)}
+.wd-chips{flex-wrap:wrap;align-items:center}
+.wd-chips .linkish{font-size:12.5px;margin-left:4px}
+/* product photos: a 3:4 thumb on the row, a swatch when the shop has no picture */
+.wd-th{width:44px;height:56px;border-radius:8px;object-fit:cover;background:var(--surface2);border:1px solid var(--border);flex:none;display:block}
+.wd-th.sm{width:38px;height:48px}
+.wd-th.sw{box-sizing:border-box}
+.wd-th.sw.dashed{background:transparent;border-style:dashed}
+.wd-th.pk{width:64px;height:80px;border-radius:10px}
+.wd-th.big{width:100%;height:180px;border-radius:12px}
+.wd-row.done .wd-th{opacity:.55}
+.wd-row .t .pill{margin-left:6px;vertical-align:1px}
+.wd-group{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:18px 6px 4px}
+.wd-group:first-child{padding-top:6px}
+.wd-filters{margin:4px 0 8px}
+.wd-pick-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+.wd-pick-grid .pick{position:relative;padding:9px 6px 8px}
+.wd-pick-grid .pick .m{font-size:11px;color:var(--muted)}
+/* the detail sheet: the shop's big photo, then the facts */
+.wd-detail img{display:block;width:100%;max-height:300px;object-fit:contain;background:var(--surface2);border:1px solid var(--border);border-radius:12px;margin-bottom:14px}
+.wd-detail .kv a{color:var(--accent2);font-weight:600}
+.wd-dot{display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid var(--border);vertical-align:-1px;margin-right:6px}
+.wd-sql{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;user-select:all}
+/* matches: the shop's photo with one line on why it fits */
+.wd-picks{gap:12px}
+.wd-pick{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;color:inherit;text-decoration:none;transition:border-color var(--t-hover) ease}
+@media(hover:hover) and (pointer:fine){ .wd-pick:hover{border-color:var(--accent)} }
+.wd-pick img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--surface2);border-bottom:1px solid var(--border)}
+.wd-pick-b{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px;min-width:0}
+.wd-pick-b .m{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-pick-b b{font-size:14px;font-weight:600;line-height:1.25}
+.wd-pick-b .why{font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+.wd-pick-b .r{font-size:13.5px;font-weight:600;margin-top:6px;font-variant-numeric:tabular-nums}
+.wd-pick-b .shop{font-weight:500;color:var(--muted);font-size:12px}
+@media(max-width:760px){
+  .wd-stage{grid-template-columns:minmax(0,1fr)}
+  .wd-3d{aspect-ratio:4/5;max-height:440px}
+  .grid.wd-picks{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .wd-pick img{aspect-ratio:1/1}
+}
 @media(prefers-reduced-motion:reduce){
   .logo path{animation:none!important;stroke-dashoffset:0}
   .auth-hero,.auth-card{animation:fadeUp 300ms ease both}
@@ -894,7 +956,7 @@ main.wide{max-width:1500px}
   .sess-live .pulse{animation:none}
   .set-dots button:active{transform:none}
   .exi-anim .mv{animation-play-state:paused!important}
-  .btn,.btn-ghost,.icon-btn,.checkbox,.pick,.tile .ic,.hd-ib{transition-property:color,background-color,border-color,opacity}
+  .btn,.btn-ghost,.icon-btn,.checkbox,.pick,.tile .ic,.hd-ib,.wd-pick{transition-property:color,background-color,border-color,opacity}
   .btn:active,.btn-ghost:active,.icon-btn:active,.checkbox:active,.pick:active,.tile:active .ic,.hd-ib:active,.tile:hover .ic{transform:none}
   @keyframes fadeUp{from{opacity:0}to{opacity:1}}
   @keyframes viewIn{from{opacity:0}to{opacity:1}}
@@ -962,12 +1024,13 @@ main.wide{max-width:1500px}
       </div>
       <div class="hub-col right">
         <button class="tile" data-tab="house" style="--tx:0.9135;--ty:-0.4067"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><b>House</b></button>
-        <button class="tile" data-tab="goals" style="--tx:0.9962;--ty:0.0872"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
-        <button class="tile" data-tab="chores" style="--tx:0.8387;--ty:0.5446"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
+        <button class="tile" data-tab="goals" style="--tx:0.9945;--ty:0.1045"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
+        <button class="tile" data-tab="chores" style="--tx:0.809;--ty:0.5878"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
+        <button class="tile" data-tab="wardrobe" style="--tx:0.4384;--ty:0.8988"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.5 3.5L12 5l3.5-1.5L20 6l-1.6 3.6L16 9v11H8V9l-2.4.6L4 6z"/></svg></span><b>Wardrobe</b></button>
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v66</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v67</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -983,6 +1046,7 @@ main.wide{max-width:1500px}
         <button class="tab" data-tab="goals"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><span class="tl">Goals</span></button>
         <button class="tab" data-tab="chores"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><span class="tl">Chores</span></button>
         <button class="tab" data-tab="house"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><span class="tl">House</span></button>
+        <button class="tab" data-tab="wardrobe"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.5 3.5L12 5l3.5-1.5L20 6l-1.6 3.6L16 9v11H8V9l-2.4.6L4 6z"/></svg></span><span class="tl">Wardrobe</span></button>
       </nav>
       <button class="icon-btn" id="signOutBtn" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
     </header>
@@ -1065,7 +1129,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v66');
+console.log('Atlas v67');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -5970,6 +6034,586 @@ function hd3Export(){
     a.download = ((HD.cur.name || '').replace(/[^\p{L}\p{N}\- ]+/gu, '').trim() || 'plan') + ' 3D.png';
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   });
+}
+
+/* ================= WARDROBE (v67) =================
+   Everything Benji owns, pulled from his Terminal X, adidas and Nike order histories, dressed onto a
+   3D mannequin drawn with three.js (loaded only when this section opens). Pieces live in
+   `wardrobe_items`, saved looks in `outfits`; what the mannequin is wearing right now lives in
+   localStorage so it survives navigation. Pictures are the shops' own product photos, hot-linked. */
+const WD_KIND = {   // kind -> [label, slot it goes on, ledger order]
+  jacket: ['Jacket', 'outer', 0], hoodie: ['Hoodie', 'top', 1], sweat: ['Sweatshirt', 'top', 2], shirt: ['Shirt', 'top', 3],
+  polo: ['Polo', 'top', 4], tee: ['T-shirt', 'top', 5], pants: ['Trousers', 'bottom', 6], shorts: ['Shorts', 'bottom', 7],
+  shoes: ['Shoes', 'feet', 8], cap: ['Cap', 'head', 9], beanie: ['Beanie', 'head', 10], bag: ['Bag', '', 11], basics: ['Basics', '', 12], other: ['Other', '', 13],
+};
+const WD_SLOTS = [['head', 'Head', ['cap', 'beanie']], ['outer', 'Layer', ['jacket', 'shirt', 'hoodie', 'sweat']], ['top', 'Top', ['tee', 'polo', 'shirt', 'sweat', 'hoodie']],
+  ['bottom', 'Bottom', ['pants', 'shorts']], ['feet', 'Shoes', ['shoes']]];
+/* the shops name colours in Hebrew; one map gives each a swatch and an English label */
+const WD_COLORS = {
+  'שחור': ['#1f1e1b', 'Black'], 'לבן': ['#f2f0ea', 'White'], 'שמנת': ['#ece3cf', 'Cream'], 'אוף ווייט': ['#e9e6dc', 'Off-white'], 'בז\'': ['#d4c3a3', 'Beige'],
+  'אפור': ['#8c8a84', 'Grey'], 'אפור בהיר': ['#c2c0b8', 'Light grey'], 'כסף': ['#b9b8b2', 'Silver'], 'orbit grey': ['#9d9a94', 'Orbit grey'], 'שחור אפור': ['#3a3936', 'Black / grey'],
+  'כחול': ['#3f5f92', 'Blue'], 'כחול כהה': ['#2b3b5e', 'Dark blue'], 'כחול נייבי': ['#242f4b', 'Navy'], 'תכלת': ['#9bb8d8', 'Light blue'], 'כחול שחור': ['#1f2538', 'Navy / black'],
+  'ירוק': ['#4f6b47', 'Green'], 'ירוק כהה': ['#2f4a35', 'Dark green'], 'ירוק זית': ['#6d6b42', 'Olive'], 'חאקי': ['#8b7f5c', 'Khaki'], 'חום': ['#6a4b35', 'Brown'],
+  'צהוב': ['#dcbf4c', 'Yellow'], 'בורדו': ['#6a2634', 'Bordeaux'], 'סגול': ['#5c3f78', 'Purple'], 'טורקיז': ['#3f9b98', 'Turquoise'], 'ורוד': ['#d9a1b0', 'Pink'], 'מולטי': ['#8f867a', 'Multi'],
+};
+const WD_TX_IMG = 'https://media.terminalx.com/pub/media/catalog/product/cache/92af6b9c945798a7e3b64d91033084b3/';
+const WD_TX_BIG = 'https://media.terminalx.com/pub/media/catalog/product/cache/f112238e8de94b6d480bd02e7a9501b8/';
+/* one Terminal X order line: the product slug is the first ten characters of the SKU, the photo is the shop's own */
+function wdTx(bought_on, name, brand, kind, colorHe, size, sku, price, file, status){
+  const c = WD_COLORS[colorHe] || ['#8f867a', colorHe];
+  const slug = sku.slice(0, 10).toLowerCase();
+  return {name, brand, kind, color: c[0], color_name: c[1], size, sku, price, bought_on, status: status || 'active', source: 'terminalx',
+    url: 'https://www.terminalx.com/' + slug, img: file ? WD_TX_IMG + file[0] + '/' + file[1] + '/' + file : null, notes: null};
+}
+/* everything bought so far: 23 Terminal X orders (Nov 2022 → Oct 2026), one adidas order, one Nike order.
+   Socks, boxers, a towel and a bottle are left out; refunded lines keep status 'returned'; three women's-size
+   pieces from Nov 2022 are 'gift'. Brands come from the product pages; '—' where the page is gone. */
+const WARDROBE_SEED = [
+  // 27 Oct 2026
+  wdTx('2026-10-27', 'Puma x Carrots logo pouch', 'Puma', 'bag', 'שחור', 'One size', 'W73218000115', 174.93, 'w732180001-11731237917.jpg'),
+  wdTx('2026-10-27', 'Evryday Pro basketball shorts', 'adidas Performance', 'shorts', 'שחור', 'XL', 'K03203000106', 119.94, 'k032030001-11782805216.jpg'),
+  wdTx('2026-10-27', 'D4T training shorts', 'adidas Performance', 'shorts', 'לבן', 'XL', 'R95155000106', 119.94, 'r951550001-11784707205.jpg'),
+  wdTx('2026-10-27', 'Adizero running tee', 'adidas Performance', 'tee', 'שחור', 'XL', 'W85487000106', 155.94, 'w854870001-11787662205.jpg'),
+  // 17 Oct 2026
+  wdTx('2026-10-17', 'Dropset 4 Trainer', 'adidas Performance', 'shoes', 'שחור', '45⅓', 'K08938000109', 329.94, 'k089380001-11787646904.jpg'),
+  // 9 Sep 2026
+  wdTx('2026-09-09', 'LFC tee', 'adidas Originals', 'tee', 'orbit grey', 'XL', 'K11145000106', 199.90, 'k111450001-11786008335.jpg'),
+  wdTx('2026-09-09', 'Pocket tee', 'Billabong', 'tee', 'לבן', 'XL', 'R93135000506', 49.95, 'r931350005-11779175011.jpg'),
+  wdTx('2026-09-09', 'Pocket tee', 'Billabong', 'tee', 'אפור', 'XL', 'R93137000806', 49.95, 'r931370008-11779175011.jpg'),
+  wdTx('2026-09-09', 'Oversized tee with stitching', 'Terminal X', 'tee', 'לבן', 'XL', 'R70081000106', 71.94, 'r700810001-11777294219.jpg'),
+  // 16 Aug 2026
+  wdTx('2026-08-16', 'Plain tee', '—', 'tee', 'שמנת', 'XL', 'R93142000706', 49.95, 'r931420007-11792913705.jpg', 'returned'),
+  wdTx('2026-08-16', 'Logo tee', 'RVCA', 'tee', 'שמנת', 'XL', 'R95053000706', 94.95, 'r950530007-11780396204.jpg'),
+  wdTx('2026-08-16', 'Bvitos shorts', 'Mango', 'shorts', 'ירוק כהה', '44', 'R73497000405', 119.97, 'r734970004-11781782204.jpg'),
+  // 10 Jul 2026
+  wdTx('2026-07-10', 'Tee', 'Billabong', 'tee', 'כחול כהה', 'XL', 'R71780002906', 94.95, 'r717800029-11774858050.jpg'),
+  wdTx('2026-07-10', 'Slub roundneck tee', 'Quiksilver', 'tee', 'כחול כהה', 'XL', 'R63958002906', 94.95, 'r639580029-11770726303.jpg'),
+  wdTx('2026-07-10', 'Larry Corduroy 18 shorts', 'Billabong', 'shorts', 'אפור בהיר', 'XL', 'R80587002506', 184.95, 'r805870025-11777294220_1.jpg'),
+  wdTx('2026-07-10', 'Crofire Submersible 21 shorts', 'Billabong', 'shorts', 'בז\'', '34', 'R90921000709', 179.95, 'r909210007-11780463705.jpg'),
+  // 15 Jun 2026
+  wdTx('2026-06-15', 'Jarod bermuda denim shorts', '—', 'shorts', 'אפור', '44', 'R72818000805', 195.93, 'r728180008-11780557904.jpg', 'returned'),
+  wdTx('2026-06-15', 'Basic tee', 'Mango', 'tee', 'צהוב', 'XL', 'R59485001505', 71.94, 'r594850015-11768306804.jpg'),
+  wdTx('2026-06-15', 'Button-up shirt', 'Mango', 'shirt', 'חאקי', 'XL', 'R59872202305', 164.95, 'r598722023-11769500804.jpg'),
+  wdTx('2026-06-15', 'Smart trousers', 'Mango', 'pants', 'שחור', '44', 'R60257000105', 275.94, 'r602570001-11767871203.jpg'),
+  wdTx('2026-06-15', 'Basic tee', 'Mango', 'tee', 'כחול נייבי', 'XL', 'R59485002705', 71.94, 'r594850027-11768306804.jpg'),
+  // 3 Jun 2026
+  wdTx('2026-06-03', 'Logo tee', 'Quiksilver', 'tee', 'לבן', 'XL', 'R75121000506', 113.94, 'r751210005-11774436403.jpg'),
+  wdTx('2026-06-03', 'Logo bermuda shorts', 'Quiksilver', 'shorts', 'שחור', '34', 'R03925000107', 209.94, 'r039250001-11744703047.jpg'),
+  wdTx('2026-06-03', 'Agave Adiv Prem print tee', '—', 'tee', 'שמנת', 'XL', 'R80605000706', 119.94, 'r806050007-11776576003.jpg'),
+  wdTx('2026-06-03', 'Print sweatshirt', '—', 'sweat', 'ירוק', 'XL', 'R19849000405', 159.95, 'r198490004-11757509859_1.jpg', 'returned'),
+  wdTx('2026-06-03', 'Button-up shirt', 'Mango', 'shirt', 'כחול נייבי', 'XL', 'R60086002705', 369.90, 'r600860027-11769500804.jpg'),
+  wdTx('2026-06-03', 'Smart trousers', 'Mango', 'pants', 'בז\'', '44', 'R56843001805', 221.94, 'r568430018-11767871203.jpg'),
+  // 30 Nov 2025
+  wdTx('2025-11-30', 'Straight chinos', '—', 'pants', 'כחול', '34', 'R45145000609', 269.94, 'r451450006-11760868303.jpg'),
+  // 26 Nov 2025
+  wdTx('2025-11-26', 'Half-zip sweatshirt', '—', 'sweat', 'בז\'', 'XL', 'R19025001805', 191.94, 'r190250018-11757854013.jpg'),
+  wdTx('2025-11-26', 'Smart trousers', '—', 'pants', 'בז\'', '44', 'R18848001805', 199.95, 'r188480018-11787200504.jpg', 'returned'),
+  wdTx('2025-11-26', 'Classic tee', '—', 'tee', 'כחול', 'XL', 'R20046000605', 71.96, 'r200460006-11752740626.jpg'),
+  wdTx('2025-11-26', 'Straight trousers', 'Mango', 'pants', 'חום', '44', 'R19711000205', 174.95, 'r197110002-11752069442.jpg'),
+  // 14 Nov 2025
+  wdTx('2025-11-14', 'Boundary Summit zip jacket', '—', 'jacket', 'שחור', 'XL', 'R41667000106', 405.93, 'r416670001-11762161440.jpg'),
+  wdTx('2025-11-14', 'Logo hoodie', '—', 'hoodie', 'כחול כהה', 'XL', 'W80512000906', 314.93, 'w805120009-11743066717.jpg', 'returned'),
+  wdTx('2025-11-14', 'Logo tee', 'Quiksilver', 'tee', 'מולטי', 'XL', 'R05393000906', 75.96, 'r053930009-11744085144.jpg'),
+  wdTx('2025-11-14', 'Logo beanie', '—', 'beanie', 'אפור', 'One size', 'W19370000815', 83.93, 'w193700008-11701088624.jpg'),
+  // 4 Nov 2025
+  wdTx('2025-11-04', 'Cargo shorts', 'Billabong', 'shorts', 'אפור בהיר', '34', 'R13752002509', 359.90, 'r137520025-11753081266.jpg'),
+  wdTx('2025-11-04', 'Classic straight jeans', '—', 'pants', 'תכלת', '44', 'R19739002105', 349.90, 'r197390021-11752739579.jpg'),
+  wdTx('2025-11-04', 'Tailored linen-blend trousers', '—', 'pants', 'כחול נייבי', '44', 'W96533002705', 214.95, 'w965330027-11747129521.jpg'),
+  wdTx('2025-11-04', 'Chino trousers', '—', 'pants', 'שחור', '34', 'Z64408000111', 449.90, 'z644080001-11668948174.jpg'),
+  // 26 Oct 2025
+  wdTx('2025-10-26', 'Surftrek Plus trousers', 'Billabong', 'pants', 'כחול נייבי', 'XL', 'R45146002706', 314.93, 'r451460027-11760868303.jpg'),
+  wdTx('2025-10-26', 'Logo gym sack', '—', 'bag', 'שחור', 'One size', 'Z31003000109', 59.43, 'z310030001-11661930196.jpg'),
+  wdTx('2025-10-26', 'Logo training bag', '—', 'bag', 'שחור', 'One size', 'Z30996000109', 125.93, 'z309960001-11650882729.jpg'),
+  wdTx('2025-10-26', 'Logo pouch', 'Nike', 'bag', 'שחור', 'One size', 'Z28480000109', 83.93, 'z284800001-11642330484.jpg'),
+  wdTx('2025-10-26', 'Killshot 2 Leather', 'Nike', 'shoes', 'שחור', '45', 'W35600000109', 293.93, 'w356000001-11716461158.jpg'),
+  wdTx('2025-10-26', 'Logo training shirt', 'Nike', 'tee', 'שחור', 'XL', 'X42329000105', 90.93, 'x423290001-11787832905.jpg'),
+  wdTx('2025-10-26', 'Logo print tee', 'Dickies', 'tee', 'שחור', 'XL', 'X96694000105', 90.93, 'x966940001-11621985597_1.jpg'),
+  wdTx('2025-10-26', 'Logo sweatshirt', 'Dickies', 'sweat', 'אפור בהיר', 'XL', 'R30748002506', 195.93, 'r307480025-11758195340.jpg'),
+  // 16 Sep 2025
+  wdTx('2025-09-16', 'Embroidered logo tee', 'Quiksilver', 'tee', 'שחור', 'XL', 'R05504000106', 189.90, 'r055040001-11744085205.jpg'),
+  wdTx('2025-09-16', 'Logo print tee', 'Dickies', 'tee', 'שחור', 'XL', 'Z83367000105', 149.90, 'z833670001-11684625852.jpg'),
+  wdTx('2025-09-16', 'Logo tee', '—', 'tee', 'שחור', 'XL', 'W88255000106', 149.90, 'w882550001-21763997003.jpg'),
+  wdTx('2025-09-16', 'Logo tee', '—', 'tee', 'ירוק', 'XXL', 'W81225000407', 83.93, 'w812250004-11748451923.jpg'),
+  wdTx('2025-09-16', 'Print tee', 'Puma', 'tee', 'שחור', 'XL', 'W81219000106', 90.93, 'w812190001-11748451782.jpg'),
+  // 2 Jul 2025
+  wdTx('2025-07-02', 'Logo bermuda shorts', '—', 'shorts', 'שחור', '34', 'W57688000107', 174.95, 'w576880001-11723367634.jpg'),
+  wdTx('2025-07-02', 'Petroglyph tee', '—', 'tee', 'כחול כהה', 'XXL', 'R12665002907', 89.95, 'r126650029-11747906298.jpg'),
+  // 2 Aug 2024
+  wdTx('2024-08-02', 'Predict SOC3 running shoes', '—', 'shoes', 'שחור', '44⅔', 'Z71495000108', 359.94, 'z714950001-11670415483.jpg'),
+  // 7 Apr 2024
+  wdTx('2024-04-07', 'Sportswear Premium Essentials tee', 'Nike', 'tee', 'ירוק', 'XL', 'W30194000406', 127.92, 'w301940004-11707736870.jpg'),
+  wdTx('2024-04-07', 'Cargo shorts', '—', 'shorts', 'אפור', '34', 'Z71094000811', 147.96, 'z710940008-11673269985.jpg'),
+  // 11 Dec 2023
+  wdTx('2023-12-11', 'Logo beanie', '—', 'beanie', 'אפור', 'One size', 'W19370000815', 59.95, 'w193700008-11701088624.jpg'),
+  wdTx('2023-12-11', 'Colour-block fleece sweatshirt', '—', 'sweat', 'בז\'', 'XL', 'W19355001806', 279.95, 'w193550018-11701091553.jpg'),
+  // 6 Aug 2023
+  wdTx('2023-08-06', 'Logo print tee', '—', 'tee', 'חאקי', 'XL', 'Z83319202305', 179.90, 'z833192023-11685953704.jpg'),
+  wdTx('2023-08-06', 'Logo print tee', '—', 'tee', 'שחור', 'XL', 'Z83318000105', 179.90, 'z833180001-11685953681.jpg'),
+  wdTx('2023-08-06', 'Vintage print tee', '—', 'tee', 'בז\'', 'XL', 'W97051001805', 142.43, 'w970510018-11689671664.jpg'),
+  // 11 Jul 2023
+  wdTx('2023-07-11', 'Mesh logo cap', '—', 'cap', 'שחור', 'One size', 'Z83290000109', 95.92, 'z832900001-11683008484.jpg'),
+  wdTx('2023-07-11', 'Logo tee', '—', 'tee', 'סגול', 'XL', 'Z83275001205', 111.92, 'z832750012-11685949837.jpg'),
+  // 23 Jan 2023
+  wdTx('2023-01-23', 'Multicolour flannel shirt', '—', 'shirt', 'מולטי', 'XL', 'Z75114000905', 189.95, 'z751140009-11669801754.jpg'),
+  wdTx('2023-01-23', 'Label-logo hoodie', '—', 'hoodie', 'בז\'', 'XL', 'Z78320665605', 244.95, 'z783206656-11673173408.jpg'),
+  // 12 Nov 2022
+  wdTx('2022-11-12', 'Floral button-up shirt', '—', 'shirt', 'ירוק', 'XL', 'Z64327000405', 173.94, 'z643270004-11666107278.jpg'),
+  wdTx('2022-11-12', 'Colour-block fleece jacket', '—', 'jacket', 'חום', 'XL', 'Z53130000205', 77.94, 'z531300002-11667719741.jpg'),
+  wdTx('2022-11-12', 'Pocket-logo button-up shirt', '—', 'shirt', 'אפור', 'XL', 'Z35406502005', 143.94, 'z354065020-11657184918.jpg'),
+  wdTx('2022-11-12', 'Buttoned tee', '—', 'tee', 'כחול נייבי', 'L', 'Z21846002704', 71.94, 'z218460027-11660126964.jpg'),
+  wdTx('2022-11-12', 'Classic polo', '—', 'polo', 'אפור בהיר', 'L', 'Z21845002504', 71.94, 'z218450025-11660126249.jpg'),
+  wdTx('2022-11-12', 'High-neck sweatshirt', '—', 'sweat', 'כחול', 'L', 'Z46892000604', 84.95, 'z468920006-11659430840_1.jpg'),
+  wdTx('2022-11-12', 'Rib basic top (women)', '—', 'other', 'ורוד', 'M', 'Z55164561503', 77.94, 'z551645615-11668334979.jpg', 'gift'),
+  wdTx('2022-11-12', 'Rib hoodie (women)', '—', 'other', 'שמנת', 'M', 'Z56820510603', 227.94, 'z568205106-11659441225.jpg', 'gift'),
+  wdTx('2022-11-12', 'Longline cardigan with pockets', '—', 'other', 'חום', 'M', 'Z55741000203', 89.94, 'z557410002-11660739628.jpg', 'gift'),
+  // 7 Nov 2022
+  wdTx('2022-11-07', 'Logo-patch backpack', '—', 'bag', 'ירוק', 'One size', 'Z64373000409', 299.94, 'z643730004-11666599052.jpg'),
+  wdTx('2022-11-07', 'Levi\'s logo flip-flops', 'Levi\'s', 'shoes', 'שחור', 'XL', 'Z47130000105', 89.90, 'z471300001-11653393127.jpg'),
+  // 1 Nov 2022
+  wdTx('2022-11-01', 'Logo print tee', '—', 'tee', 'בורדו', 'XL', 'Z64305001705', 107.94, 'z643050017-11666107181.jpg'),
+  wdTx('2022-11-01', 'Knit sweater with print', '—', 'sweat', 'כסף', 'XL', 'Z61268001405', 119.94, 'z612680014-11666180508_2.jpg'),
+  wdTx('2022-11-01', 'Embroidered logo tee', '—', 'tee', 'טורקיז', 'XL', 'Z56942534205', 83.94, 'z569425342-11659880203.jpg'),
+  wdTx('2022-11-01', 'Quilted sweatshirt', '—', 'sweat', 'אפור', 'XL', 'Z61264000805', 107.94, 'z612640008-11666180468_2.jpg'),
+  wdTx('2022-11-01', 'Marvel hoodie', '—', 'hoodie', 'שחור אפור', 'XXL', 'Z34057200306', 107.94, 'z340572003-11669016455.jpg'),
+  // adidas.co.il, 17 Oct 2026
+  {name: 'Samba OG', brand: 'adidas Originals', kind: 'shoes', color: '#e8e2d0', color_name: 'Cream / green', size: '45⅓', sku: 'AIL03030191', price: 349.93, bought_on: '2026-10-17',
+    status: 'active', source: 'adidas', url: 'https://www.adidas.co.il/he/samba', img: 'https://www.adidas.co.il/on/demandware.static/-/Sites-adidas-navigation-il/default/dwba9e01f1/Samba.png', notes: 'Paid ₪349.93 (list ₪499.90)'},
+  // nike.com/il, 29 Nov 2024
+  {name: 'Court Vintage Premium', brand: 'Nike', kind: 'shoes', color: '#f1efe9', color_name: 'White / orange', size: 'EU 45.5', sku: 'CT1726-100', price: 239.92, bought_on: '2024-11-29',
+    status: 'active', source: 'nike', url: 'https://www.nike.com/il/w?q=CT1726-100', img: 'https://static.nike.com/a/images/t_default/b8bf6468-e294-4af7-93a4-65e5e723df0f/NIKE+COURT+VINTAGE+PREM.png', notes: 'White / Total Orange / Black'},
+];
+/* in stock in his sizes on 1 Nov 2026, chosen to sit with what is already here: the cream-and-green Sambas,
+   the black Killshots and Dropsets, and a shelf of black, navy, cream and beige tops */
+const WARDROBE_PICKS = [
+  {shop: 'adidas', brand: 'adidas Originals', name: 'Beckenbauer track jacket', color: 'Khaki Three', price: 359.90, size: 'XL', url: 'https://www.adidas.co.il/he/x/KT5044.html',
+    img: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/18fd68b32e2345658ccb6a7f33002c45_9366/KT5044_000_plp_model.jpg', why: 'Same family as the Sambas; the khaki picks up the cream and beige tees'},
+  {shop: 'adidas', brand: 'adidas Originals', name: 'Coaches jacket', color: 'Green', price: 549.90, size: 'XL', url: 'https://www.adidas.co.il/he/x/KQ8866.html',
+    img: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/c956c32cae7040edabb2d0f5d39d001c_9366/KQ8866_000_plp_model.jpg', why: 'A light layer in the Samba stripe green, over any black or cream tee'},
+  {shop: 'adidas', brand: 'adidas Originals', name: 'FSBS cargo pant', color: 'Black', price: 399.90, size: 'XL', url: 'https://www.adidas.co.il/he/x/KS6775.html',
+    img: 'https://assets.adidas.com/images/w_600,f_auto,q_auto/55e1b072faec4a7daf91347e6166b443_9366/KS6775_000_plp_model.jpg', why: 'Not a sweatpant; black to go with the Killshots and the black tees'},
+  {shop: 'nike', brand: 'Nike Sportswear', name: 'Club woven cargo trousers', color: 'Black', price: 279.90, size: 'XL', url: 'https://www.nike.com/il/t/sportswear-club-mens-woven-cargo-trousers-xt3qKP/IB6497-010',
+    img: 'https://static.nike.com/a/images/t_web_pw_592_v2/f_auto/4d63b18b-a79a-4d11-85fb-58e7b02484ff/M+NSW+CLUB+CARGO+WV+PANT.png', why: 'Woven, so it reads as trousers, and it matches the black Nike training shirt'},
+  {shop: 'nike', brand: 'Nike Club', name: 'Half-zip jacket', color: 'Black', price: 349.90, size: 'XL', url: 'https://www.nike.com/il/t/club-mens-1-2-zip-jacket-XQt7GHBM/IO4160-010',
+    img: 'https://static.nike.com/a/images/t_web_pw_592_v2/f_auto/u_9ddf04c7-2a9a-4d76-add1-d15af8f0263d,c_scale,fl_relative,w_1.0,h_1.0,fl_layer_apply/82000ca7-fdc5-4308-b7ac-678c021f6369/M+M+NK+CLUB+HZ+JKT+NCC.png', why: 'Gym-to-street layer over the Adizero tee and the black shorts'},
+  {shop: 'terminalx', brand: 'Quiksilver', name: 'Taxer regular twill pant', color: 'Green', price: 429.90, size: 'XL', url: 'https://www.terminalx.com/k216170009',
+    img: WD_TX_IMG + 'k/2/k216170009-11792913704.jpg', why: 'Olive twill: the trousers the Sambas and the beige half-zip are missing'},
+  {shop: 'terminalx', brand: 'Billabong', name: 'Coastline flannel shirt', color: 'Dark green', price: 379.90, size: 'XL', url: 'https://www.terminalx.com/k237030001',
+    img: WD_TX_IMG + 'k/2/k237030001-11792917006.jpg', why: 'Open over a white or cream tee; green plaid against the black chinos'},
+];
+window.WARDROBE_SEED = WARDROBE_SEED;   // the dev fixture reads it
+const WD_SHOP = {terminalx: 'Terminal X', adidas: 'adidas', nike: 'Nike', manual: 'Added by hand'};
+const WD_PLURAL = {jacket: 'Jackets', hoodie: 'Hoodies', sweat: 'Sweatshirts', shirt: 'Shirts', polo: 'Polos', tee: 'T-shirts', pants: 'Trousers', shorts: 'Shorts', shoes: 'Shoes', cap: 'Caps', beanie: 'Beanies', bag: 'Bags', basics: 'Basics', other: 'Other'};
+const wdNis = v => '₪' + (+v).toLocaleString('en-IL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const wdKindLabel = k => (WD_KIND[k] || WD_KIND.other)[0];
+const wdSlotOf = k => (WD_KIND[k] || WD_KIND.other)[1];
+const wdFitKey = 'atlas_wd_fit';
+function wdFit(){ try{ return Object.assign({head: null, outer: null, top: null, bottom: null, feet: null}, JSON.parse(localStorage.getItem(wdFitKey) || '{}')); }catch(e){ return {head: null, outer: null, top: null, bottom: null, feet: null}; } }
+function wdFitSet(fit){ try{ localStorage.setItem(wdFitKey, JSON.stringify(fit)); }catch(e){} }
+const wdById = id => (window._wd || []).find(x => x.id === id);
+
+views.wardrobe = async function(){
+  const seq = renderStart();
+  document.getElementById('main').innerHTML = `
+    <div class="mast">
+      <div class="mast-txt"><h2>Wardrobe</h2><div class="mast-sub" id="wdSub">Loading…</div>
+        <div class="mast-acts"><button class="btn" type="button" onclick="wdItemSheet()">Add piece</button>
+          <button class="btn-ghost" type="button" onclick="wdSaveOutfit()">Save this outfit</button></div></div>
+      <img class="mast-art" src="hero-wardrobe.png" alt="" onerror="this.remove()">
+    </div>
+    <div class="wd-stage">
+      <div class="wd-3d" id="wd3d"><div class="wd-3d-note" id="wd3dNote">Loading the figure…</div></div>
+      <div class="wd-side">
+        <div class="wd-slots" id="wdSlots"></div>
+        <div class="wd-outfits" id="wdOutfits"></div>
+      </div>
+    </div>
+    <div class="lead" id="wdLead"></div>
+    <div class="sec"><div class="sec-h"><h3>Matches for what you have</h3><span class="n">in stock in your sizes · found 1 Nov</span></div>
+      <div class="grid cols3 wd-picks">${WARDROBE_PICKS.map(p => `<a class="wd-pick" href="${p.url}" target="_blank" rel="noopener">
+        <img src="${p.img}" alt="" loading="lazy"><div class="wd-pick-b"><span class="m">${esc(p.brand)} · ${esc(p.color)} · ${esc(p.size)}</span><b>${esc(p.name)}</b>
+        <span class="why">${esc(p.why)}</span><span class="r">${wdNis(p.price)} <span class="shop">at ${WD_SHOP[p.shop]}</span></span></div></a>`).join('')}</div></div>
+    <div class="sec"><div class="sec-h"><h3>Everything</h3><span class="n" id="wdCount"></span></div>
+      <div class="seg wd-filters" id="wdFilters"></div>
+      <div class="ledger" id="wdList"><div class="empty">Loading…</div></div></div>`;
+  const [it, of] = await Promise.all([fetchAll(() => sb.from('wardrobe_items').select('*').order('bought_on', {ascending: false})), sb.from('outfits').select('*').order('created_at')]);
+  if(stale(seq)) return;
+  if(it.error){ return wdMissing(it.error); }
+  window._wd = it.data || []; window._wdOutfits = of.error ? [] : (of.data || []);
+  window._wdFilter = window._wdFilter || 'all';
+  // first visit: the figure starts in the newest top, bottom and shoes rather than bare
+  let seen = null; try{ seen = localStorage.getItem(wdFitKey); }catch(e){}
+  if(!seen && window._wd.length){ const fit = wdFit();
+    ['top', 'bottom', 'feet'].forEach(s => { const x = window._wd.find(i => i.status === 'active' && wdSlotOf(i.kind) === s); if(x) fit[s] = x.id; });
+    wdFitSet(fit); }
+  wdRender();
+  wdStage();
+};
+/* the table isn't there yet: say so, and hand over the SQL instead of a stack of errors */
+function wdMissing(e){
+  const msg = (e && e.message) || '';
+  if(!/wardrobe_items|outfits|schema cache|does not exist/i.test(msg)) return err(e);
+  const list = document.getElementById('wdList'); if(list) list.innerHTML = `<div class="empty">The wardrobe tables aren't in Supabase yet.<br>
+    <button class="linkish" type="button" onclick="wdSqlSheet()">Show the SQL to run</button></div>`;
+  const sub = document.getElementById('wdSub'); if(sub) sub.textContent = 'Not set up yet';
+  const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'Run the SQL first';
+}
+function wdSqlSheet(){
+  openSheet({title: 'Create the wardrobe tables', sub: 'Supabase → SQL editor → paste → Run. Then reopen this section and press Import.',
+    body: `<pre class="wd-sql" id="wdSql">${esc(WD_SQL)}</pre>`,
+    foot: `<span class="n"></span><button class="btn" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(WD_SQL).then(()=>toast('Copied'))">Copy SQL</button>`});
+}
+const WD_SQL = `create table if not exists wardrobe_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null, brand text, kind text not null default 'other',
+  color text, color_name text, size text, sku text, source text default 'manual',
+  url text, img text, price numeric, bought_on date,
+  status text not null default 'active', notes text,
+  created_at timestamptz not null default now());
+alter table wardrobe_items enable row level security;
+create policy "own rows select" on wardrobe_items for select using (auth.uid() = user_id);
+create policy "own rows insert" on wardrobe_items for insert with check (auth.uid() = user_id);
+create policy "own rows update" on wardrobe_items for update using (auth.uid() = user_id);
+create policy "own rows delete" on wardrobe_items for delete using (auth.uid() = user_id);
+create table if not exists outfits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  name text not null, slots jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now());
+alter table outfits enable row level security;
+create policy "own rows select" on outfits for select using (auth.uid() = user_id);
+create policy "own rows insert" on outfits for insert with check (auth.uid() = user_id);
+create policy "own rows update" on outfits for update using (auth.uid() = user_id);
+create policy "own rows delete" on outfits for delete using (auth.uid() = user_id);`;
+
+/* ---- the ledger, the lead tiles, the status line ---- */
+const WD_FILTERS = [['all', 'All'], ['top', 'Tops'], ['outer', 'Jackets'], ['bottom', 'Bottoms'], ['feet', 'Shoes'], ['head', 'Hats'], ['bag', 'Bags'], ['returned', 'Returned']];
+function wdRender(){
+  const all = window._wd || [], mine = all.filter(x => x.status === 'active');
+  const list = document.getElementById('wdList'), f = window._wdFilter;
+  const fl = document.getElementById('wdFilters');
+  if(fl) fl.innerHTML = WD_FILTERS.map(([k, l]) => `<button class="${f === k ? 'on' : ''}" type="button" onclick="window._wdFilter='${k}';wdRender()">${l}</button>`).join('');
+  if(!list) return;
+  if(!all.length){
+    list.innerHTML = `<div class="empty">Nothing here yet.<br><button class="btn" type="button" style="margin-top:12px" onclick="wdImport(this)">Import ${WARDROBE_SEED.length} pieces from your Terminal X, adidas and Nike orders</button>
+      <div class="n" style="margin-top:8px">or add pieces one by one</div></div>`;
+  } else {
+    let rows = f === 'all' ? all.filter(x => x.status !== 'returned') : f === 'returned' ? all.filter(x => x.status === 'returned')
+      : f === 'bag' ? all.filter(x => x.kind === 'bag' && x.status !== 'returned') : all.filter(x => wdSlotOf(x.kind) === f && x.status !== 'returned');
+    rows = [...rows].sort((a, b) => (WD_KIND[a.kind] || WD_KIND.other)[2] - (WD_KIND[b.kind] || WD_KIND.other)[2] || (a.status === 'gift') - (b.status === 'gift') || (b.bought_on || '').localeCompare(a.bought_on || ''));
+    let last = '';
+    list.innerHTML = rows.length ? rows.map(x => { const k = WD_PLURAL[x.kind] || WD_PLURAL.other;
+      const head = (f === 'all' || f === 'returned') && k !== last ? `<div class="wd-group">${k}</div>` : ''; last = k;
+      return head + wdRow(x); }).join('') : '<div class="empty">Nothing in this group</div>';
+  }
+  const cnt = document.getElementById('wdCount'); if(cnt) cnt.textContent = all.length ? plural(mine.length, 'piece') + (all.length - mine.length ? ' · ' + (all.length - mine.length) + ' returned or not yours' : '') : '';
+  // lead + status
+  const brands = new Set(mine.map(x => x.brand).filter(b => b && b !== '—'));
+  const spent = mine.reduce((a, x) => a + (+x.price || 0), 0);
+  const newest = mine[0];
+  const lead = document.getElementById('wdLead'); if(lead) lead.innerHTML = [
+    statTile('Pieces', mine.length, mine.length ? `${plural(mine.filter(x => wdSlotOf(x.kind) === 'top').length, 'top')} · ${mine.filter(x => wdSlotOf(x.kind) === 'bottom').length} bottoms · ${mine.filter(x => x.kind === 'shoes').length} shoes` : 'nothing imported yet'),
+    statTile('Spent', NIS(Math.round(spent)), mine.length ? 'on what you kept' : ''),
+    statTile('Outfits', (window._wdOutfits || []).length, (window._wdOutfits || []).length ? 'saved looks' : 'dress the figure and save one'),
+  ].join('');
+  const sub = document.getElementById('wdSub'); if(sub) sub.textContent = mine.length ? `${plural(mine.length, 'piece')} · ${plural(brands.size, 'brand')}${newest ? ' · last bought ' + fmtDate(newest.bought_on) : ''}` : 'Empty wardrobe';
+  wdSlotsRender(); wdOutfitsRender();
+}
+function wdThumb(x, cls){ return x && x.img ? `<img class="wd-th${cls ? ' ' + cls : ''}" src="${esc(x.img)}" alt="" loading="lazy" onerror="this.replaceWith(wdSwatch('${x.color || '#8f867a'}'))">` : wdSwatchHtml(x && x.color, cls); }
+function wdSwatchHtml(c, cls){ return `<span class="wd-th sw${cls ? ' ' + cls : ''}" style="background:${c || '#d8d5ce'}"></span>`; }
+function wdSwatch(c){ const s = document.createElement('span'); s.className = 'wd-th sw'; s.style.background = c; return s; }
+function wdRow(x){
+  const meta = [x.brand && x.brand !== '—' ? x.brand : '', x.color_name, x.size, x.bought_on ? fmtDate(x.bought_on) : ''].filter(Boolean).join(' · ');
+  const tag = x.status === 'returned' ? '<span class="pill grey">Returned</span>' : x.status === 'gift' ? '<span class="pill grey">Not yours</span>' : wdWorn(x.id) ? '<span class="pill green">On the figure</span>' : '';
+  return `<div class="lrow wd-row${x.status === 'returned' ? ' done' : ''}" role="button" tabindex="0" onclick="wdDetail('${x.id}')" onkeydown="if(event.key==='Enter'){wdDetail('${x.id}')}">
+    ${wdThumb(x)}<span class="body"><span class="t">${titleOf(x.name, 'piece')}${tag}</span><span class="m">${esc(meta)}</span></span>
+    <span class="r"><b>${x.price != null ? wdNis(x.price) : ''}</b></span><span class="chev">${ICO.chevR}</span></div>`;
+}
+function wdWorn(id){ const f = wdFit(); return Object.values(f).includes(id); }
+async function wdImport(btn){
+  if(btn){ btn.disabled = true; btn.textContent = 'Importing…'; }
+  const rows = WARDROBE_SEED.map(x => ({...x}));
+  for(let i = 0; i < rows.length; i += 40){
+    const {error} = await sb.from('wardrobe_items').insert(rows.slice(i, i + 40));
+    if(error){ if(btn){ btn.disabled = false; btn.textContent = 'Import again'; } return err(error); }
+  }
+  toast(`${rows.length} pieces imported`); views.wardrobe();
+}
+
+/* ---- the slots beside the figure ---- */
+function wdSlotsRender(){
+  const el = document.getElementById('wdSlots'); if(!el) return;
+  const fit = wdFit();
+  el.innerHTML = WD_SLOTS.map(([slot, label]) => { const x = fit[slot] ? wdById(fit[slot]) : null;
+    return `<div class="wd-slot${x ? '' : ' empty'}" role="button" tabindex="0" onclick="wdPick('${slot}')" onkeydown="if(event.key==='Enter'){wdPick('${slot}')}">
+      ${x ? wdThumb(x, 'sm') : '<span class="wd-th sw sm dashed"></span>'}
+      <span class="body"><span class="lbl">${label}</span><span class="t">${x ? esc(x.name) : 'Nothing'}</span>${x ? `<span class="m">${esc([x.brand !== '—' ? x.brand : '', x.color_name].filter(Boolean).join(' · '))}</span>` : ''}</span>
+      ${x ? `<button class="icon-btn sm" type="button" aria-label="Take off" title="Take off" onclick="event.stopPropagation();wdWear('${slot}',null)">${ICO.x}</button>` : `<span class="chev">${ICO.chevR}</span>`}</div>`; }).join('');
+}
+function wdWear(slot, id){
+  const fit = wdFit(); fit[slot] = id || null;
+  // a shirt pulled on as a layer comes off the top slot, and vice versa, so one piece isn't worn twice
+  if(id){ Object.keys(fit).forEach(k => { if(k !== slot && fit[k] === id) fit[k] = null; }); }
+  wdFitSet(fit); wdSlotsRender(); wdDress(); wdRender();
+}
+function wdPick(slot){
+  const kinds = WD_SLOTS.find(s => s[0] === slot)[2], fit = wdFit();
+  const rows = (window._wd || []).filter(x => x.status === 'active' && kinds.includes(x.kind));
+  const groups = kinds.map(k => [k, rows.filter(x => x.kind === k)]).filter(g => g[1].length);
+  openSheet({title: 'Choose a ' + WD_SLOTS.find(s => s[0] === slot)[1].toLowerCase(), sub: rows.length ? plural(rows.length, 'piece') + ' to pick from' : 'Nothing of this kind in the wardrobe yet',
+    body: groups.length ? groups.map(([k, arr]) => `<div class="pick-sec">${wdKindLabel(k)}</div><div class="pick-grid wd-pick-grid">${arr.map(x =>
+      `<button class="pick${fit[slot] === x.id ? ' added' : ''}" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet()"><span class="tick">${ICO.tick}</span>${wdThumb(x, 'pk')}<b>${esc(short(x.name, 30))}</b><span class="m">${esc(x.color_name || '')}</span></button>`).join('')}</div>`).join('')
+      : '<div class="empty">Add a piece first</div>',
+    foot: `<span class="n"></span>${fit[slot] ? `<button class="btn-ghost" type="button" onclick="wdWear('${slot}',null);closeSheet()">Take off</button>` : ''}`});
+}
+
+/* ---- saved outfits ---- */
+function wdOutfitsRender(){
+  const el = document.getElementById('wdOutfits'); if(!el) return;
+  const of = window._wdOutfits || [];
+  el.innerHTML = `<div class="lbl">Outfits</div>` + (of.length ? `<div class="seg wd-chips">${of.map(o => `<button type="button" onclick="wdLoadOutfit('${o.id}')">${esc(short(o.name, 24))}</button>`).join('')}
+    <button class="linkish" type="button" onclick="wdOutfitsSheet()">Manage</button></div>` : '<div class="n">Dress the figure, then Save this outfit</div>');
+}
+function wdLoadOutfit(id){ const o = (window._wdOutfits || []).find(x => x.id === id); if(!o) return; wdFitSet(Object.assign({head: null, outer: null, top: null, bottom: null, feet: null}, o.slots || {})); wdSlotsRender(); wdDress(); wdRender(); toast(o.name); }
+async function wdSaveOutfit(){
+  const fit = wdFit();
+  if(!Object.values(fit).some(Boolean)) return toast('Put something on the figure first');
+  openSheet({title: 'Save this outfit', sub: Object.entries(fit).filter(([, v]) => v).map(([, v]) => (wdById(v) || {}).name).filter(Boolean).join(' · '), focus: 'wdOName',
+    body: `<form id="wdOForm" onsubmit="submitGuard(event, wdSaveOutfitGo)"><div class="form-grid"><div style="grid-column:1/-1"><label class="lbl" for="wdOName">Name</label><input id="wdOName" placeholder="e.g. Friday, gym, Sambas day"></div></div></form>`,
+    foot: `<span class="n"></span><button class="btn" type="submit" form="wdOForm">Save</button>`});
+}
+async function wdSaveOutfitGo(){
+  const name = wdOName.value.trim(); if(!name) return toast('Name the outfit');
+  const {data, error} = await sb.from('outfits').insert({name, slots: wdFit()}).select().single();
+  if(error) return err(error);
+  window._wdOutfits = [...(window._wdOutfits || []), data]; closeSheet(); toast('Outfit saved'); wdRender();
+}
+function wdOutfitsSheet(){
+  const of = window._wdOutfits || [];
+  openSheet({title: 'Outfits', sub: plural(of.length, 'saved look'),
+    body: of.length ? `<div class="ledger">${of.map(o => `<div class="lrow" role="button" tabindex="0" onclick="wdLoadOutfit('${o.id}');closeSheet()"><span class="body"><span class="t">${esc(o.name)}</span>
+      <span class="m">${esc(Object.values(o.slots || {}).map(v => (wdById(v) || {}).name).filter(Boolean).join(' · ') || 'empty')}</span></span><span class="r"></span>
+      <button class="linkish danger" type="button" onclick="event.stopPropagation();wdDelOutfit('${o.id}')">Delete</button></div>`).join('')}</div>` : '<div class="empty">No outfits yet</div>'});
+}
+async function wdDelOutfit(id){
+  if(!await ask({title: 'Delete this outfit?', body: 'The pieces stay in the wardrobe.', ok: 'Delete', danger: true})) return;
+  const {error} = await sb.from('outfits').delete().eq('id', id); if(error) return err(error);
+  window._wdOutfits = (window._wdOutfits || []).filter(o => o.id !== id); closeSheet(); wdRender(); toast('Outfit deleted');
+}
+
+/* ---- one piece: read it, wear it, edit it ---- */
+function wdDetail(id){
+  const x = wdById(id); if(!x) return;
+  const slot = wdSlotOf(x.kind), fit = wdFit(), on = Object.keys(fit).find(k => fit[k] === id);
+  const big = x.img && x.img.startsWith(WD_TX_IMG) ? x.img.replace(WD_TX_IMG, WD_TX_BIG) : x.img;
+  openSheet({title: esc(x.name), sub: [x.brand !== '—' ? x.brand : '', wdKindLabel(x.kind)].filter(Boolean).join(' · '), cls: 'wd-sheet',
+    body: `<div class="wd-detail">${big ? `<img src="${esc(big)}" alt="" onerror="this.remove()">` : wdSwatchHtml(x.color, 'big')}
+      <div class="kv"><span>Colour</span><span><span class="wd-dot" style="background:${x.color || '#8f867a'}"></span>${esc(x.color_name || '—')}</span>
+        <span>Size</span><span>${esc(x.size || '—')}</span>
+        <span>Bought</span><span>${x.bought_on ? fmtDate(x.bought_on) : '—'}${x.price != null ? ' · ' + wdNis(x.price) : ''}</span>
+        <span>From</span><span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${WD_SHOP[x.source] || esc(x.source || '')}</a>` : esc(WD_SHOP[x.source] || x.source || '—')}${x.sku ? ' · ' + esc(x.sku) : ''}</span>
+        ${x.status !== 'active' ? `<span>Status</span><span>${x.status === 'returned' ? 'Returned for a refund' : x.status === 'gift' ? 'Not yours' : esc(x.status)}</span>` : ''}
+        ${x.notes ? `<span>Notes</span><span>${esc(x.notes)}</span>` : ''}</div></div>`,
+    foot: `<span class="n"><button class="linkish danger" type="button" onclick="sheetDel('wardrobe_items','${x.id}','wardrobe')">Delete</button></span>
+      <button class="btn-ghost" type="button" onclick="closeSheet();wdItemSheet('${x.id}')">Edit</button>
+      ${slot && x.status === 'active' ? (on ? `<button class="btn-ghost" type="button" onclick="wdWear('${on}',null);closeSheet()">Take off</button>`
+        : `<button class="btn" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet();document.getElementById('wd3d')?.scrollIntoView({behavior:'smooth',block:'center'})">Wear it</button>`) : ''}`});
+}
+function wdItemSheet(id){
+  const x = id ? wdById(id) : null; if(id && !x) return;
+  window._editWd = x;
+  const opt = (v, l, cur) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`;
+  openSheet({title: x ? 'Edit piece' : 'Add piece', focus: x ? '' : 'wdName', sub: x ? '' : 'Anything you own that didn\'t come through an order',
+    body: `<form id="wdForm" onsubmit="submitGuard(event, wdSave)"><div class="form-grid">
+      <div style="grid-column:1/-1"><label class="lbl" for="wdName">Name</label><input id="wdName" placeholder="e.g. Grey crewneck" value="${x ? esc(x.name) : ''}"></div>
+      <div><label class="lbl" for="wdBrand">Brand</label><input id="wdBrand" placeholder="e.g. Carhartt" value="${x && x.brand !== '—' ? esc(x.brand || '') : ''}"></div>
+      <div><label class="lbl" for="wdKind">Kind</label><select id="wdKind">${Object.keys(WD_KIND).map(k => opt(k, WD_KIND[k][0], x ? x.kind : 'tee')).join('')}</select></div>
+      <div><label class="lbl" for="wdColorName">Colour</label><input id="wdColorName" placeholder="e.g. Olive" value="${x ? esc(x.color_name || '') : ''}"></div>
+      <div><label class="lbl" for="wdColor">Swatch</label><input id="wdColor" type="color" value="${x && x.color ? x.color : '#8f867a'}"></div>
+      <div><label class="lbl" for="wdSize">Size</label><input id="wdSize" placeholder="XL / 34 / 45" value="${x ? esc(x.size || '') : ''}"></div>
+      <div><label class="lbl" for="wdPrice">Paid (₪)</label><input id="wdPrice" type="number" inputmode="decimal" step="0.01" min="0" value="${x && x.price != null ? x.price : ''}"></div>
+      <div><label class="lbl" for="wdDate">Bought on</label><input id="wdDate" type="date" value="${x ? x.bought_on || '' : todayStr()}"></div>
+      <div><label class="lbl" for="wdStatus">Status</label><select id="wdStatus">${opt('active', 'In the wardrobe', x ? x.status : 'active')}${opt('returned', 'Returned', x ? x.status : '')}${opt('gift', 'Not mine', x ? x.status : '')}${opt('gone', 'Worn out / given away', x ? x.status : '')}</select></div>
+      <div style="grid-column:1/-1"><label class="lbl" for="wdUrl">Shop page</label><input id="wdUrl" type="url" inputmode="url" placeholder="https://…" value="${x ? esc(x.url || '') : ''}"></div>
+      <div style="grid-column:1/-1"><label class="lbl" for="wdImg">Photo URL</label><input id="wdImg" type="url" inputmode="url" placeholder="https://…" value="${x ? esc(x.img || '') : ''}"></div>
+      <div style="grid-column:1/-1"><label class="lbl" for="wdNotes">Notes</label><input id="wdNotes" value="${x ? esc(x.notes || '') : ''}"></div>
+    </div></form>`,
+    foot: `<span class="n"></span><button class="btn" type="submit" form="wdForm">${x ? 'Save' : 'Add piece'}</button>`});
+}
+async function wdSave(){
+  const name = wdName.value.trim(); if(!name) return toast('Name the piece');
+  const row = {name, brand: wdBrand.value.trim() || null, kind: wdKind.value, color: wdColor.value, color_name: wdColorName.value.trim() || null, size: wdSize.value.trim() || null,
+    price: wdPrice.value === '' ? null : +wdPrice.value, bought_on: wdDate.value || null, status: wdStatus.value, url: wdUrl.value.trim() || null, img: wdImg.value.trim() || null, notes: wdNotes.value.trim() || null};
+  const ed = window._editWd;
+  const {error} = ed ? await sb.from('wardrobe_items').update(row).eq('id', ed.id) : await sb.from('wardrobe_items').insert(Object.assign({source: 'manual'}, row));
+  if(error) return err(error);
+  window._editWd = null; closeSheet(); toast(ed ? 'Piece updated' : 'Piece added'); views.wardrobe();
+}
+
+/* ================= WARDROBE 3D: the figure =================
+   A stylised mannequin built from lathe profiles (189 cm, broad shoulders, narrow waist) with the
+   garments as slightly larger shells in the piece's colour, inked with an inverted-hull outline so it
+   reads like the engravings elsewhere in Atlas. three.js is fetched the first time the section opens. */
+let W3 = null;
+async function wdThree(){
+  if(window.__THREE) return window.__THREE;
+  if(!window.__THREEp) window.__THREEp = import('https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js').then(m => (window.__THREE = m));
+  return window.__THREEp;
+}
+async function wdStage(){
+  const el = document.getElementById('wd3d'); if(!el) return;
+  let T; try{ T = await wdThree(); }catch(e){ const n = document.getElementById('wd3dNote'); if(n) n.textContent = 'The 3D figure needs a connection the first time'; return; }
+  if(!el.isConnected) return;
+  if(W3 && W3.el !== el) wdDispose();
+  if(W3) return wdDress();
+  const renderer = new T.WebGLRenderer({antialias: true, alpha: true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = T.SRGBColorSpace;
+  el.querySelector('#wd3dNote')?.remove();
+  el.appendChild(renderer.domElement);
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(24, 1, .1, 20); camera.position.set(0, 1.08, 5.1); camera.lookAt(0, .96, 0);
+  scene.add(new T.HemisphereLight(0xffffff, 0xb4b0a6, 2.4));
+  const sun = new T.DirectionalLight(0xffffff, 2.2); sun.position.set(2.5, 4, 3.5); scene.add(sun);
+  const fill = new T.DirectionalLight(0xffffff, .9); fill.position.set(-3, 1.5, -2.5); scene.add(fill);
+  const root = new T.Group(); scene.add(root);
+  // contact shadow: a radial fade on the floor
+  const sc = document.createElement('canvas'); sc.width = sc.height = 128; const sx = sc.getContext('2d');
+  const g = sx.createRadialGradient(64, 64, 6, 64, 64, 64); g.addColorStop(0, 'rgba(26,26,24,.28)'); g.addColorStop(1, 'rgba(26,26,24,0)'); sx.fillStyle = g; sx.fillRect(0, 0, 128, 128);
+  const shadow = new T.Mesh(new T.PlaneGeometry(1.5, 1.5), new T.MeshBasicMaterial({map: new T.CanvasTexture(sc), transparent: true, depthWrite: false}));
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = .002; shadow.scale.set(1, .55, 1); root.add(shadow);
+  W3 = {T, el, renderer, scene, camera, root, body: new T.Group(), cloth: new T.Group(), yaw: .35, vel: 0, drag: null, idle: 0, raf: 0};
+  root.add(W3.body); root.add(W3.cloth);
+  wdBody();
+  // turn it by hand; it drifts back to a slow turn when left alone
+  el.addEventListener('pointerdown', e => { W3.drag = {x: e.clientX, yaw: W3.yaw}; W3.idle = performance.now(); el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => { if(!W3 || !W3.drag) return; const d = (e.clientX - W3.drag.x) * .012; W3.vel = d - (W3.yaw - W3.drag.yaw); W3.yaw = W3.drag.yaw + d; W3.idle = performance.now(); });
+  const up = () => { if(W3) W3.drag = null; }; el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+  const size = () => { if(!W3) return; const w = el.clientWidth, h = el.clientHeight; if(!w || !h) return; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); };
+  new ResizeObserver(size).observe(el); size();
+  const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+  let last = performance.now();
+  const loop = now => {
+    if(!W3) return;
+    if(!el.isConnected) return wdDispose();                 // the router replaced #main
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if(!W3.drag){ const spin = reduced ? 0 : .28; W3.vel += (spin - W3.vel) * Math.min(1, dt * 1.6); W3.yaw += W3.vel * dt; }
+    root.rotation.y = W3.yaw;
+    renderer.render(scene, camera);
+    W3.raf = requestAnimationFrame(loop);
+  };
+  W3.raf = requestAnimationFrame(loop);
+  wdDress();
+}
+function wdDispose(){
+  if(!W3) return; cancelAnimationFrame(W3.raf);
+  W3.scene.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if(m.map) m.map.dispose(); m.dispose(); }); } });
+  W3.renderer.dispose(); W3.renderer.domElement.remove(); W3 = null;
+}
+/* geometry helpers: a lathe from [radius, height] pairs (scaled flat on z so bodies are oval, not round),
+   each mesh paired with a slightly larger back-face copy in ink for the outline */
+function wdLathe(pts, seg){ const {T} = W3; const g = new T.LatheGeometry(pts.map(([r, y]) => new T.Vector2(Math.max(r, .0005), y)), seg || 36); g.computeVertexNormals(); return g; }
+function wdMat(color){ const {T} = W3; return new T.MeshStandardMaterial({color, roughness: .92, metalness: 0}); }
+const WD_INK = 0x1f1e1b;
+function wdMesh(geo, color, parent, o){
+  const {T} = W3; o = o || {};
+  const m = new T.Mesh(geo, wdMat(color)); if(o.z) m.scale.z = o.z; if(o.x) m.scale.x = o.x;
+  if(o.pos) m.position.set(...o.pos); if(o.rot) m.rotation.set(...o.rot);
+  if(o.ink !== false){
+    const ink = new T.Mesh(geo, new T.MeshBasicMaterial({color: WD_INK, side: T.BackSide}));
+    const k = o.ink || 1.035; ink.scale.set(k, 1, k);   // round the sides only: a vertical push would show as a dark band at every hem
+    m.add(ink);
+  }
+  parent.add(m); return m;
+}
+const WD_SKIN = 0xd6d2c8, WD_Z = .64;
+/* an artist's mannequin: ball joints at the shoulders, elbows, hips and knees, flat-oval limbs between them.
+   Heights in metres, feet on y = 0; shoulders 49 cm across, waist 33, like the man it stands in for. */
+const WD_ARM = {x: .238, y: 1.49, tilt: .07, upper: .31, fore: .27};     // shoulder joint, segment lengths
+const WD_LEG = {x: .1, y: .93, thigh: .45, calf: .41};
+function wdBody(){
+  const {T, body} = W3, sk = WD_SKIN;
+  const ball = (r, pos, parent) => wdMesh(new T.SphereGeometry(r, 24, 16), sk, parent || body, {pos, ink: 1.05});
+  // pelvis and torso, one lathe each so the waist reads as a waist
+  wdMesh(wdLathe([[0, .86], [.13, .86], [.178, .93], [.182, 1.0], [.168, 1.08], [0, 1.09]]), sk, body, {z: WD_Z});
+  wdMesh(wdLathe([[0, 1.06], [.165, 1.06], [.168, 1.14], [.196, 1.3], [.215, 1.42], [.228, 1.49], [.2, 1.535], [.12, 1.565], [.06, 1.575], [0, 1.578]]), sk, body, {z: WD_Z});
+  wdMesh(new T.CylinderGeometry(.052, .06, .12, 24), sk, body, {pos: [0, 1.615, 0], z: .85});
+  const head = wdMesh(new T.SphereGeometry(.105, 32, 24), sk, body, {pos: [0, 1.775, .012], ink: 1.03}); head.scale.set(.9, 1.1, .96);
+  [-1, 1].forEach(s => {
+    ball(.052, [s * WD_ARM.x, WD_ARM.y, 0]);
+    const arm = new T.Group(); arm.position.set(s * WD_ARM.x, WD_ARM.y, 0); arm.rotation.z = s * -WD_ARM.tilt; body.add(arm);
+    wdMesh(wdLathe([[0, -WD_ARM.upper], [.04, -WD_ARM.upper], [.046, -.18], [.05, -.04], [.04, 0], [0, .01]]), sk, arm, {z: .85});
+    ball(.042, [0, -WD_ARM.upper, 0], arm);
+    const fore = new T.Group(); fore.position.y = -WD_ARM.upper; fore.rotation.z = s * -.04; arm.add(fore);
+    wdMesh(wdLathe([[0, -WD_ARM.fore], [.03, -WD_ARM.fore], [.036, -.14], [.04, -.02], [0, 0]]), sk, fore, {z: .85});
+    const hand = wdMesh(new T.SphereGeometry(.042, 20, 14), sk, fore, {pos: [0, -WD_ARM.fore - .045, .01], ink: 1.04}); hand.scale.set(.7, 1.3, .45);
+    ball(.075, [s * WD_LEG.x, WD_LEG.y, 0]);
+    const leg = new T.Group(); leg.position.set(s * WD_LEG.x, WD_LEG.y, 0); body.add(leg);
+    wdMesh(wdLathe([[0, -WD_LEG.thigh], [.06, -WD_LEG.thigh], [.068, -.28], [.082, -.06], [.07, 0], [0, .01]]), sk, leg, {z: .88});
+    ball(.062, [0, -WD_LEG.thigh, 0], leg);
+    const calf = new T.Group(); calf.position.y = -WD_LEG.thigh; leg.add(calf);
+    wdMesh(wdLathe([[0, -WD_LEG.calf], [.04, -WD_LEG.calf], [.052, -.24], [.062, -.1], [.055, 0], [0, .01]]), sk, calf, {z: .88});
+    wdMesh(wdLathe([[0, 0], [.055, 0], [.06, .045], [.045, .08], [0, .085]]), sk, body, {pos: [s * WD_LEG.x, 0, .06], z: 2.1});   // foot: a flat oval
+  });
+}
+/* the clothes: rebuilt whenever a slot changes. Each garment is the body's own profile pushed out a little,
+   so it hangs on the figure instead of floating round it. */
+function wdDress(){
+  if(!W3) return;
+  const {T, cloth} = W3;
+  while(cloth.children.length){ const c = cloth.children.pop(); c.traverse(o => { if(o.geometry) o.geometry.dispose(); if(o.material) o.material.dispose(); }); }
+  const fit = wdFit(), get = s => fit[s] ? wdById(fit[s]) : null;
+  const top = get('top'), outer = get('outer'), bottom = get('bottom'), feet = get('feet'), head = get('head');
+  const col = x => new T.Color(x && x.color || '#8f867a');
+  const torso = (off, hem, c) => wdMesh(wdLathe([[0, hem], [.19 + off, hem], [.19 + off, 1.0], [.172 + off, 1.1], [.2 + off, 1.3], [.218 + off, 1.42], [.226 + off, 1.47], [.19 + off, 1.525], [.12 + off * .4, 1.56], [.065, 1.585], [0, 1.598]]), c, cloth, {z: WD_Z});
+  const sleeve = (off, len, c) => [-1, 1].forEach(s => { const a = new T.Group(); a.position.set(s * WD_ARM.x, WD_ARM.y, 0); a.rotation.z = s * -WD_ARM.tilt; cloth.add(a);
+    const l = Math.min(len, WD_ARM.upper);
+    wdMesh(wdLathe([[0, -l], [.052 + off, -l], [.056 + off, -.18], [.06 + off, -.04], [.046 + off, .02], [0, .03]]), c, a, {z: .9});
+    if(len > WD_ARM.upper){ const f = new T.Group(); f.position.y = -WD_ARM.upper; f.rotation.z = s * -.04; a.add(f);
+      const fl = len - WD_ARM.upper; wdMesh(wdLathe([[0, -fl], [.04 + off, -fl], [.046 + off, -.12], [.05 + off, 0], [.045 + off, .04], [0, .05]]), c, f, {z: .9}); } });
+  const dressTop = (x, layer) => {
+    if(!x) return;
+    const c = col(x), off = layer ? .03 : .016, k = x.kind;
+    const long = k !== 'tee' && k !== 'polo';
+    const hem = layer ? .9 : .95;
+    torso(off, hem, c);
+    sleeve(off, long ? WD_ARM.upper + WD_ARM.fore - .02 : .22, c);
+    if(k === 'polo' || k === 'shirt' || k === 'jacket'){   // collar
+      const cl = wdMesh(new T.TorusGeometry(.074 + off, .02, 10, 28), c, cloth, {pos: [0, 1.578, -.004]}); cl.rotation.x = Math.PI / 2; cl.scale.z = .82;
+    }
+    if(k === 'hoodie'){                                      // hood resting on the shoulders
+      const h = wdMesh(new T.SphereGeometry(.15, 24, 16), c, cloth, {pos: [0, 1.57, -.1]}); h.scale.set(1.2, .62, .85);
+    }
+    if(k === 'shirt' || k === 'jacket'){                     // a placket / zip down the front
+      wdMesh(new T.BoxGeometry(k === 'jacket' ? .02 : .034, 1.56 - hem, .01), c.clone().multiplyScalar(.7), cloth, {pos: [0, (hem + 1.56) / 2, (.2 + off) * WD_Z + .008], ink: false});
+    }
+    if(k === 'sweat' || k === 'hoodie'){                     // ribbed hem
+      const r = wdMesh(new T.TorusGeometry(.174 + off, .014, 10, 36), c, cloth, {pos: [0, hem + .012, 0]}); r.rotation.x = Math.PI / 2; r.scale.z = WD_Z;
+    }
+  };
+  dressTop(top, false); dressTop(outer, true);
+  if(bottom){
+    const c = col(bottom), shorts = bottom.kind === 'shorts', hemY = shorts ? .55 : .06;
+    wdMesh(wdLathe([[0, .86], [.16, .86], [.198, .93], [.2, 1.0], [.186, 1.09], [0, 1.1]]), c, cloth, {z: WD_Z});   // seat
+    [-1, 1].forEach(s => { const leg = new T.Group(); leg.position.set(s * WD_LEG.x, WD_LEG.y, 0); cloth.add(leg);
+      const L = WD_LEG.y - hemY;
+      wdMesh(wdLathe([[0, -L], [shorts ? .095 : .072, -L], [.084, -.45], [.095, -.2], [.1, -.04], [.09, .02], [0, .03]]), c, leg, {z: .9}); });
+  }
+  if(feet){
+    const c = col(feet);
+    [-1, 1].forEach(s => { const f = wdMesh(wdLathe([[0, 0], [.066, 0], [.074, .04], [.064, .085], [.04, .115], [0, .12]]), c, cloth, {pos: [s * WD_LEG.x, 0, .075], z: 2.1});
+      const sole = wdMesh(new T.TorusGeometry(.064, .011, 8, 30), c.clone().multiplyScalar(.55), f, {pos: [0, .01, 0], ink: false}); sole.rotation.x = Math.PI / 2; });
+  }
+  if(head){
+    const c = col(head);
+    if(head.kind === 'cap'){
+      const d = wdMesh(new T.SphereGeometry(.113, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2), c, cloth, {pos: [0, 1.785, .008]}); d.scale.set(.95, 1.05, 1.02);
+      const b = wdMesh(new T.CylinderGeometry(.125, .125, .01, 24, 1, false, -Math.PI * .4, Math.PI * .8), c.clone().multiplyScalar(.85), cloth, {pos: [0, 1.79, .03]}); b.rotation.y = Math.PI; b.rotation.x = .1;
+    } else {
+      const d = wdMesh(new T.SphereGeometry(.116, 28, 18, 0, Math.PI * 2, 0, Math.PI * .6), c, cloth, {pos: [0, 1.775, .008]}); d.scale.set(.94, 1.14, 1);
+      const band = wdMesh(new T.TorusGeometry(.108, .02, 10, 32), c, cloth, {pos: [0, 1.728, .008]}); band.rotation.x = Math.PI / 2; band.scale.set(.94, 1, .98);
+    }
+  }
 }
 
 /* ================= INTRO: Atlas holds the line (plays on a cold load, before the login) =================

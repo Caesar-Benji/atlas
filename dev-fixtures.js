@@ -232,7 +232,7 @@
   let live = params.get('out') === '1' ? null : SESSION, authCb = null;
   const clone = v => JSON.parse(JSON.stringify(v));
   function builder(table){
-    const rows = db[table] || [];
+    const rows = db[table] || (mode === 'demo' && table === 'wardrobe_items' && window.WARDROBE_SEED ? (db.wardrobe_items = window.WARDROBE_SEED.map((x, i) => Object.assign({id: 'wd-' + i, created_at: T(0)}, x))) : []);
     const q = {filters: [], order: [], limit: null, range: null, single: null, head: false, count: null, write: null};
     const api = {};
     const chain = fn => (...a) => { fn(...a); return api; };
