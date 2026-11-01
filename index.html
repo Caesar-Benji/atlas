@@ -1053,7 +1053,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v69</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v70</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1152,7 +1152,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v69');
+console.log('Atlas v70');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -6240,7 +6240,8 @@ views.wardrobe = async function(){
     <div class="mast">
       <div class="mast-txt"><h2>Wardrobe</h2><div class="mast-sub" id="wdSub">Loading…</div>
         <div class="mast-acts"><button class="btn" type="button" onclick="wdItemSheet()">Add piece</button>
-          <button class="btn-ghost" type="button" onclick="wdSaveOutfit()">Save this outfit</button></div></div>
+          <button class="btn-ghost" type="button" onclick="wdSaveOutfit()">Save this outfit</button>
+          <button class="btn-ghost" type="button" id="wdPrepBtn" hidden onclick="wdPrepareAll()">Prepare photos</button></div></div>
       <img class="mast-art" src="hero-wardrobe.png" alt="" onerror="this.remove()">
     </div>
     <div class="wd-stage">
@@ -6339,7 +6340,9 @@ function wdRender(){
     statTile('Spent', NIS(Math.round(spent)), mine.length ? 'on what you kept' : ''),
     statTile('Measured', mine.filter(x => +x.length_cm).length + ' / ' + mine.filter(x => wdSlotOf(x.kind)).length, 'pieces with a taped length · the rest are brand-chart estimates'),
   ].join('');
-  const sub = document.getElementById('wdSub'); if(sub) sub.textContent = mine.length ? `${plural(mine.length, 'piece')} · ${plural(brands.size, 'brand')}${newest ? ' · last bought ' + fmtDate(newest.bought_on) : ''}` : 'Empty wardrobe';
+  const prep = document.getElementById('wdPrepBtn'), todo = mine.filter(x => wdSlotOf(x.kind) && x.img && !x.cut_path).length;
+  if(prep){ prep.hidden = !todo || !sb.storage; prep.textContent = `Prepare photos (${todo})`; }
+  const sub = document.getElementById('wdSub'); if(sub && !W2.preparing) sub.textContent = mine.length ? `${plural(mine.length, 'piece')} · ${plural(brands.size, 'brand')}${newest ? ' · last bought ' + fmtDate(newest.bought_on) : ''}` : 'Empty wardrobe';
   wdSlotsRender(); wdOutfitsRender();
 }
 function wdThumb(x, cls){ return x && x.img ? `<img class="wd-th${cls ? ' ' + cls : ''}" src="${esc(x.img)}" alt="" loading="lazy" onerror="this.replaceWith(wdSwatch('${x.color || '#8f867a'}'))">` : wdSwatchHtml(x && x.color, cls); }
@@ -6436,10 +6439,12 @@ function wdDetail(id){
         ${wdSlotOf(x.kind) ? `<span>Measures</span><span>${(() => { const d = wdDims(x); return `${Math.round(d.len)} × ${Math.round(d.w)} cm${d.est ? ' <span class="pill grey">estimated</span>' : ''}`; })()}</span>` : ''}
         <span>Bought</span><span>${x.bought_on ? fmtDate(x.bought_on) : '—'}${x.price != null ? ' · ' + wdNis(x.price) : ''}</span>
         <span>From</span><span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${WD_SHOP[x.source] || esc(x.source || '')}</a>` : esc(WD_SHOP[x.source] || x.source || '—')}${x.sku ? ' · ' + esc(x.sku) : ''}</span>
+        ${x.cut_path ? `<span>Photo</span><span>${x.photo_kind === 'flat' ? 'Flat shop photo, cut on white' : x.photo_kind === 'model' ? 'Shot on a model, garment cut out' : 'Chosen by hand'} · ${x.cut_w} × ${x.cut_h} px</span>` : x.img ? `<span>Photo</span><span>Not prepared yet</span>` : ''}
         ${x.status !== 'active' ? `<span>Status</span><span>${x.status === 'returned' ? 'Returned for a refund' : x.status === 'gift' ? 'Not yours' : esc(x.status)}</span>` : ''}
         ${x.notes ? `<span>Notes</span><span>${esc(x.notes)}</span>` : ''}</div></div>`,
     foot: `<span class="n"><button class="linkish danger" type="button" onclick="sheetDel('wardrobe_items','${x.id}','wardrobe')">Delete</button></span>
       ${x.source === 'terminalx' && x.img ? `<button class="btn-ghost" type="button" onclick="closeSheet();wdPhotoSheet('${x.id}')">Change photo</button>` : ''}
+      ${x.img && sb.storage && wdSlotOf(x.kind) ? `<button class="btn-ghost" type="button" onclick="closeSheet();toast('Preparing…');wdPrepareOne(wdById('${x.id}')).then(ok=>{toast(ok?'Photo prepared':'No usable photo');wdDollRender();wdRender();}).catch(err)">${x.cut_path ? 'Redo photo' : 'Prepare photo'}</button>` : ''}
       <button class="btn-ghost" type="button" onclick="closeSheet();wdItemSheet('${x.id}')">Edit</button>
       ${slot && x.status === 'active' ? (on ? `<button class="btn-ghost" type="button" onclick="wdWear('${on}',null);closeSheet()">Take off</button>`
         : `<button class="btn" type="button" onclick="wdWear('${slot}','${x.id}');closeSheet();document.getElementById('wdDoll')?.scrollIntoView({behavior:'smooth',block:'center'})">Wear it</button>`) : ''}`});
@@ -6543,16 +6548,38 @@ function wdSegmenter(){
       through similar colours so the model's other clothes stay behind (a print that defeats the grow falls back
       to everything the model classed as clothes);
    3. a thin ink line round the result so a white tee still reads on paper. Returns the cropped canvas. */
-async function wdCutout(bmp, kind){
+// the backdrop colour of a shop photo: the median of a ring 1 % in from the edge; `framed` is how much of that ring
+// is the backdrop (a close-up or a lifestyle shot runs to the edge and scores low)
+function wdBgOf(d, W, H){
+  const R = [], G = [], Bl = [], m = Math.max(1, Math.round(Math.min(W, H) * .01)), ring = [];
+  for(let x = 0; x < W; x += 2){ ring.push(m * W + x, (H - 1 - m) * W + x); } for(let y = 0; y < H; y += 2){ ring.push(y * W + m, y * W + W - 1 - m); }
+  ring.forEach(i => { const o = i * 4; if(d[o + 3] < 12) return; R.push(d[o]); G.push(d[o + 1]); Bl.push(d[o + 2]); });
+  const med = a => { if(!a.length) return 255; a.sort((p, q) => p - q); return a[a.length >> 1]; };
+  const r = med(R), g = med(G), b = med(Bl); let ok = 0, n = 0;
+  ring.forEach(i => { const o = i * 4; n++; if(d[o + 3] < 12 || Math.abs(d[o] - r) + Math.abs(d[o + 1] - g) + Math.abs(d[o + 2] - b) < 24) ok++; });
+  return {r, g, b, bright: (r + g + b) / 3, framed: n ? ok / n : 0};
+}
+async function wdCutout(bmp, kind, mode){
   const W = bmp.width, H = bmp.height, c = document.createElement('canvas'); c.width = W; c.height = H;
   const x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(bmp, 0, 0);
   const id = x.getImageData(0, 0, W, H), d = id.data, bg = new Uint8Array(W * H), st = [];
-  const open = i => { const o = i * 4; if(d[o + 3] < 12) return true; const r = d[o], g = d[o + 1], b = d[o + 2]; return r > 241 && g > 241 && b > 241 && Math.max(r, g, b) - Math.min(r, g, b) < 10; };
-  for(let i = 0; i < W; i++){ st.push(i, (H - 1) * W + i); } for(let j = 0; j < H; j++){ st.push(j * W, j * W + W - 1); }
-  while(st.length){ const i = st.pop(); if(bg[i] || !open(i)) continue; bg[i] = 1; const xx = i % W;
-    if(xx) st.push(i - 1); if(xx < W - 1) st.push(i + 1); if(i >= W) st.push(i - W); if(i < W * (H - 1)) st.push(i + W); }
+  // the backdrop is whatever grey the border is (Terminal X ghost shots sit on 240-243, not white); a flat shot keeps
+  // its off-whites, so the tolerance is tighter there. A dark or busy border means no backdrop to flood at all.
+  const B = wdBgOf(d, W, H), tol = mode === 'flat' ? 20 : 30, flood = B.bright > 200 && B.framed > .6;
+  const open = i => { const o = i * 4; if(d[o + 3] < 12) return true; if(!flood) return false; const r = d[o], g = d[o + 1], b = d[o + 2];
+    return Math.abs(r - B.r) + Math.abs(g - B.g) + Math.abs(b - B.b) < tol && Math.max(r, g, b) - Math.min(r, g, b) < 14; };
+  // a ghost shot's soft drop shadow is a dead-neutral grey (r = g = b, the backdrop's own tint) that darkens a shade
+  // per pixel away from the backdrop, where a garment edge is a step and even an off-white tee carries a warm cast:
+  // the flood may walk down such a ramp (never up, so a white tee is safe) in flat mode
+  const shade = (i, p) => { const o = i * 4, q = p * 4; if(d[o + 3] < 12) return false; const r = d[o], g = d[o + 1], b = d[o + 2];
+    if(Math.max(r, g, b) - Math.min(r, g, b) > 3 || r + g + b < 585) return false; const dr = r - d[q], dg = g - d[q + 1], db = b - d[q + 2];
+    return dr <= 1 && dg <= 1 && db <= 1 && dr >= -3 && dg >= -3 && db >= -3; };
+  const ramp = mode === 'flat' && flood;
+  for(let i = 0; i < W; i++){ st.push(i, -1, (H - 1) * W + i, -1); } for(let j = 0; j < H; j++){ st.push(j * W, -1, j * W + W - 1, -1); }
+  while(st.length){ const p = st.pop(), i = st.pop(); if(bg[i] || !(open(i) || (ramp && p >= 0 && shade(i, p)))) continue; bg[i] = 1; const xx = i % W;
+    if(xx) st.push(i - 1, i); if(xx < W - 1) st.push(i + 1, i); if(i >= W) st.push(i - W, i); if(i < W * (H - 1)) st.push(i + W, i); }
   // 2. a model in the photo?
-  const seg = kind === 'shoes' || kind === 'bag' ? null : await wdSegmenter();
+  const seg = mode === 'flat' || kind === 'shoes' || kind === 'bag' ? null : await wdSegmenter();
   if(seg){
     try{
       const sc = Math.min(1, 512 / Math.max(W, H)), sw = Math.round(W * sc), sh = Math.round(H * sc);
@@ -6602,7 +6629,12 @@ async function wdCutout(bmp, kind){
       if(res.close) res.close();
     }catch(e){ console.warn('Wardrobe: segmentation failed on a photo', e && e.message); }
   }
-  // 3. alpha, outline, crop
+  // 3. drop specks (jpeg noise next to a white garment, a stray label), then alpha, outline, crop
+  { const comp = new Int32Array(W * H).fill(-1), sizes = [], qq = [];
+    for(let i = 0; i < W * H; i++){ if(bg[i] || comp[i] >= 0) continue; const id2 = sizes.length; sizes.push(0); comp[i] = id2; qq.push(i);
+      while(qq.length){ const k = qq.pop(); sizes[id2]++; const xx = k % W;
+        [xx ? k - 1 : -1, xx < W - 1 ? k + 1 : -1, k >= W ? k - W : -1, k < W * (H - 1) ? k + W : -1].forEach(j => { if(j >= 0 && !bg[j] && comp[j] < 0){ comp[j] = id2; qq.push(j); } }); } }
+    if(sizes.length > 1){ const big = Math.max(...sizes) * .02; for(let i = 0; i < W * H; i++){ if(!bg[i] && sizes[comp[i]] < big) bg[i] = 1; } } }
   let x0 = W, y0 = H, x1 = -1, y1 = -1; const edge = [];
   for(let i = 0; i < W * H; i++){
     if(bg[i]){ d[i * 4 + 3] = 0; continue; }
@@ -6625,19 +6657,86 @@ function wdStore(mode, key, val){
       const r = mode === 'get' ? os.get(key) : os.put(val, key); r.onsuccess = () => { res(mode === 'get' ? r.result || null : true); db.close(); }; r.onerror = () => { res(null); db.close(); }; }; }catch(e){ res(null); } });
 }
 const wdBig = x => x.img && x.img.startsWith(WD_TX_IMG) ? x.img.replace(WD_TX_IMG, WD_TX_BIG) : x.img;
+const wdCanvasOf = async blob => { const bmp = await createImageBitmap(blob); const cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height; cv.getContext('2d').drawImage(bmp, 0, 0); return cv; };
 async function wdPiece(x){
   if(W2.cache.has(x.id)) return W2.cache.get(x.id);
   if(W2.jobs.has(x.id)) return W2.jobs.get(x.id);
-  const job = (async () => { let cv = null, cut = true;
-    const key = x.id + '|' + wdBig(x) + '|v2';
+  const job = (async () => { let cv = null;
     try{
-      const saved = await wdStore('get', key);
-      if(saved){ const bmp = await createImageBitmap(saved); cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height; cv.getContext('2d').drawImage(bmp, 0, 0); }
-      else { cv = await wdCutout(await wdBitmap(wdBig(x)), x.kind); if(cv) cv.toBlob(b => { if(b) wdStore('put', key, b); }, 'image/png'); }
-    }catch(e){ cut = false; cv = null; }
-    if(!cv) cut = false;
-    const r = {canvas: cv, cut}; W2.cache.set(x.id, r); W2.jobs.delete(x.id); return r; })();
+      if(x.cut_path && sb.storage){                       // prepared once, stored under his user
+        const key = 'cut|' + x.cut_path + '|' + (x.cut_w || 0) + 'x' + (x.cut_h || 0);
+        let blob = await wdStore('get', key);
+        if(!blob){ const {data, error} = await sb.storage.from('wardrobe').download(x.cut_path); if(error) throw error; blob = data; wdStore('put', key, blob); }
+        cv = await wdCanvasOf(blob);
+      } else if(x.img && !sb.storage){                    // fixtures: cut at runtime, nowhere to store
+        cv = await wdCutout(await wdBitmap(wdBig(x)), x.kind, 'flat');
+      }
+    }catch(e){ console.warn('Wardrobe: piece image', x.name, e && e.message); cv = null; }
+    const r = {canvas: cv, cut: !!cv}; W2.cache.set(x.id, r); W2.jobs.delete(x.id); return r; })();
   W2.jobs.set(x.id, job); return job;
+}
+/* ================= preparing the photos =================
+   Terminal X numbers a product's gallery -1… to -8… in the file name; a missing number answers with a 720×900
+   "TERMINAL X" placeholder. The clean ghost shot is usually in there but rarely first. For each piece: load the
+   gallery, drop placeholders, score every shot for person pixels, take the flat one with the most garment; failing
+   that the model shot with the most clothes, cut round the garment. The cut-out goes to Storage as a PNG and
+   the row remembers which photo and how big. Runs in the browser, once, from the Prepare button. */
+const WD_TX_RE = /^(.*\/)([a-z]\d{9})-(\d)(\d+(?:_\d+)?\.jpg)$/;
+function wdGallery(x){ const m = (x.img || '').match(WD_TX_RE); if(!m) return x.img ? [x.img] : []; return [1, 2, 3, 4, 5, 6, 7, 8].map(n => m[1] + m[2] + '-' + n + m[4]); }
+async function wdScore(bmp, kind){
+  const W = bmp.width, H = bmp.height;
+  const k = 256 / Math.max(W, H), sw = Math.max(1, Math.round(W * k)), sh = Math.max(1, Math.round(H * k));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh; const x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(bmp, 0, 0, sw, sh);
+  const d = x.getImageData(0, 0, sw, sh).data, B = wdBgOf(d, sw, sh); let dark = 0, garment = 0;
+  for(let i = 0; i < sw * sh; i++){ const o = i * 4, r = d[o], g = d[o + 1], b = d[o + 2]; if(d[o + 3] < 12) continue; if(r < 200 || g < 200 || b < 200) dark++;
+    if(Math.abs(r - B.r) + Math.abs(g - B.g) + Math.abs(b - B.b) >= 20 || Math.max(r, g, b) - Math.min(r, g, b) >= 14) garment++; }
+  const n = sw * sh, placeholder = (W <= 720 && H <= 900 && dark / n < .002) || dark / n < .0005;
+  let person = 0, clothes = 0;
+  const seg = placeholder || kind === 'shoes' || kind === 'bag' ? null : await wdSegmenter();
+  if(seg){ try{ const res = seg.segment(c), m = res.categoryMask && res.categoryMask.getAsUint8Array(); if(m){ for(let i = 0; i < m.length; i++){ if(m[i] >= 1 && m[i] <= 3) person++; else if(m[i] >= 4) clothes++; } } if(res.close) res.close(); }catch(e){} }
+  return {placeholder, person: person / n, clothes: clothes / n, garment: garment / n, framed: B.framed, bright: B.bright, w: W, h: H};
+}
+// which photo to cut: a flat (ghost) shot — nobody in it, a light backdrop all round, the garment filling a sane
+// share of the frame (a fabric close-up fills it all) — with the most garment; failing that, the model shot with the most clothes
+function wdPickShot(shots){
+  const flats = shots.filter(s => s.sc.person < .005 && s.sc.framed > .85 && s.sc.bright > 200 && s.sc.garment > .06 && s.sc.garment < .8);
+  // front and back ghost shots score alike; the front comes first in the gallery, so: the first within a tenth of the best
+  if(flats.length){ const best = Math.max(...flats.map(s => s.sc.garment)); return {pick: flats.find(s => s.sc.garment >= best * .9), mode: 'flat'}; }
+  const dressed = shots.filter(s => s.sc.clothes > .05), whole = dressed.filter(s => s.sc.framed > .8 && s.sc.bright > 200);   // the full figure on the backdrop, not a close-up
+  if(dressed.length) return {pick: (whole.length ? whole : dressed).reduce((a, b) => b.sc.clothes > a.sc.clothes ? b : a), mode: 'model'};
+  const framed = shots.filter(s => s.sc.framed > .85 && s.sc.bright > 200);   // shoes and bags are never segmented: the best-framed shot
+  return framed.length ? {pick: framed.reduce((a, b) => b.sc.garment > a.sc.garment ? b : a), mode: 'flat'} : null;
+}
+async function wdPrepareOne(x, forceUrl){
+  if(!sb.storage) return false;
+  const urls = forceUrl ? [forceUrl] : wdGallery(x); if(!urls.length) return false;
+  const shots = [];
+  for(const u of urls){ try{ const big = u.startsWith(WD_TX_IMG) ? u.replace(WD_TX_IMG, WD_TX_BIG) : u; const bmp = await wdBitmap(big); const sc = await wdScore(bmp, x.kind); if(sc.placeholder){ bmp.close && bmp.close(); continue; } shots.push({u, bmp, sc}); }catch(e){} }
+  if(!shots.length) return false;
+  const chosen = forceUrl ? {pick: shots[0], mode: shots[0].sc.person < .005 ? 'flat' : 'model'} : wdPickShot(shots);
+  if(!chosen){ shots.forEach(s => s.bmp.close && s.bmp.close()); return false; }
+  const {pick, mode} = chosen;
+  const cv = await wdCutout(pick.bmp, x.kind, mode); shots.forEach(s => s.bmp.close && s.bmp.close());
+  if(!cv) return false;
+  const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+  const {data: {user}} = await sb.auth.getUser(); const path = user.id + '/' + x.id + '.png';
+  const up = await sb.storage.from('wardrobe').upload(path, blob, {upsert: true, contentType: 'image/png'}); if(up.error) throw up.error;
+  const row = {img: pick.u, cut_path: path, cut_w: cv.width, cut_h: cv.height, photo_kind: forceUrl ? 'manual' : mode, photos: shots.map(s => s.u)};
+  const {error} = await sb.from('wardrobe_items').update(row).eq('id', x.id); if(error) throw error;
+  Object.assign(x, row); W2.cache.delete(x.id); wdStore('put', 'cut|' + path + '|' + cv.width + 'x' + cv.height, blob);
+  return true;
+}
+async function wdPrepareAll(force){
+  if(W2.preparing) return; W2.preparing = true;
+  const todo = (window._wd || []).filter(x => x.status === 'active' && wdSlotOf(x.kind) && x.img && (force || !x.cut_path));
+  const sub = document.getElementById('wdSub'); let done = 0, failed = 0;
+  for(const x of todo){ if(sub) sub.innerHTML = `<span class="pulse"></span>Preparing photos ${done + failed + 1} / ${todo.length} · ${esc(short(x.name, 30))}`;
+    try{ if(await wdPrepareOne(x)) done++; else failed++; }catch(e){ console.warn('prepare', x.name, e && e.message); failed++; }
+    if(!document.getElementById('wdDoll')){ break; }   // he left the section; the rest can run next time
+    wdDollRender(); }
+  W2.preparing = false;
+  toast(failed ? `${done} photos prepared · ${failed} without a usable photo` : `${done} photos prepared`);
+  if(document.getElementById('wdDoll')) wdRender();
 }
 function wdDoll(){
   const el = document.getElementById('wdDoll'); if(!el) return;
@@ -6658,7 +6757,7 @@ async function wdDollRender(){
     const piece = await wdPiece(x); if(el._seq !== seq) return;
     drop(slot);
     const g = document.createElement('div'); g.className = 'wd-g' + (piece.cut ? '' : ' raw'); g.dataset.slot = slot; g.dataset.item = x.id; g.dataset.len = String(d.len);
-    const img = piece.canvas || Object.assign(new Image(), {src: wdBig(x), alt: ''}); g.appendChild(img);
+    const img = piece.canvas || Object.assign(new Image(), {src: wdBig(x), alt: '', crossOrigin: 'anonymous'}); g.appendChild(img);
     const ar = piece.canvas ? piece.canvas.width / piece.canvas.height : 3 / 4;   // a raw photo is assumed 3:4
     let hcm, wcm, left, top;
     if(slot === 'top' || slot === 'outer'){ hcm = d.len; wcm = hcm * ar; const hem = B.shoulder - (d.body || d.len) + (slot === 'outer' ? -1 : 0); top = hem + hcm; left = WD_W / 2 - wcm / 2; }
@@ -6689,14 +6788,15 @@ async function wdPhotoSheet(id){
     foot: `<span class="n">Photos come from the shop; a missing number just means the shop has fewer</span>`});
   const box = document.getElementById('wdPhotos'); if(!box) return;
   await Promise.all(urls.map(async (u, i) => { const b = box.children[i]; if(!b) return;
-    try{ const bmp = await wdBitmap(u); const c = document.createElement('canvas'); const k = 220 / bmp.height; c.width = Math.round(bmp.width * k); c.height = 220; c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); b.innerHTML = ''; b.appendChild(c); }
+    try{ const bmp = await wdBitmap(u); if(bmp.width <= 720 && bmp.height <= 900){ b.remove(); return; } const c = document.createElement('canvas'); const k = 220 / bmp.height; c.width = Math.round(bmp.width * k); c.height = 220; c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); b.innerHTML = ''; b.appendChild(c); }
     catch(e){ b.remove(); } }));
   if(!box.children.length) box.innerHTML = '<div class="empty">The shop has no other photos of this piece</div>';
 }
 async function wdPhotoPick(id, url){
   const x = wdById(id); if(!x) return;
-  const {error} = await sb.from('wardrobe_items').update({img: url}).eq('id', id); if(error) return err(error);
-  x.img = url; W2.cache.delete(id); closeSheet(); toast('Photo changed'); wdDollRender(); wdRender();
+  closeSheet(); toast('Cutting the piece out…');
+  try{ if(!await wdPrepareOne(x, url)) return toast('That photo could not be cut out'); }catch(e){ return err(e); }
+  toast('Photo changed'); wdDollRender(); wdRender();
 }
 /* the flat lay under the figure: each worn piece on its own, with its measurements, for checking against a tape */
 function wdFlatRender(){

@@ -25,3 +25,12 @@ create policy "own rows delete" on outfits for delete using (auth.uid() = user_i
 
 -- v69: real garment measurements, typed in after taping the piece (null = estimated from the brand chart)
 alter table wardrobe_items add column if not exists length_cm numeric, add column if not exists width_cm numeric;
+
+-- v70: photos prepared once — the cut-out PNG lives in Storage, the row remembers which shot and how big
+alter table wardrobe_items add column if not exists cut_path text, add column if not exists cut_w int, add column if not exists cut_h int,
+  add column if not exists photo_kind text, add column if not exists photos jsonb;
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types) values ('wardrobe', 'wardrobe', false, 8388608, '{image/png}') on conflict (id) do nothing;
+create policy "wardrobe own read" on storage.objects for select using (bucket_id = 'wardrobe' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "wardrobe own insert" on storage.objects for insert with check (bucket_id = 'wardrobe' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "wardrobe own update" on storage.objects for update using (bucket_id = 'wardrobe' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "wardrobe own delete" on storage.objects for delete using (bucket_id = 'wardrobe' and (storage.foldername(name))[1] = auth.uid()::text);
