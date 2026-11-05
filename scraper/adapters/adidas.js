@@ -5,7 +5,7 @@
 const ADIDAS = "https://www.adidas.co.il";
 const OUTLETS = ["/he/men-outlet", "/he/men-shoes-outlet", "/he/men-clothing-outlet", "/he/men-accessories-outlet"];
 const PAGE = 48;
-const MAX_DETAILS = 250;
+const MAX_DETAILS = 120;   // the variation endpoint sits behind Akamai: slow and few
 
 const numOf = (s) => { const m = String(s ?? "").replace(/,/g, "").match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 
@@ -64,14 +64,17 @@ async function adidasFetchDeals({ getText, getJson, sleep, stripHtml, qualify, k
     }
   }
   const items = [];
-  let details = 0;
+  let details = 0, blocked = 0;
   for (const t of found.values()) {
     if (!(t.compare > t.price) && !t.off) continue;
     const { kind, category } = kindOf(t.title, t.line || "", t.href);
     let d = { images: t.img ? [t.img.replace(/w_\d+/, "w_600")] : [], sizes: [], description: null, price: null, compare: null, title: null };
-    if (details < MAX_DETAILS) {
-      try { d = await productJson(getJson, t.pid); details++; await sleep(350); }
-      catch (e) { log(`adidas: variation ${t.pid} ${e.message.slice(0, 40)}`); }
+    if (details < MAX_DETAILS && blocked < 3) {
+      try { d = await productJson(getJson, t.pid); details++; blocked = 0; await sleep(1200 + Math.random() * 800); }
+      catch (e) {
+        log(`adidas: variation ${t.pid} ${e.message.slice(0, 40)}`);
+        if (/403/.test(e.message)) { blocked++; await sleep(60_000); }           // Akamai cooled us down — wait, then try again
+      }
       if (!d.images.length && t.img) d.images = [t.img.replace(/w_\d+/, "w_600")];
       if (details % 25 === 0) log(`adidas: details ${details}/${found.size}`);
     }

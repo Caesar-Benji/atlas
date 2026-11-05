@@ -5,7 +5,7 @@
 const NIKE = "https://www.nike.com";
 const API = "https://api.nike.com";
 const WALL_PATH = "/il/w/mens-sale-3yaepznik1";   // all men's sale (shoes + clothing + accessories)
-const MAX_DETAILS = 300;
+const MAX_DETAILS = 600;
 
 function walk(o, fn, depth = 0) {
   if (!o || typeof o !== "object" || depth > 14) return;
@@ -29,26 +29,23 @@ function wallProducts(data) {
   return out;
 }
 
-function detail(html) {
+function detail(html, code) {
   const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-  if (!m) return { images: [], sizes: [], description: null };
-  let data; try { data = JSON.parse(m[1]); } catch { return { images: [], sizes: [], description: null }; }
-  const images = new Set(), sizes = new Map();
-  let description = null;
-  walk(data, (o) => {
-    for (const k of ["portraitURL", "squarishURL", "imageURL", "url"]) {
-      const u = o[k]; if (typeof u === "string" && /static\.nike\.com\/a\/images\//.test(u)) images.add(u.replace(/\/t_[A-Za-z0-9_]+\//, "/t_PDP_1280_v1/"));
-    }
-    if (o.localizedSize || o.nikeSize) {
-      const size = o.localizedSize || o.nikeSize;
-      const st = o.available ?? o.isAvailable ?? (o.status ? /ACTIVE|IN_STOCK/i.test(o.status) : null) ?? (o.level ? o.level !== "OOS" : null);
-      if (!sizes.has(size) || st === true) sizes.set(size, st);
-    }
-    if (!description && typeof o.descriptionPreview === "string") description = o.descriptionPreview;
-    if (!description && typeof o.description === "string" && o.description.length > 40) description = o.description;
-  });
-  // Nike IL lists EU sizes as "EU 45" / "45"; keep the label as shown
-  return { images: [...images], sizes: [...sizes].map(([size, in_stock]) => ({ size: String(size), in_stock: in_stock == null ? null : !!in_stock })), description };
+  const empty = { images: [], sizes: [], description: null, price: null, compare: null };
+  if (!m) return empty;
+  let data; try { data = JSON.parse(m[1]); } catch { return empty; }
+  // one object per colourway, each with sizes[{label, status}], productInfo and contentImages
+  const ways = [];
+  walk(data, (o) => { if (Array.isArray(o.sizes) && o.sizes[0]?.label && o.productInfo) ways.push(o); });
+  if (!ways.length) return empty;
+  const way = ways.find((w) => `${w.styleCode}-${w.colorCode}` === code || w.productInfo?.url?.includes(code)) || ways[0];
+  const images = new Set();
+  walk(way.contentImages || [], (o) => { for (const k of ["url", "portraitURL", "squarishURL"]) if (typeof o[k] === "string" && /static\.nike\.com\/a\/images\//.test(o[k])) images.add(o[k].replace(/\/t_[A-Za-z0-9_]+\//, "/t_PDP_1280_v1/")); });
+  // status ACTIVE means listed, not necessarily in stock (stock is a separate call) → null; anything else → out
+  const sizes = way.sizes.map((x) => ({ size: String(x.localizedLabel || x.label), in_stock: x.status === "ACTIVE" ? null : false }));
+  const pi = way.productInfo || {};
+  const description = [pi.productDescription, ...(pi.featuresAndBenefits || [])].filter((x) => typeof x === "string").join(" ");
+  return { images: [...images], sizes, description: description || null, price: money(way.prices?.currentPrice), compare: money(way.prices?.initialPrice) };
 }
 
 async function nikeFetchDeals({ getJson, getText, sleep, stripHtml, qualify, kindOf }, log = () => {}) {
@@ -84,7 +81,7 @@ async function nikeFetchDeals({ getJson, getText, sleep, stripHtml, qualify, kin
     const { kind, category } = kindOf(title);
     let dt = { images: p.images, sizes: [], description: null };
     if (details < MAX_DETAILS) {
-      try { const d = detail(await getText(p.url)); details++; dt = { images: d.images.length ? d.images : p.images, sizes: d.sizes, description: d.description }; await sleep(300); }
+      try { const d = detail(await getText(p.url), p.id); details++; dt = { images: d.images.length ? d.images : p.images, sizes: d.sizes, description: d.description }; await sleep(300); if (details % 50 === 0) log(`nike: details ${details}`); }
       catch (e) { log(`nike: detail ${p.id} ${e.message.slice(0, 40)}`); }
     }
     const it = qualify({

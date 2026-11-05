@@ -61,9 +61,9 @@ const KINDS = [
   [/mouse\b|עכבר/, "mouse", "desk"],
   [/monitor arm|זרוע|mount|מעמד למסך|stand/, "arm", "desk"],
   [/desk mat|משטח|deskmat|mousepad|פד לעכבר/, "deskmat", "desk"],
-  [/light ?bar|מנורת מסך|screenbar|lamp|מנורה|תאורה|light/, "lamp", "lights"],
-  [/apple watch|רצועה|band\b|strap|magsafe|charger|מטען|iphone 17|מגן ל|case\b/, "apple", "apple"],
-  [/watch|שעון/, "watch", "watches"],
+  [/light ?bar|מנורת מסך|screenbar|lamp\b|מנורה|מנורת|תאורה/, "lamp", "lights"],
+  [/apple watch|magsafe|charger|מטען|iphone|airpods|מגן ל|רצועה לשעון|watch band|watch strap/, "apple", "apple"],
+  [/\bwatch\b|שעון יד|שעון/, "watch", "watches"],
 ];
 function kindOf(...texts) {
   const t = texts.filter(Boolean).join(" ").toLowerCase();
@@ -215,7 +215,7 @@ async function ingest({ url, token, shop, runner, items, seen, error }) {
 const ADIDAS = "https://www.adidas.co.il";
 const OUTLETS = ["/he/men-outlet", "/he/men-shoes-outlet", "/he/men-clothing-outlet", "/he/men-accessories-outlet"];
 const PAGE = 48;
-const MAX_DETAILS = 250;
+const MAX_DETAILS = 120;   // the variation endpoint sits behind Akamai: slow and few
 
 const numOf = (s) => { const m = String(s ?? "").replace(/,/g, "").match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
 
@@ -274,14 +274,17 @@ async function adidasFetchDeals({ getText, getJson, sleep, stripHtml, qualify, k
     }
   }
   const items = [];
-  let details = 0;
+  let details = 0, blocked = 0;
   for (const t of found.values()) {
     if (!(t.compare > t.price) && !t.off) continue;
     const { kind, category } = kindOf(t.title, t.line || "", t.href);
     let d = { images: t.img ? [t.img.replace(/w_\d+/, "w_600")] : [], sizes: [], description: null, price: null, compare: null, title: null };
-    if (details < MAX_DETAILS) {
-      try { d = await productJson(getJson, t.pid); details++; await sleep(350); }
-      catch (e) { log(`adidas: variation ${t.pid} ${e.message.slice(0, 40)}`); }
+    if (details < MAX_DETAILS && blocked < 3) {
+      try { d = await productJson(getJson, t.pid); details++; blocked = 0; await sleep(1200 + Math.random() * 800); }
+      catch (e) {
+        log(`adidas: variation ${t.pid} ${e.message.slice(0, 40)}`);
+        if (/403/.test(e.message)) { blocked++; await sleep(60_000); }           // Akamai cooled us down — wait, then try again
+      }
       if (!d.images.length && t.img) d.images = [t.img.replace(/w_\d+/, "w_600")];
       if (details % 25 === 0) log(`adidas: details ${details}/${found.size}`);
     }

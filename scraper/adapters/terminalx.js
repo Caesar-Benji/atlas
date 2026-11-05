@@ -9,7 +9,7 @@ const MAX_PAGES = 25;        // per brand, 24 tiles a page
 const MAX_DETAILS = 450;     // product pages per run
 
 const numOf = (s) => { const m = String(s ?? "").replace(/,/g, "").match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
-const hiRes = (u) => u.replace(/\/cache\/[0-9a-f]{32}\//, "/cache/f112238e8f1f2b1b4c4b0f8e9d6a5c3b/"); // 1200×1600 cache per CLAUDE.md
+const hiRes = (u) => u.replace(/\/cache\/[0-9a-f]{32}\//, "/cache/f112238e8de94b6d480bd02e7a9501b8/"); // 1200×1600 cache per CLAUDE.md
 
 function parseTiles(html) {
   const out = [];
@@ -30,21 +30,30 @@ function parseTiles(html) {
   return out;
 }
 
-function parseDetail(html, sku) {
-  // every catalog image of this sku, de-duplicated, hi-res cache
-  const imgs = [...new Set((html.match(/https:\/\/media\.terminalx\.com\/pub\/media\/catalog\/product\/cache\/[0-9a-f]{32}\/[^"'\\ )]+/g) || [])
+function parseDetail(html, sku, colorIdx) {
+  // every catalog image of this sku, query stripped, de-duplicated, hi-res cache
+  const imgs = [...new Set((html.match(/https:\/\/media\.terminalx\.com\/pub\/media\/catalog\/product\/cache\/[0-9a-f]{32}\/[^"'\\ )?]+/g) || [])
     .filter((u) => u.toLowerCase().includes(sku.slice(0, 7).toLowerCase())).map((u) => u.replace(/\\\//g, "/")))].map(hiRes);
-  // sizes: Magento configurable options carry {"label":"XL",…} next to a stock flag in most builds
-  const sizes = [];
-  const seen = new Set();
-  for (const m of html.matchAll(/"label":"(XXS|XS|S|M|L|XL|XXL|2XL|3XL|\d{2}(?:\/\d{2})?|\d{2}\.5|ONE SIZE|One Size)"(?:,[^{}]{0,200}?"(?:is_in_stock|in_stock|stock_status|out_of_stock|isInStock)":\s*("?[A-Z_a-z]+"?|true|false))?/g)) {
-    const size = m[1]; if (seen.has(size)) continue; seen.add(size);
-    const st = m[2] == null ? null : /true|IN_STOCK|"in_stock"/i.test(m[2]) && !/OUT_OF_STOCK|false/i.test(m[2]);
-    sizes.push({ size, in_stock: st });
+  // Magento variants: {"attributes":[{"label":"XL","code":"size","value_index":40},…],"product":{…"stock_status2":"IN_STOCK"…}}
+  const stock = new Map();
+  for (const m of html.matchAll(/"attributes":\[((?:\{"label":"[^"]*","code":"[a-z_]+","value_index":\d+\},?)+)\],"product":\{[^{}]*?"stock_status2":"([A-Z_]+)"/g)) {
+    const attrs = [...m[1].matchAll(/"label":"([^"]*)","code":"([a-z_]+)","value_index":(\d+)/g)].map((x) => ({ label: x[1], code: x[2], idx: x[3] }));
+    const color = attrs.find((x) => x.code === "color"), size = attrs.find((x) => x.code === "size");
+    if (!size) continue;
+    if (colorIdx && color && color.idx !== String(colorIdx)) continue;        // only the colour of this listing
+    const ok = m[2] === "IN_STOCK";
+    stock.set(size.label, (stock.get(size.label) ?? false) || ok);
   }
-  const desc = (html.match(/"description":\s*\{\s*"html":\s*"((?:[^"\\]|\\.)*)"/) || html.match(/"short_description":\s*"((?:[^"\\]|\\.)*)"/) || [])[1];
-  const color = (html.match(/"color":\s*"([^"]{1,40})"/) || html.match(/"color_label":\s*"([^"]{1,40})"/) || [])[1];
-  return { images: imgs, sizes, description: desc ? desc.replace(/\\n/g, " ").replace(/\\"/g, '"') : null, color: color || null };
+  let sizes = [...stock].map(([size, in_stock]) => ({ size, in_stock }));
+  if (!sizes.length) {                                                       // no variants block: list the option labels, stock unknown
+    const seg = (html.match(/"attribute_code":"size"[\s\S]{0,6000}?\]\}/) || [""])[0];
+    sizes = [...new Set([...seg.matchAll(/"label":"([^"]+)","store_label"/g)].map((x) => x[1]))].map((size) => ({ size, in_stock: null }));
+  }
+  const desc = (html.match(/"description":\s*\{\s*"html":\s*"((?:[^"\\]|\\.)*)"/) || html.match(/"short_description":\s*\{\s*"html":\s*"((?:[^"\\]|\\.)*)"/) || [])[1];
+  const color = colorIdx
+    ? (html.match(new RegExp(`"label":"([^"]+)","store_label":"[^"]*","use_default_value":(?:true|false),"value_index":${colorIdx}\\b`)) || [])[1]
+    : (html.match(/"attribute_code":"color"[\s\S]{0,400}?"values":\[\{"default_label":"([^"]+)"/) || [])[1];
+  return { images: imgs, sizes, description: desc ? desc.replace(/\\n/g, " ").replace(/\\"/g, '"').replace(/\\\//g, "/") : null, color: color || null };
 }
 
 async function txFetchDeals({ getText, sleep, stripHtml, qualify, brandOf, kindOf }, log = () => {}) {
@@ -79,7 +88,7 @@ async function txFetchDeals({ getText, sleep, stripHtml, qualify, brandOf, kindO
     const { kind, category } = kindOf(title);
     let detail = { images: t.img ? [hiRes(t.img)] : [], sizes: [], description: null, color: null };
     if (details < MAX_DETAILS) {
-      try { detail = parseDetail(await getText(`${TX}${t.path}${t.query}`), t.sku); details++; await sleep(250); }
+      try { detail = parseDetail(await getText(`${TX}${t.path}${t.query}`), t.sku, (t.query.match(/color=(\d+)/) || [])[1]); details++; await sleep(250); }
       catch (e) { log(`terminalx: detail ${t.sku} ${e.message.slice(0, 40)}`); }
       if (!detail.images.length && t.img) detail.images = [hiRes(t.img)];
     }

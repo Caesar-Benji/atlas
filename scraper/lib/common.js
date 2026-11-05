@@ -56,9 +56,9 @@ const KINDS = [
   [/mouse\b|עכבר/, "mouse", "desk"],
   [/monitor arm|זרוע|mount|מעמד למסך|stand/, "arm", "desk"],
   [/desk mat|משטח|deskmat|mousepad|פד לעכבר/, "deskmat", "desk"],
-  [/light ?bar|מנורת מסך|screenbar|lamp|מנורה|תאורה|light/, "lamp", "lights"],
-  [/apple watch|רצועה|band\b|strap|magsafe|charger|מטען|iphone 17|מגן ל|case\b/, "apple", "apple"],
-  [/watch|שעון/, "watch", "watches"],
+  [/light ?bar|מנורת מסך|screenbar|lamp\b|מנורה|מנורת|תאורה/, "lamp", "lights"],
+  [/apple watch|magsafe|charger|מטען|iphone|airpods|מגן ל|רצועה לשעון|watch band|watch strap/, "apple", "apple"],
+  [/\bwatch\b|שעון יד|שעון/, "watch", "watches"],
 ];
 function kindOf(...texts) {
   const t = texts.filter(Boolean).join(" ").toLowerCase();
