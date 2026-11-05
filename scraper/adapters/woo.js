@@ -9,6 +9,7 @@ const WOO = {
   gant:     { base: "https://www.gant.co.il",         brand: "gant",     query: "&category=2254",  requireBrand: false },  // Shopping IL | men
 };
 
+const MAX_STOCK = 150;      // variations calls per run
 const SIZE_TAX = /pa_(measure|size|sizes|w_size|l_sizes|shoe|shoes)|מידה|size/i;
 
 function wooPrice(p) {
@@ -33,10 +34,12 @@ async function wooFetchDeals(shop, { getJson, sleep, stripHtml, qualify, brandOf
     await sleep(250);
   }
 
-  const items = [];
+  // pass 1: the shop-side rules; pass 2: per-size stock for the best MAX_STOCK (Gant's Store API
+  // answers a variations call in ~3 s behind Cloudflare, so a thousand of them is not an option)
+  const pre = [];
   let n = 0;
   for (const p of raw) {
-    if (++n % 100 === 0) log(`${shop}: checked ${n}/${raw.length}, kept ${items.length}`);
+    if (++n % 200 === 0) log(`${shop}: checked ${n}/${raw.length}, kept ${pre.length}`);
     const { price, compare, currency } = wooPrice(p);
     if (!price) continue;
     const cats = (p.categories || []).map((c) => c.name);
@@ -47,39 +50,44 @@ async function wooFetchDeals(shop, { getJson, sleep, stripHtml, qualify, brandOf
     const sizeAttr = (p.attributes || []).find((a) => SIZE_TAX.test(a.taxonomy + " " + a.name) && !/colou?r|צבע/i.test(a.taxonomy));
     const title = stripHtml(p.name);
     const { kind, category } = kindOf(title, cats.join(" "));
-    // sizes as listed; stock per variation fetched below only when a size of his exists
-    let sizes = sizeAttr ? sizeAttr.terms.map((t) => ({ size: t.name, in_stock: null })) : [];
-    const pre = qualify({
+    const sizes = sizeAttr ? sizeAttr.terms.map((t) => ({ size: t.name, in_stock: null })) : [];
+    const it = qualify({
       external_id: p.id, url: p.permalink, title, price, compare_price: compare > price ? compare : null, currency,
       brand: cfg.brand || brandOf(title, brandRaw), brandRaw, categories: cats, kind, category,
       images: (p.images || []).map((i) => i.src), description: stripHtml(p.short_description || p.description).slice(0, 2000),
       color, sizes, attrs: { ...attrs, sku: p.sku, in_stock: p.is_in_stock },
     }, { requireBrand: cfg.requireBrand, tech: !!cfg.tech });
-    if (!pre) continue;
-    if (sizeAttr && p.type === "variable") {
+    if (it) pre.push({ it, p, sizeAttr, cats });
+  }
+  pre.sort((a, b) => b.it.score - a.it.score);
+  const items = [];
+  let stocked = 0;
+  for (const { it, p, sizeAttr, cats } of pre) {
+    if (sizeAttr && p.type === "variable" && stocked < MAX_STOCK) {
       try {
         const vs = await getJson(`${api}?type=variation&parent=${p.id}&per_page=100`);
+        stocked++;
+        if (stocked % 25 === 0) log(`${shop}: stock ${stocked}/${Math.min(MAX_STOCK, pre.length)}`);
         const stock = new Map();
         for (const v of vs) {
           // Store API variations carry attributes[] on most shops; Gant's come as "מידה: XL, צבע: Navy"
           let sz = (v.attributes || []).find((a) => SIZE_TAX.test(a.name) || sizeAttr.name === a.name)?.value;
           if (!sz && typeof v.variation === "string") {
-            const part = v.variation.split(",").map((x) => x.split(":").map((y) => y.trim())).find(([n]) => n === sizeAttr.name || SIZE_TAX.test(n));
+            const part = v.variation.split(",").map((x) => x.split(":").map((y) => y.trim())).find(([nm]) => nm === sizeAttr.name || SIZE_TAX.test(nm));
             sz = part && part[1];
           }
           if (sz) stock.set(sz, (stock.get(sz) ?? false) || !!v.is_in_stock);
         }
         if (stock.size) {
-          sizes = [...stock].map(([size, in_stock]) => ({ size, in_stock }));
-          const re = qualify({ ...pre, my_size: undefined, sizes, on_sale: pre.attrs.on_sale, categories: cats }, { requireBrand: cfg.requireBrand, tech: !!cfg.tech });
-          if (!re) continue;                                   // his size is sold out
-          items.push(re);
+          const sizes = [...stock].map(([size, in_stock]) => ({ size, in_stock }));
+          const re = qualify({ ...it, my_size: undefined, sizes, on_sale: it.attrs.on_sale, categories: cats }, { requireBrand: cfg.requireBrand, tech: !!cfg.tech });
+          if (re) items.push(re);                                // else: his size is sold out
           await sleep(150);
           continue;
         }
       } catch (e) { log(`${shop}: variations ${p.id} ${e.message}`); }
     }
-    items.push(pre);
+    items.push(it);
   }
   return { items, seen: raw.length };
 }
