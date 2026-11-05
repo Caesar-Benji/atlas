@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
   // 3. run bookkeeping
   const { data: run } = await sb.from("deal_runs").select("items_seen,items_kept").eq("id", run_id).single();
   const patch: Record<string, unknown> = {
-    items_seen: (run?.items_seen ?? 0) + (Number(body.seen) || rawItems.length),
+    items_seen: (run?.items_seen ?? 0) + (body.seen != null ? Number(body.seen) || 0 : rawItems.length),
     items_kept: (run?.items_kept ?? 0) + upserted,
   };
   const errMsg = str(body.error, 500);
