@@ -1,0 +1,10 @@
+{
+  "name": "atlas-deals-scraper",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build:browser": "node build-browser.js",
+    "dry": "node run.js"
+  }
+}
