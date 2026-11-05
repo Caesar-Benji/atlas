@@ -27,14 +27,14 @@ const SALE_LABEL = /sale|מבצע|black|friday|הנחה|deal|outlet|עודפים
 const parseJ = (s, d) => { if (s == null) return d; if (typeof s !== "string") return s; try { return JSON.parse(s); } catch { return d; } };
 
 async function kspItem(getJson, uin) {
-  for (const u of [`${KSP}/m_action/api/item/${uin}`, `${KSP}/m_action/api/item/${uin}?language=he`]) {
-    try {
-      const d = await getJson(u);
-      const r = d.result || d;
-      if (r && (r.data || r.images || r.img || r.name)) return r.data || r;
-    } catch { /* try the next form */ }
-  }
-  return null;
+  try {
+    const d = await getJson(`${KSP}/m_action/api/item/${uin}`);
+    const r = d.result || d;
+    if (!r || !r.data) return null;
+    const images = (r.images || []).map((i) => (i.sizes?.l || i.sizes?.b || i.sizes?.s || {}).src).filter(Boolean).map((u) => u.replace(/\?.*/, ""));
+    const spec = (r.specification?.items || []).slice(0, 40).map((x) => [String(x.head || "").trim(), String(x.body || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 300)]);
+    return { images, description: r.data.smalldesc || r.data.description || null, spec, eilatPrice: r.data.eilatPrice || null };
+  } catch { return null; }
 }
 
 async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, brandOf }, log = () => {}) {
@@ -57,7 +57,7 @@ async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, br
         if (!found.has(i.uin)) found.set(i.uin, { ...i, cat, match: m });
       }
       log(`ksp: ${cat} p${p} items ${its.length} kept ${found.size}`);
-      url = res.next ? (String(res.next).startsWith("http") ? res.next : `${KSP}${String(res.next).startsWith("/") ? "" : "/m_action/api/category/"}${res.next}`) : null;
+      url = res.next && Number(res.next) > p ? `${KSP}/m_action/api/category/${cat}?page=${res.next}` : null;   // next is the page number
       if (url) await sleep(500);
     }
   }
@@ -66,23 +66,22 @@ async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, br
   for (const i of found.values()) {
     const labels = parseJ(i.labels, []), red = parseJ(i.redMsg, []), tags = parseJ(i.tags, {});
     const on_sale = [...labels, ...red].some((l) => SALE_LABEL.test(`${l.type || ""} ${l.msg || ""}`));
-    let images = i.img ? [i.img] : [], description = i.description || null;
+    let images = i.img ? [i.img.replace(/\?.*/, "")] : [], description = i.description || null, spec = [];
     if (details < MAX_DETAILS) {
       const it = await kspItem(getJson, i.uin); details++; await sleep(400);
       if (it) {
-        const imgs = [];
-        const walk = (o, dp = 0) => { if (!o || typeof o !== "object" || dp > 6) return; for (const k in o) { const v = o[k]; if (typeof v === "string" && /^https?:\/\/ksp\.co\.il\/(shop\/items|images)\/.+\.(jpe?g|png|webp)/i.test(v)) imgs.push(v.replace(/\?.*/, "")); else if (typeof v === "object") walk(v, dp + 1); } };
-        walk(it);
-        if (imgs.length) images = [...new Set([...images, ...imgs])];
-        if (typeof it.description === "string" && it.description.length > (description || "").length) description = it.description;
+        if (it.images.length) images = it.images;
+        if (it.description && it.description.length > (description || "").length) description = it.description;
+        spec = it.spec;
       }
+      if (details % 25 === 0) log(`ksp: details ${details}/${found.size}`);
     }
     const price = Number(i.price), minp = Number(i.min_price) || null;
     const q = qualify({
       external_id: String(i.uin), url: `${KSP}/web/item/${i.uin}`, title: i.name, price: minp && minp < price ? minp : price, compare_price: null,
       brand: brandOf(i.brandName || "", i.name) || (i.brandName || "").toLowerCase() || null, brandRaw: i.brandName, kind: i.match.kind, category: i.match.category,
       images, description: stripHtml(description).slice(0, 2000), sizes: [], on_sale,
-      attrs: { labels, redMsg: red, tags, ksp_category: i.cat, eilat_price: i.eilatPrice || null, need: i.match.need },
+      attrs: { labels, redMsg: red, tags, spec, ksp_category: i.cat, eilat_price: i.eilatPrice || null, need: i.match.need },
     }, { requireDiscount: false, tech: true });
     if (q) items.push(q);
   }
