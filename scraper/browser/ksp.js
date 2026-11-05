@@ -231,7 +231,7 @@ const KSP_CATS = {
   "06613": "lamp",       // מנורות חכמות
 };
 const MAX_PAGES = 15;
-const MAX_DETAILS = 120;   // the item endpoint throttles: ~4 s each under load
+const MAX_DETAILS = 60;    // the item endpoint answers in 4–7 s under load; the best ones get the gallery
 const SALE_LABEL = /sale|מבצע|black|friday|הנחה|deal|outlet|עודפים/i;
 
 const parseJ = (s, d) => { if (s == null) return d; if (typeof s !== "string") return s; try { return JSON.parse(s); } catch { return d; } };
@@ -273,7 +273,9 @@ async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, br
   }
   const items = [];
   let details = 0;
-  for (const i of found.values()) {
+  // sale-labelled first, then by how much he wants the kind, so the slow gallery calls go to the right items
+  const ordered = [...found.values()].sort((a, b) => (SALE_LABEL.test(JSON.stringify(b.labels || "")) - SALE_LABEL.test(JSON.stringify(a.labels || ""))) || (b.match.need - a.match.need));
+  for (const i of ordered) {
     const labels = parseJ(i.labels, []), red = parseJ(i.redMsg, []), tags = parseJ(i.tags, {});
     const on_sale = [...labels, ...red].some((l) => SALE_LABEL.test(`${l.type || ""} ${l.msg || ""}`));
     let images = i.img ? [i.img.replace(/\?.*/, "")] : [], description = i.description || null, spec = [];
