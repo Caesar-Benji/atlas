@@ -21,7 +21,7 @@ const KSP_CATS = {
   "06613": "lamp",       // מנורות חכמות
 };
 const MAX_PAGES = 15;
-const MAX_DETAILS = 300;
+const MAX_DETAILS = 120;   // the item endpoint throttles: ~4 s each under load
 const SALE_LABEL = /sale|מבצע|black|friday|הנחה|deal|outlet|עודפים/i;
 
 const parseJ = (s, d) => { if (s == null) return d; if (typeof s !== "string") return s; try { return JSON.parse(s); } catch { return d; } };
@@ -68,7 +68,7 @@ async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, br
     const on_sale = [...labels, ...red].some((l) => SALE_LABEL.test(`${l.type || ""} ${l.msg || ""}`));
     let images = i.img ? [i.img.replace(/\?.*/, "")] : [], description = i.description || null, spec = [];
     if (details < MAX_DETAILS) {
-      const it = await kspItem(getJson, i.uin); details++; await sleep(400);
+      const it = await kspItem(getJson, i.uin); details++; await sleep(700);
       if (it) {
         if (it.images.length) images = it.images;
         if (it.description && it.description.length > (description || "").length) description = it.description;

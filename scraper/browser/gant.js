@@ -244,7 +244,9 @@ async function wooFetchDeals(shop, { getJson, sleep, stripHtml, qualify, brandOf
   }
 
   const items = [];
+  let n = 0;
   for (const p of raw) {
+    if (++n % 100 === 0) log(`${shop}: checked ${n}/${raw.length}, kept ${items.length}`);
     const { price, compare, currency } = wooPrice(p);
     if (!price) continue;
     const cats = (p.categories || []).map((c) => c.name);
