@@ -29,25 +29,24 @@ function parseListing(html) {
   return out;
 }
 
-function parseProduct(html, pid) {
-  const images = [...new Set((html.match(/https:\/\/assets\.adidas\.com\/images\/[^"' \\)]+/g) || [])
-    .filter((u) => u.includes(pid)).map((u) => u.replace(/w_\d+/, "w_600").replace(/\\\//g, "/")))];
-  const sizes = [];
-  const sizeBlock = (html.match(/"attributeId":"size"[\s\S]{0,20000}?\]\s*\}/) || [html])[0];
-  for (const m of sizeBlock.matchAll(/"displayValue":"([^"]+)"[^{}]*?"selectable":(true|false)/g)) sizes.push({ size: m[1], in_stock: m[2] === "true" });
-  if (!sizes.length) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    for (const b of doc.querySelectorAll("[data-attr='size'] [data-attr-value], .size-item, .attribute-size button, [class*='size'] [role='radio']")) {
-      const size = (b.getAttribute("data-attr-value") || b.textContent || "").trim();
-      if (size) sizes.push({ size, in_stock: !/unselectable|disabled|out-of-stock|unavailable/i.test(b.className + " " + (b.getAttribute("aria-disabled") || "")) });
-    }
-  }
-  const desc = (html.match(/"description":"((?:[^"\\]|\\.){40,2000})"/) || html.match(/<div class="[^"]*description[^"]*"[^>]*>([\s\S]{40,3000}?)<\/div>/i) || [])[1];
-  const color = (html.match(/"colou?r(?:Description|Name)?":"([^"]{2,40})"/i) || [])[1];
-  return { images, sizes, description: desc ? desc.replace(/\\n/g, " ").replace(/\\"/g, '"') : null, color: color || null };
+// SFCC's Product-Variation JSON: sizes with `selectable`, the zoom/large gallery, both prices,
+// the description — no product-page HTML needed.
+const VARIATION = `${ADIDAS}/on/demandware.store/Sites-adidas-IL-Site/he_IL/Product-Variation?quantity=1&pid=`;
+async function productJson(getJson, pid) {
+  const d = await getJson(VARIATION + encodeURIComponent(pid));
+  const p = d.product || {};
+  const gallery = p.images?.zoom?.length ? p.images.zoom : (p.images?.large || []);
+  const images = [...new Set(gallery.map((i) => i.url).filter(Boolean))];
+  const sizeAttr = (p.variationAttributes || []).find((a) => a.attributeId === "size");
+  const sizes = (sizeAttr?.values || []).map((v) => ({ size: v.displayValue, in_stock: !!v.selectable }));
+  return {
+    images, sizes, description: p.longDescription || p.description || p.shortDescription || null,
+    price: p.price?.sales?.value ?? null, compare: p.price?.list?.value ?? null, salePct: p.salePercentage ?? null,
+    title: p.productName || null, available: p.available,
+  };
 }
 
-async function adidasFetchDeals({ getText, sleep, stripHtml, qualify, kindOf }, log = () => {}) {
+async function adidasFetchDeals({ getText, getJson, sleep, stripHtml, qualify, kindOf }, log = () => {}) {
   const found = new Map();
   let seen = 0;
   for (const path of OUTLETS) {
@@ -68,22 +67,25 @@ async function adidasFetchDeals({ getText, sleep, stripHtml, qualify, kindOf }, 
   let details = 0;
   for (const t of found.values()) {
     if (!(t.compare > t.price) && !t.off) continue;
-    const { kind, category } = kindOf(t.title, t.line || "");
-    let d = { images: t.img ? [t.img.replace(/w_\d+/, "w_600")] : [], sizes: [], description: null, color: null };
+    const { kind, category } = kindOf(t.title, t.line || "", t.href);
+    let d = { images: t.img ? [t.img.replace(/w_\d+/, "w_600")] : [], sizes: [], description: null, price: null, compare: null, title: null };
     if (details < MAX_DETAILS) {
-      try { d = parseProduct(await getText(t.href.startsWith("http") ? t.href : ADIDAS + t.href), t.pid); details++; await sleep(500); }
-      catch (e) { log(`adidas: detail ${t.pid} ${e.message.slice(0, 40)}`); }
+      try { d = await productJson(getJson, t.pid); details++; await sleep(350); }
+      catch (e) { log(`adidas: variation ${t.pid} ${e.message.slice(0, 40)}`); }
       if (!d.images.length && t.img) d.images = [t.img.replace(/w_\d+/, "w_600")];
+      if (details % 25 === 0) log(`adidas: details ${details}/${found.size}`);
     }
+    const price = d.price || t.price, compare = d.compare || t.compare || (t.off ? Math.round(price / (1 - t.off / 100) * 100) / 100 : null);
+    if (d.available === false) continue;
     const it = qualify({
-      external_id: t.pid, url: t.href.startsWith("http") ? t.href : ADIDAS + t.href, title: t.title, price: t.price,
-      compare_price: t.compare || (t.off ? Math.round(t.price / (1 - t.off / 100) * 100) / 100 : null), brand: "adidas", kind, category,
-      images: d.images, description: d.description ? stripHtml(d.description).slice(0, 2000) : null, color: d.color, sizes: d.sizes,
-      attrs: { off: t.off, line: t.line },
+      external_id: t.pid, url: t.href.startsWith("http") ? t.href : ADIDAS + t.href, title: d.title || t.title, price,
+      compare_price: compare > price ? compare : null, brand: "adidas", kind, category,
+      images: d.images, description: d.description ? stripHtml(d.description).slice(0, 2000) : null, color: null, sizes: d.sizes,
+      attrs: { off: d.salePct ?? t.off, line: t.line },
     });
     if (it) items.push(it);
   }
   return { items, seen };
 }
 
-export { adidasFetchDeals, parseListing as adidasParseListing, parseProduct as adidasParseProduct };
+export { adidasFetchDeals, parseListing as adidasParseListing, productJson as adidasProductJson };
