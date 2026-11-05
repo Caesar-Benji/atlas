@@ -3,8 +3,8 @@
 // Nike's payload shapes move around, so everything is found by walking for known keys.
 
 const NIKE = "https://www.nike.com";
-const WALL = "https://api.nike.com/discover/product_wall/v1/marketplace/IL/language/en-GB/consumerChannelId/d9a5bc42-4b9c-4976-858a-f159cf99c647";
-const WALL_PATHS = ["/il/w/mens-sale-3yaepznik1", "/il/w/mens-sale-shoes-3yaepzy7ok", "/il/w/mens-sale-clothing-3yaepz6ymx6"];
+const API = "https://api.nike.com";
+const WALL_PATH = "/il/w/mens-sale-3yaepznik1";   // all men's sale (shoes + clothing + accessories)
 const MAX_DETAILS = 300;
 
 function walk(o, fn, depth = 0) {
@@ -54,22 +54,27 @@ function detail(html) {
 async function nikeFetchDeals({ getJson, getText, sleep, stripHtml, qualify, kindOf }, log = () => {}) {
   const found = new Map();
   let seen = 0;
-  for (const path of WALL_PATHS) {
-    let anchor = 0, total = Infinity;
-    while (anchor < total && anchor < 1200) {
-      let d;
-      try { d = await getJson(`${WALL}?path=${encodeURIComponent(path)}&queryType=PRODUCTS&anchor=${anchor}&count=60`, { "nike-api-caller-id": "nike:dotcom:browse:wall.client", Accept: "application/json" }); }
-      catch (e) { log(`nike: wall ${path} @${anchor} ${e.message.slice(0, 40)}`); break; }
-      const ps = wallProducts(d);
-      total = d.pages?.totalResources ?? d.pages?.totalPages * 60 ?? (ps.length ? anchor + 60 + (d.pages?.next ? 60 : 0) : 0);
-      if (!ps.length) break;
-      seen += ps.length;
-      for (const p of ps) if (p.price && !found.has(p.id)) found.set(p.id, p);
-      log(`nike: ${path} @${anchor} +${ps.length} (${found.size})`);
-      anchor += 60;
-      if (!d.pages?.next) break;
-      await sleep(400);
-    }
+  // page 1 is in the wall page's __NEXT_DATA__, and so is the exact `next` API link (it carries
+  // attributeIds the API insists on); we just follow it until it runs out
+  const html = await getText(`${NIKE}${WALL_PATH}`);
+  const m = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) throw new Error("nike: no __NEXT_DATA__ on the wall page");
+  const wall = JSON.parse(m[1]).props?.pageProps?.initialState?.Wall;
+  let ps = wallProducts(wall?.productGroupings || []);
+  let next = wall?.pageData?.next || null;
+  const total = wall?.pageData?.totalResources;
+  for (let guard = 0; guard < 60; guard++) {
+    seen += ps.length;
+    for (const p of ps) if (p.price && !found.has(p.id)) found.set(p.id, p);
+    log(`nike: +${ps.length} (${found.size}/${total ?? "?"})${next ? "" : " — end"}`);
+    if (!next) break;
+    await sleep(400);
+    let d;
+    try { d = await getJson(`${API}${next}`, { "nike-api-caller-id": "nike:dotcom:browse:wall.client" }); }
+    catch (e) { log(`nike: next ${e.message.slice(0, 60)}`); break; }
+    ps = wallProducts(d.productGroupings || d);
+    next = d.pages?.next || null;
+    if (!ps.length) break;
   }
   const items = [];
   let details = 0;

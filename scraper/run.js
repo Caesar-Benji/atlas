@@ -37,7 +37,10 @@ if (result) {
   writeFileSync(`out/${shop}.json`, JSON.stringify(result, null, 1));
   const top = result.items.slice().sort((a, b) => b.score - a.score).slice(0, 5)
     .map((i) => `  ${i.score}  ${i.title.slice(0, 50)}  ${i.price}${i.compare_price ? ` (was ${i.compare_price})` : ""}  ${i.my_size === true ? "size ok" : i.my_size === null ? "size ?" : ""}`);
+  const cnt = (f) => Object.entries(result.items.reduce((a, i) => (a[f(i)] = (a[f(i)] || 0) + 1, a), {})).map(([k, v]) => `${k}:${v}`).join(" ");
   log(`${shop}: seen ${result.seen}, kept ${result.items.length}, ${((Date.now() - t0) / 1000).toFixed(0)}s\n${top.join("\n")}`);
+  log(`${shop}: kinds ${cnt((i) => i.kind)} | my_size ${cnt((i) => String(i.my_size))} | images/item ${(result.items.reduce((a, i) => a + i.images.length, 0) / Math.max(1, result.items.length)).toFixed(1)} | with sizes ${result.items.filter((i) => i.sizes.length).length} | with description ${result.items.filter((i) => i.description).length}`);
+  for (const i of result.items.slice(0, 2)) log(`${shop}: sample ${JSON.stringify({ ...i, description: (i.description || "").slice(0, 80), images: i.images.slice(0, 3), sizes: i.sizes.slice(0, 8) })}`);
 }
 if (dry) process.exit(failure ? 1 : 0);
 

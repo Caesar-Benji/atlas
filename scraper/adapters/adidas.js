@@ -51,7 +51,7 @@ async function adidasFetchDeals({ getText, sleep, stripHtml, qualify, kindOf }, 
   const found = new Map();
   let seen = 0;
   for (const path of OUTLETS) {
-    for (let start = 0; start < 1500; start += PAGE) {
+    for (let start = 0; start < (globalThis.__DEALS_MAX_PAGES ? globalThis.__DEALS_MAX_PAGES * PAGE : 1500); start += PAGE) {
       let html;
       try { html = await getText(`${ADIDAS}${path}?start=${start}&sz=${PAGE}`); } catch (e) { log(`adidas: ${path} @${start} ${e.message.slice(0, 40)}`); break; }
       const tiles = parseListing(html);

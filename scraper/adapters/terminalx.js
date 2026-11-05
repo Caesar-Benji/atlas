@@ -3,9 +3,9 @@
 // then open each kept product page once for its gallery and sizes.
 
 const TX = "https://www.terminalx.com";
-const TX_BRANDS = ["gant", "tommy-hilfiger", "lacoste", "carhartt-wip", "levis", "dickies", "fred-perry", "superdry", "timberland",
-  "polo-ralph-lauren", "ralph-lauren", "hugo-boss", "boss", "barbour", "dockers", "massimo-dutti", "nike", "adidas", "adidas-originals"];
-const MAX_PAGES = 12;        // per brand
+// slugs as listed on /brands (checked 2026-11-05); Boss, Barbour, Dockers, Massimo Dutti are not sold there
+const TX_BRANDS = ["gant", "tommy-hilfiger", "lacoste", "carhartt-wip", "levis", "dickies", "fred-perry", "superdry", "timberland", "ralph-lauren", "nike", "adidas-all"];
+const MAX_PAGES = 25;        // per brand, 24 tiles a page
 const MAX_DETAILS = 450;     // product pages per run
 
 const numOf = (s) => { const m = String(s ?? "").replace(/,/g, "").match(/\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; };
@@ -67,7 +67,7 @@ async function txFetchDeals({ getText, sleep, stripHtml, qualify, brandOf, kindO
         found.set(sku, { ...t, sku, slug }); kept++;
       }
       log(`terminalx: ${slug} p${p} tiles ${tiles.length} kept ${kept}`);
-      if (tiles.length < 40) break;
+      if (tiles.length < 24 || !kept && p > 3) break;
       await sleep(400);
     }
   }

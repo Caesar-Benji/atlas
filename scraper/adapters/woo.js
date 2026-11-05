@@ -5,7 +5,7 @@
 const WOO = {
   redback:  { base: "https://redback.co.il",          brand: "redback",  query: "",                requireBrand: false },
   outline:  { base: "https://www.outline.co.il",      brand: null,       query: "&category=59",    requireBrand: true },   // 59 = CARHARTT MEN
-  benda:    { base: "https://www.bendastore.co.il",   brand: null,       query: "",                requireBrand: true },
+  benda:    { base: "https://www.bendastore.co.il",   brand: null,       query: "",                requireBrand: false, tech: true },  // electronics/home outlet
   gant:     { base: "https://www.gant.co.il",         brand: "gant",     query: "&category=2254",  requireBrand: false },  // Shopping IL | men
 };
 
@@ -20,7 +20,7 @@ async function wooFetchDeals(shop, { getJson, sleep, stripHtml, qualify, brandOf
   const cfg = WOO[shop];
   const api = `${cfg.base}/wp-json/wc/store/v1/products`;
   const raw = [];
-  for (let page = 1; page <= 40; page++) {
+  for (let page = 1; page <= (globalThis.__DEALS_MAX_PAGES || 40); page++) {
     const r = await fetch(`${api}?on_sale=true&per_page=100&page=${page}${cfg.query}`, { headers: { Accept: "application/json" } });
     if (r.status === 400) break;                                 // past the last page
     if (!r.ok) throw new Error(`${r.status} on page ${page}`);
@@ -52,19 +52,24 @@ async function wooFetchDeals(shop, { getJson, sleep, stripHtml, qualify, brandOf
       brand: cfg.brand || brandOf(title, brandRaw), brandRaw, categories: cats, kind, category,
       images: (p.images || []).map((i) => i.src), description: stripHtml(p.short_description || p.description).slice(0, 2000),
       color, sizes, attrs: { ...attrs, sku: p.sku, in_stock: p.is_in_stock },
-    }, { requireBrand: cfg.requireBrand });
+    }, { requireBrand: cfg.requireBrand, tech: !!cfg.tech });
     if (!pre) continue;
     if (sizeAttr && p.type === "variable") {
       try {
         const vs = await getJson(`${api}?type=variation&parent=${p.id}&per_page=100`);
         const stock = new Map();
         for (const v of vs) {
-          const sz = (v.attributes || []).find((a) => SIZE_TAX.test(a.name) || sizeAttr.name === a.name)?.value;
+          // Store API variations carry attributes[] on most shops; Gant's come as "מידה: XL, צבע: Navy"
+          let sz = (v.attributes || []).find((a) => SIZE_TAX.test(a.name) || sizeAttr.name === a.name)?.value;
+          if (!sz && typeof v.variation === "string") {
+            const part = v.variation.split(",").map((x) => x.split(":").map((y) => y.trim())).find(([n]) => n === sizeAttr.name || SIZE_TAX.test(n));
+            sz = part && part[1];
+          }
           if (sz) stock.set(sz, (stock.get(sz) ?? false) || !!v.is_in_stock);
         }
         if (stock.size) {
           sizes = [...stock].map(([size, in_stock]) => ({ size, in_stock }));
-          const re = qualify({ ...pre, my_size: undefined, sizes, on_sale: pre.attrs.on_sale, categories: cats }, { requireBrand: cfg.requireBrand });
+          const re = qualify({ ...pre, my_size: undefined, sizes, on_sale: pre.attrs.on_sale, categories: cats }, { requireBrand: cfg.requireBrand, tech: !!cfg.tech });
           if (!re) continue;                                   // his size is sold out
           items.push(re);
           await sleep(150);

@@ -42,7 +42,7 @@ async function kspFetchDeals({ getJson, sleep, stripHtml, qualify, techMatch, br
   let seen = 0;
   for (const [cat, want] of Object.entries(KSP_CATS)) {
     let url = `${KSP}/m_action/api/category/${cat}`;
-    for (let p = 1; p <= MAX_PAGES && url; p++) {
+    for (let p = 1; p <= (globalThis.__DEALS_MAX_PAGES || MAX_PAGES) && url; p++) {
       let d;
       try { d = await getJson(url); } catch (e) { log(`ksp: ${cat} p${p} ${e.message.slice(0, 40)}`); break; }
       const res = d.result || {};
