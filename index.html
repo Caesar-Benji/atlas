@@ -959,6 +959,48 @@ main.wide{max-width:1500px}
 .wd-pick{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;color:inherit;text-decoration:none;transition:border-color var(--t-hover) ease}
 @media(hover:hover) and (pointer:fine){ .wd-pick:hover{border-color:var(--accent)} }
 .wd-pick img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--surface2);border-bottom:1px solid var(--border)}
+/* ---- Deals (v74) ---- */
+.dl-bar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+.dl-bar .seg{min-width:0;max-width:100%}.dl-sort{flex:none}.dl-shops{margin-bottom:14px;max-width:100%}.seg i{font-style:normal;opacity:.6;font-weight:500}
+.dl-grid{grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr));gap:12px}
+.dl-card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color var(--t-hover) ease}
+@media(hover:hover) and (pointer:fine){ .dl-card:hover{border-color:var(--accent)} }
+.dl-card.wished{border-color:var(--accent2)}
+.dl-img{position:relative;display:block;width:100%;padding:0;border:0;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer}
+.dl-img img{display:block;width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--surface2)}
+.dl-tags{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.dl-off{position:absolute;right:8px;top:8px;background:var(--accent);color:var(--on-ink);font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;letter-spacing:.01em}
+.dl-b{display:flex;flex-direction:column;gap:4px;padding:10px 11px 9px;min-width:0}
+.dl-b .m{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dl-b b{font-size:13.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
+.dl-b .r{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:2px}
+.dl-b .r .p{font-size:16px;font-weight:700;letter-spacing:-.01em}.dl-b .r s{color:var(--muted);font-size:12.5px}
+.dl-b .f{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:4px;min-height:26px}
+.dl-acts{display:flex;gap:2px;margin-right:-4px}.dl-acts .icon-btn{padding:4px}.dl-acts .icon-btn.on{color:var(--red)}.dl-acts .icon-btn.on svg{fill:currentColor}
+.dl-more{display:flex;justify-content:center;margin:18px 0 6px}
+.dl-thumb{width:44px;height:55px;object-fit:cover;border-radius:7px;background:var(--surface2);flex:none}
+.dl-spark{color:var(--accent2);flex:none}
+.lrow .dl-spark{margin:0 6px}
+.dl-dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--border)}.dl-dot.ok{background:var(--green)}.dl-dot.bad{background:var(--red)}.dl-dot.run{background:var(--amber)}
+.mstat .v .dim,.dim{color:var(--muted);font-weight:500}
+.dl-sheet .sheet{max-width:720px}
+.dl-gal{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:0 -17px;padding:0 17px;-webkit-overflow-scrolling:touch}
+.dl-gal::-webkit-scrollbar{display:none}
+.dl-gal img{flex:none;width:min(78%,360px);aspect-ratio:4/5;object-fit:cover;border-radius:12px;background:var(--surface2);scroll-snap-align:center;border:1px solid var(--border)}
+.dl-gal-n{font-size:11.5px;color:var(--muted);margin:6px 0 2px;text-align:right}
+.dl-price{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:12px 0 14px}
+.dl-price .p{font-size:24px;font-weight:700;letter-spacing:-.02em}.dl-price s{color:var(--muted)}
+.dl-sheet .lbl{margin:12px 0 6px}
+.dl-sizes{display:flex;flex-wrap:wrap;gap:6px}
+.dl-size{border:1px solid var(--border);border-radius:8px;padding:5px 9px;font-size:12.5px;font-weight:600;min-width:36px;text-align:center}
+.dl-size.out{color:var(--muted);text-decoration:line-through;opacity:.6}
+.dl-size.mine{border-color:var(--accent);background:var(--surface2)}
+.dl-size.mine.out{border-color:var(--border);background:transparent}
+.dl-desc{font-size:13.5px;line-height:1.5;color:var(--text);margin:0;white-space:pre-line}
+.dl-spec{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px}.dl-spec span:first-child{color:var(--muted)}
+.dl-hist{color:var(--accent2)}.dl-hist-l{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--text);margin-top:6px}.dl-hist-l i{font-style:normal;color:var(--muted);margin-right:5px}
+@media(max-width:760px){ .dl-grid{grid-template-columns:repeat(2,1fr);gap:9px} .dl-b{padding:8px 9px 8px} .dl-b b{font-size:12.5px} .dl-b .r .p{font-size:15px} .dl-gal img{width:82%} .dl-bar{flex-direction:column;align-items:stretch} }
+
 .wd-pick-b{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px;min-width:0}
 .wd-pick-b .m{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wd-pick-b b{font-size:14px;font-weight:600;line-height:1.25}
@@ -1102,6 +1144,7 @@ main.wide{max-width:1500px}
              onerror="this.remove()">
       </div>
       <div class="hub-col right">
+        <button class="tile" data-tab="deals" style="--tx:0.6691;--ty:-0.7431"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20.6 13.4L13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none"/></svg></span><b>Deals</b></button>
         <button class="tile" data-tab="house" style="--tx:0.9135;--ty:-0.4067"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><b>House</b></button>
         <button class="tile" data-tab="goals" style="--tx:0.9945;--ty:0.1045"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><b>Goals</b></button>
         <button class="tile" data-tab="chores" style="--tx:0.809;--ty:0.5878"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><b>Chores</b></button>
@@ -1109,7 +1152,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v73</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v74</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1125,6 +1168,7 @@ main.wide{max-width:1500px}
         <button class="tab" data-tab="goals"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg></span><span class="tl">Goals</span></button>
         <button class="tab" data-tab="chores"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l4-1 12-12-3-3L4 17l-1 4zM14 4l3 3M12 21h9"/></svg></span><span class="tl">Chores</span></button>
         <button class="tab" data-tab="house"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="1.5"/><path d="M3 12h6M13 3v6M13 13v8M13 13h8"/></svg></span><span class="tl">House</span></button>
+        <button class="tab" data-tab="deals"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M20.6 13.4L13.4 20.6a2 2 0 01-2.8 0L3 13V3h10l7.6 7.6a2 2 0 010 2.8z"/><circle cx="7.5" cy="7.5" r="1.3" fill="currentColor" stroke="none"/></svg></span><span class="tl">Deals</span></button>
         <button class="tab" data-tab="wardrobe"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8.5 3.5L12 5l3.5-1.5L20 6l-1.6 3.6L16 9v11H8V9l-2.4.6L4 6z"/></svg></span><span class="tl">Wardrobe</span></button>
       </nav>
       <button class="icon-btn" id="signOutBtn" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
@@ -1208,7 +1252,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v73');
+console.log('Atlas v74');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -1960,6 +2004,7 @@ const draftPending = () => !!gymDraft && !gymDraft.id && !gymDraft.started;
 function draftLoad(){ try{ const d = JSON.parse(localStorage.getItem(GYM_KEY) || 'null'); return (d && Array.isArray(d.items)) ? d : null; }catch(e){ return null; } }
 function draftSave(){ try{ gymDraft ? localStorage.setItem(GYM_KEY, JSON.stringify(gymDraft)) : localStorage.removeItem(GYM_KEY); }catch(e){} }
 const ICO = {
+  heart:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5l-1.4-1.3C5.6 14.7 2.5 11.9 2.5 8.4 2.5 5.6 4.7 3.5 7.5 3.5c1.6 0 3.2.8 4.5 2.1 1.3-1.3 2.9-2.1 4.5-2.1 2.8 0 5 2.1 5 4.9 0 3.5-3.1 6.3-8.1 10.8z"/></svg>',
   x:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   chevL:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
   chevR:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>',
@@ -7089,6 +7134,230 @@ function wdDollTap(e){
     const px = (e.clientX - r.left) / r.width * c.width, py = (e.clientY - r.top) / r.height * c.height;
     const a = c.getContext('2d').getImageData(g.classList.contains('mirror') ? c.width - 1 - px : px, py, 1, 1).data[3];
     if(a > 30) return wdDetail(g.dataset.item); }
+}
+
+/* ================= DEALS (v74) =================
+   What the daily gatherers found on sale, ranked for Benji. Products and their daily prices
+   land in deal_products / deal_prices through the deals-ingest Edge Function (GitHub Actions
+   for six shops, a scheduled task in his Chrome for Gant, adidas and KSP); the app reads the
+   deal_today view (one row per active product with today's price, yesterday's, the lowest ever
+   and his flag) and writes only deal_flags (heart = watch, cross = hide for good).
+   Screens: Today (ranked cards, filters) · Watchlist (hearts + hidden) · History (price lines). */
+const DL_SHOPS = {gant: 'Gant', adidas: 'adidas', ksp: 'KSP', outline: 'Outline', redback: 'Redback', benda: 'Benda', terminalx: 'Terminal X', nike: 'Nike', mous: 'Mous'};
+const DL_CATS = [['all', 'All'], ['clothes', 'Clothes'], ['shoes', 'Shoes'], ['hats', 'Hats'], ['bags', 'Bags'], ['watches', 'Watches'], ['audio', 'Audio'], ['desk', 'Desk'], ['apple', 'Apple'], ['lights', 'Lights']];
+const DL_SORTS = [['score', 'Best'], ['discount', 'Biggest cut'], ['price', 'Cheapest'], ['new', 'Newest']];
+const dlMoney = (v, cur) => cur && cur !== 'ILS' ? `${cur === 'USD' ? '$' : cur + ' '}${(+v).toLocaleString('en-US', {maximumFractionDigits: 2})}` : wdNis(v);
+const dlRunner = s => ['gant', 'adidas', 'ksp'].includes(s) ? 'mac' : 'github';
+/* a deal shows on Today when the shop marks it down, or our own history does */
+const dlIsDeal = x => (x.discount_pct || 0) > 0 || x.on_sale || (x.prev_price != null && +x.price < +x.prev_price);
+const dlDrop = x => x.prev_price != null && +x.price < +x.prev_price;
+const dlLowest = x => x.days_seen > 1 && x.lowest_price != null && +x.price <= +x.lowest_price;
+const dlNew = x => x.days_seen <= 1 || x.first_seen === x.seen_on;
+
+views.deals = async function(){
+  const seq = renderStart();
+  document.getElementById('main').innerHTML = `
+    <div class="mast">
+      <div class="mast-txt"><h2>Deals</h2><div class="mast-sub" id="dlSub">Loading…</div>
+        <div class="mast-acts"><button class="btn-ghost" type="button" onclick="dlRunsSheet()">Last runs</button></div></div>
+      <img class="mast-art" src="hero-deals.png" alt="" onerror="this.remove()">
+    </div>
+    ${subnav('deals', [['today', 'Today'], ['watch', 'Watchlist'], ['history', 'History']])}
+    ${pane('deals', 'today', `
+      <div class="lead" id="dlLead"></div>
+      <div class="dl-bar"><div class="seg" id="dlCats"></div><div class="seg dl-sort" id="dlSorts"></div></div>
+      <div class="seg dl-shops" id="dlShops"></div>
+      <div class="grid dl-grid" id="dlGrid"><div class="empty">Loading…</div></div>
+      <div class="dl-more" id="dlMore"></div>`)}
+    ${pane('deals', 'watch', `
+      <div class="sec"><div class="sec-h"><h3>Watching</h3><span class="n" id="dlWatchN"></span></div><div class="grid dl-grid" id="dlWatch"></div></div>
+      <div class="sec"><div class="sec-h"><h3>Hidden</h3><span class="n" id="dlHiddenN"></span></div><div class="ledger" id="dlHidden"></div></div>`)}
+    ${pane('deals', 'history', `
+      <div class="sec"><div class="sec-h"><h3>Price history</h3><span class="n">every product the gatherers have seen more than once</span></div>
+        <div class="ledger" id="dlHist"><div class="empty">Loading…</div></div></div>`)}`;
+  paneInit('deals');
+  const [rows, runs] = await Promise.all([
+    fetchAll(() => sb.from('deal_today').select('*').order('score', {ascending: false})),
+    sb.from('deal_runs').select('*').order('started_at', {ascending: false}).limit(60)]);
+  if(stale(seq)) return;
+  if(rows.error) return dlMissing(rows.error);
+  window._dl = rows.data || []; window._dlRuns = runs.error ? [] : (runs.data || []);
+  window._dlF = window._dlF || {cat: 'all', sort: 'score', shop: 'all', fit: false, show: 48};
+  dlRender();
+  dlHistory();
+};
+function dlMissing(e){
+  const msg = (e && e.message) || '';
+  if(!/deal_today|deal_products|schema cache|does not exist/i.test(msg)) return err(e);
+  const g = document.getElementById('dlGrid'); if(g) g.innerHTML = `<div class="empty">The deals tables aren't in Supabase yet — run supabase/deals.sql.</div>`;
+  const sub = document.getElementById('dlSub'); if(sub) sub.textContent = 'Not set up yet';
+}
+
+/* ---- Today ---- */
+function dlVisible(){
+  const f = window._dlF, all = window._dl || [];
+  let xs = all.filter(x => x.flag !== 'hidden' && dlIsDeal(x));
+  if(f.cat !== 'all') xs = xs.filter(x => x.category === f.cat);
+  if(f.shop !== 'all') xs = xs.filter(x => x.shop === f.shop);
+  if(f.fit) xs = xs.filter(x => x.my_size === true);
+  const disc = x => x.discount_pct || (dlDrop(x) ? Math.round((1 - x.price / x.prev_price) * 100) : 0);
+  const sorters = {score: (a, b) => b.score - a.score, discount: (a, b) => disc(b) - disc(a), price: (a, b) => a.price - b.price,
+    new: (a, b) => (b.first_seen > a.first_seen ? 1 : b.first_seen < a.first_seen ? -1 : b.score - a.score)};
+  return xs.sort(sorters[f.sort] || sorters.score);
+}
+function dlRender(){
+  const all = window._dl || [], f = window._dlF;
+  const deals = all.filter(x => x.flag !== 'hidden' && dlIsDeal(x));
+  const fresh = deals.filter(dlNew).length, drops = deals.filter(dlDrop).length, fit = deals.filter(x => x.my_size === true).length;
+  const runs = window._dlRuns || [], last = runs[0];
+  const lastBy = {}; runs.forEach(r => { if(!lastBy[r.shop]) lastBy[r.shop] = r; });
+  const failed = Object.values(lastBy).filter(r => r.status === 'error').length, stale = Object.values(lastBy).filter(r => (Date.now() - new Date(r.started_at)) > 36 * 3600e3).length;
+  const sub = document.getElementById('dlSub');
+  if(sub) sub.textContent = last ? `${deals.length} on sale across ${Object.keys(lastBy).length} shops · gathered ${fmtAgo(last.started_at)}` : 'Nothing gathered yet — the first run fills this in';
+  const lead = document.getElementById('dlLead');
+  if(lead) lead.innerHTML = `
+    <div class="mstat"><div class="lbl">On sale now</div><div class="v">${deals.length}</div><div class="s">${fresh ? `${fresh} new today` : 'nothing new today'} · ${fit} in your size</div></div>
+    <div class="mstat"><div class="lbl">Price drops</div><div class="v">${drops}</div><div class="s">${deals.filter(dlLowest).length} at their lowest</div></div>
+    <div class="mstat"><div class="lbl">Shops</div><div class="v">${Object.keys(lastBy).length - failed - stale}<span class="dim">/${Object.keys(DL_SHOPS).length}</span></div>
+      <div class="s ${failed || stale ? 'warn' : ''}">${failed ? `${failed} failed` : ''}${failed && stale ? ' · ' : ''}${stale ? `${stale} stale` : ''}${!failed && !stale ? 'all fresh' : ''}</div></div>`;
+  const cats = document.getElementById('dlCats');
+  if(cats) cats.innerHTML = DL_CATS.filter(([k]) => k === 'all' || deals.some(x => x.category === k)).map(([k, l]) => `<button type="button" class="${f.cat === k ? 'on' : ''}" onclick="dlSet('cat','${k}')">${l}</button>`).join('')
+    + `<button type="button" class="${f.fit ? 'on' : ''}" onclick="dlSet('fit',${!f.fit})">My size</button>`;
+  const sorts = document.getElementById('dlSorts');
+  if(sorts) sorts.innerHTML = DL_SORTS.map(([k, l]) => `<button type="button" class="${f.sort === k ? 'on' : ''}" onclick="dlSet('sort','${k}')">${l}</button>`).join('');
+  const shops = document.getElementById('dlShops');
+  if(shops) shops.innerHTML = [['all', 'All shops'], ...Object.entries(DL_SHOPS).filter(([k]) => deals.some(x => x.shop === k))].map(([k, l]) => `<button type="button" class="${f.shop === k ? 'on' : ''}" onclick="dlSet('shop','${k}')">${l}${k === 'all' ? '' : ` <i>${deals.filter(x => x.shop === k).length}</i>`}</button>`).join('');
+  const xs = dlVisible(), grid = document.getElementById('dlGrid'), more = document.getElementById('dlMore');
+  if(grid) grid.innerHTML = xs.length ? xs.slice(0, f.show).map(dlCard).join('') : `<div class="empty">${all.length ? 'Nothing matches these filters.' : 'Nothing gathered yet. The runners post here every morning at seven.'}</div>`;
+  if(more) more.innerHTML = xs.length > f.show ? `<button class="btn-ghost" type="button" onclick="window._dlF.show+=48;dlRender()">Show more · ${xs.length - f.show} left</button>` : '';
+  dlWatch();
+}
+function dlSet(k, v){ window._dlF[k] = v; window._dlF.show = 48; dlRender(); }
+function fmtAgo(ts){
+  const m = Math.round((Date.now() - new Date(ts)) / 60000);
+  if(m < 2) return 'just now'; if(m < 60) return `${m} min ago`; const h = Math.round(m / 60); if(h < 36) return `${h} h ago`;
+  return fmtDate(String(ts).slice(0, 10));
+}
+function dlSizeBadge(x){
+  if(x.my_size === true){ const s = (x.sizes || []).filter(z => z.in_stock !== false).map(z => z.size); const mine = s.find(z => /^(XL|L|XXL|2XL|34|45|W34)/i.test(String(z))) || s[0]; return `<span class="pill green">${esc(mine || 'your size')} in stock</span>`; }
+  if(x.my_size === false) return `<span class="pill red">not your size</span>`;
+  if((x.sizes || []).length) return `<span class="pill grey">size unconfirmed</span>`;
+  return '';
+}
+function dlCard(x){
+  const disc = x.discount_pct || (dlDrop(x) ? Math.round((1 - x.price / x.prev_price) * 100) : 0);
+  const was = x.compare_price || (dlDrop(x) ? x.prev_price : null);
+  return `<div class="dl-card${x.flag === 'wish' ? ' wished' : ''}" data-id="${x.id}">
+    <button class="dl-img" type="button" onclick="dlDetail(${x.id})" aria-label="${esc_(x.title)}">
+      <img src="${esc(x.image_url || '')}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+      <span class="dl-tags">${dlNew(x) ? '<span class="pill grey">New</span>' : ''}${dlDrop(x) ? '<span class="pill amber">Drop</span>' : ''}${dlLowest(x) ? '<span class="pill green">Lowest</span>' : ''}</span>
+      ${disc ? `<span class="dl-off">−${disc}%</span>` : ''}</button>
+    <div class="dl-b">
+      <div class="m">${esc(x.brand ? x.brand.replace(/\b\w/g, c => c.toUpperCase()) : (x.kind || ''))} · ${DL_SHOPS[x.shop] || x.shop}${x.color ? ` · ${esc(x.color)}` : ''}</div>
+      <b onclick="dlDetail(${x.id})">${esc(x.title)}</b>
+      <div class="r"><span class="p">${dlMoney(x.price, x.currency)}</span>${was ? `<s>${dlMoney(was, x.currency)}</s>` : ''}${x.attrs && x.attrs.vat_flag ? '<span class="pill amber">+VAT</span>' : ''}</div>
+      <div class="f">${dlSizeBadge(x)}<span class="dl-acts">
+        <button class="icon-btn${x.flag === 'wish' ? ' on' : ''}" type="button" title="${x.flag === 'wish' ? 'Stop watching' : 'Watch'}" aria-label="Watch" onclick="dlFlag(${x.id},'wish')">${ICO.heart}</button>
+        <button class="icon-btn" type="button" title="Hide" aria-label="Hide" onclick="dlFlag(${x.id},'hidden')">${ICO.x}</button></span></div>
+    </div></div>`;
+}
+
+/* ---- flags: one row per product; tapping the same flag again clears it ---- */
+async function dlFlag(id, flag){
+  const x = (window._dl || []).find(r => r.id === id); if(!x) return;
+  const clear = x.flag === flag;
+  const {data: {user}} = await sb.auth.getUser();
+  let q;
+  if(clear) q = await sb.from('deal_flags').delete().eq('product_id', id);
+  else q = await sb.from('deal_flags').upsert({user_id: user.id, product_id: id, flag, price_at: x.price}, {onConflict: 'user_id,product_id'});
+  if(q.error) return err(q.error);
+  x.flag = clear ? null : flag; x.flag_price = clear ? null : x.price;
+  toast(clear ? (flag === 'wish' ? 'No longer watching' : 'Shown again') : (flag === 'wish' ? 'Watching' : 'Hidden'));
+  dlRender();
+  const d = document.getElementById('dlDetailFoot'); if(d) d.innerHTML = dlDetailFoot(x);
+}
+
+/* ---- Watchlist + Hidden ---- */
+function dlWatch(){
+  const all = window._dl || [];
+  const w = all.filter(x => x.flag === 'wish').sort((a, b) => b.score - a.score), h = all.filter(x => x.flag === 'hidden');
+  const wn = document.getElementById('dlWatchN'), hn = document.getElementById('dlHiddenN'), wg = document.getElementById('dlWatch'), hg = document.getElementById('dlHidden');
+  if(wn) wn.textContent = w.length ? `${w.length} · ${w.filter(x => x.flag_price != null && +x.price < +x.flag_price).length} cheaper than when you hearted them` : '';
+  if(wg) wg.innerHTML = w.length ? w.map(x => dlCard(x).replace('<div class="r">', `<div class="r">${x.flag_price != null && +x.price !== +x.flag_price ? `<span class="pill ${+x.price < +x.flag_price ? 'green' : 'red'}">${+x.price < +x.flag_price ? '−' : '+'}${dlMoney(Math.abs(x.price - x.flag_price), x.currency)} since</span>` : ''}`)).join('') : '<div class="empty">Heart a deal on Today to follow its price here.</div>';
+  if(hn) hn.textContent = h.length ? `${h.length}` : '';
+  if(hg) hg.innerHTML = h.length ? h.map(x => `<button class="lrow" type="button" onclick="dlFlag(${x.id},'hidden')">
+      <img class="dl-thumb" src="${esc(x.image_url || '')}" alt="" loading="lazy"><div class="t"><div class="l">${esc(x.title)}</div><div class="s">${DL_SHOPS[x.shop] || x.shop} · ${dlMoney(x.price, x.currency)}</div></div>
+      <span class="r"><span class="pill grey">Show again</span></span></button>`).join('') : '<div class="empty">Nothing hidden.</div>';
+}
+
+/* ---- History: price lines for everything seen more than once ---- */
+async function dlHistory(){
+  const el = document.getElementById('dlHist'); if(!el) return;
+  const seq = _renderSeq;
+  const all = (window._dl || []).filter(x => x.days_seen > 1 && x.flag !== 'hidden');
+  const xs = all.sort((a, b) => (dlDrop(b) - dlDrop(a)) || (b.days_seen - a.days_seen)).slice(0, 80);
+  if(!xs.length){ el.innerHTML = '<div class="empty">History starts tomorrow — every product needs two days of prices to draw a line.</div>'; return; }
+  const {data, error} = await sb.from('deal_prices').select('product_id,seen_on,price').in('product_id', xs.map(x => x.id)).order('seen_on');
+  if(stale(seq) || !document.getElementById('dlHist')) return;
+  if(error) return err(error);
+  const by = {}; (data || []).forEach(p => (by[p.product_id] = by[p.product_id] || []).push(p));
+  window._dlPrices = by;
+  el.innerHTML = xs.map(x => { const ps = by[x.id] || [], first = ps[0] ? +ps[0].price : +x.price, delta = +x.price - first;
+    return `<button class="lrow" type="button" onclick="dlDetail(${x.id})">
+      <img class="dl-thumb" src="${esc(x.image_url || '')}" alt="" loading="lazy">
+      <div class="t"><div class="l">${esc(x.title)}</div><div class="s">${DL_SHOPS[x.shop] || x.shop} · ${ps.length} days · lowest ${dlMoney(x.lowest_price, x.currency)}</div></div>
+      ${dlSpark(ps.map(p => +p.price))}
+      <span class="r"><b>${dlMoney(x.price, x.currency)}</b>${delta ? `<span class="pill ${delta < 0 ? 'green' : 'red'}">${delta < 0 ? '−' : '+'}${Math.round(Math.abs(delta) / first * 100)}%</span>` : ''}</span></button>`; }).join('');
+}
+function dlSpark(vals, w = 72, h = 26){
+  if(vals.length < 2) return `<span class="dl-spark"></span>`;
+  const lo = Math.min(...vals), hi = Math.max(...vals), sp = hi - lo || 1;
+  const pts = vals.map((v, i) => `${(i / (vals.length - 1) * (w - 4) + 2).toFixed(1)},${(h - 3 - (v - lo) / sp * (h - 6)).toFixed(1)}`);
+  return `<svg class="dl-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><polyline points="${pts.join(' ')}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${pts[pts.length - 1].split(',')[0]}" cy="${pts[pts.length - 1].split(',')[1]}" r="2.2" fill="currentColor"/></svg>`;
+}
+
+/* ---- one product: every photo, every size, the shop's words, its price line ---- */
+function dlDetailFoot(x){
+  return `<span class="n"><button class="linkish" type="button" onclick="dlFlag(${x.id},'hidden')">${x.flag === 'hidden' ? 'Show again' : 'Hide for good'}</button></span>
+    <button class="btn-ghost" type="button" onclick="dlFlag(${x.id},'wish')">${x.flag === 'wish' ? 'Stop watching' : 'Watch price'}</button>
+    <a class="btn" href="${esc(x.url)}" target="_blank" rel="noopener">Open at ${DL_SHOPS[x.shop] || x.shop}</a>`;
+}
+async function dlDetail(id){
+  const x = (window._dl || []).find(r => r.id === id); if(!x) return;
+  const imgs = (x.images && x.images.length ? x.images : [x.image_url]).filter(Boolean);
+  const was = x.compare_price || (dlDrop(x) ? x.prev_price : null);
+  const disc = x.discount_pct || (dlDrop(x) ? Math.round((1 - x.price / x.prev_price) * 100) : 0);
+  const sizes = (x.sizes || []);
+  const mine = z => /^(XL|L|XXL|2XL|34|45|W34|50)(\b|\/)/i.test(String(z.size)) || /^EU ?45|^UK ?10\.5|^US ?11/i.test(String(z.size));
+  const spec = x.attrs && Array.isArray(x.attrs.spec) ? x.attrs.spec.filter(([h, b]) => h && b && !/ברקוד|אחריות/.test(h)).slice(0, 8) : [];
+  openSheet({title: esc(x.title), sub: `${esc(x.brand || '')}${x.brand ? ' · ' : ''}${DL_SHOPS[x.shop] || x.shop}${x.color ? ' · ' + esc(x.color) : ''} · seen ${x.days_seen} day${x.days_seen === 1 ? '' : 's'}`, cls: 'dl-sheet',
+    body: `
+      <div class="dl-gal" id="dlGal">${imgs.map((u, i) => `<img src="${esc(u)}" alt="" loading="${i ? 'lazy' : 'eager'}" onerror="this.remove()">`).join('')}</div>
+      ${imgs.length > 1 ? `<div class="dl-gal-n">${imgs.length} photos · swipe</div>` : ''}
+      <div class="dl-price"><span class="p">${dlMoney(x.price, x.currency)}</span>${was ? `<s>${dlMoney(was, x.currency)}</s>` : ''}${disc ? `<span class="pill red">−${disc}%</span>` : ''}
+        ${dlNew(x) ? '<span class="pill grey">New</span>' : ''}${dlDrop(x) ? '<span class="pill amber">Dropped</span>' : ''}${dlLowest(x) ? '<span class="pill green">Lowest seen</span>' : ''}
+        ${x.attrs && x.attrs.vat_flag ? '<span class="pill amber">over $75 — VAT applies</span>' : ''}</div>
+      ${sizes.length ? `<div class="lbl">Sizes</div><div class="dl-sizes">${sizes.map(z => `<span class="dl-size${z.in_stock === false ? ' out' : ''}${mine(z) ? ' mine' : ''}" title="${z.in_stock === false ? 'Sold out' : z.in_stock ? 'In stock' : 'Stock unknown'}">${esc(z.size)}</span>`).join('')}</div>` : ''}
+      ${x.description ? `<div class="lbl">From the shop</div><p class="dl-desc">${esc(x.description)}</p>` : ''}
+      ${spec.length ? `<div class="lbl">Details</div><div class="dl-spec">${spec.map(([h, b]) => `<div><span>${esc(h)}</span><span>${esc(b)}</span></div>`).join('')}</div>` : ''}
+      <div class="lbl">Price</div><div class="dl-hist" id="dlHistBox">${x.days_seen > 1 ? 'Loading…' : `First seen today at ${dlMoney(x.price, x.currency)}.`}</div>`,
+    foot: `<div class="dl-foot" id="dlDetailFoot" style="display:contents">${dlDetailFoot(x)}</div>`});
+  if(x.days_seen > 1){
+    let ps = (window._dlPrices || {})[x.id];
+    if(!ps){ const {data} = await sb.from('deal_prices').select('seen_on,price,compare_price').eq('product_id', x.id).order('seen_on'); ps = data || []; }
+    const box = document.getElementById('dlHistBox'); if(!box) return;
+    box.innerHTML = `${dlSpark(ps.map(p => +p.price), 260, 56)}<div class="dl-hist-l">${ps.map(p => `<span><i>${fmtDate(p.seen_on)}</i>${dlMoney(p.price, x.currency)}</span>`).join('')}</div>`;
+  }
+}
+
+/* ---- the runs: which shop reported when, and whether it worked ---- */
+function dlRunsSheet(){
+  const runs = window._dlRuns || [], lastBy = {}; runs.forEach(r => { if(!lastBy[r.shop]) lastBy[r.shop] = r; });
+  const rows = Object.entries(DL_SHOPS).map(([k, l]) => { const r = lastBy[k];
+    return `<div class="lrow static"><span class="dl-dot ${!r ? 'none' : r.status === 'ok' ? 'ok' : r.status === 'error' ? 'bad' : 'run'}"></span>
+      <div class="t"><div class="l">${l} <span class="dim">· ${dlRunner(k) === 'mac' ? 'from your Mac' : 'GitHub'}</span></div>
+        <div class="s">${!r ? 'never run' : r.status === 'running' ? `running since ${fmtAgo(r.started_at)}` : `${fmtAgo(r.started_at)} · ${r.items_kept} kept of ${r.items_seen} seen${r.error ? ' · ' + esc(r.error.slice(0, 80)) : ''}`}</div></div></div>`; }).join('');
+  openSheet({title: 'Last runs', sub: 'GitHub Actions gathers six shops at 07:00; Gant, adidas and KSP block datacenter traffic, so a scheduled task in your Chrome does those.', body: `<div class="ledger">${rows}</div>`});
 }
 
 /* ================= INTRO: Atlas holds the line (plays on a cold load, before the login) =================

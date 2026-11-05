@@ -42,7 +42,8 @@ function detail(html, code) {
   const images = new Set();
   walk(way.contentImages || [], (o) => { for (const k of ["url", "portraitURL", "squarishURL"]) if (typeof o[k] === "string" && /static\.nike\.com\/a\/images\//.test(o[k])) images.add(o[k].replace(/\/t_[A-Za-z0-9_]+\//, "/t_PDP_1280_v1/")); });
   // status ACTIVE means listed, not necessarily in stock (stock is a separate call) → null; anything else → out
-  const sizes = way.sizes.map((x) => ({ size: String(x.localizedLabel || x.label), in_stock: x.status === "ACTIVE" ? null : false }));
+  // status ACTIVE only means listed; stock comes from available_gtins (fetched by the caller) — keep the gtins for that
+  const sizes = way.sizes.map((x) => ({ size: String(x.localizedLabel || x.label), in_stock: x.status === "ACTIVE" ? null : false, gtins: (x.gtins || []).map((g) => g.gtin) }));
   const pi = way.productInfo || {};
   const description = [pi.productDescription, ...(pi.featuresAndBenefits || [])].filter((x) => typeof x === "string").join(" ");
   return { images: [...images], sizes, description: description || null, price: money(way.prices?.currentPrice), compare: money(way.prices?.initialPrice) };
@@ -81,7 +82,19 @@ async function nikeFetchDeals({ getJson, getText, sleep, stripHtml, qualify, kin
     const { kind, category } = kindOf(title);
     let dt = { images: p.images, sizes: [], description: null };
     if (details < MAX_DETAILS) {
-      try { const d = detail(await getText(p.url), p.id); details++; dt = { images: d.images.length ? d.images : p.images, sizes: d.sizes, description: d.description }; await sleep(300); if (details % 50 === 0) log(`nike: details ${details}`); }
+      try {
+        const d = detail(await getText(p.url), p.id); details++;
+        // which of those sizes can actually ship: the public available_gtins feed
+        if (d.sizes.some((z) => z.gtins.length)) {
+          try {
+            const av = await getJson(`${API}/deliver/available_gtins/v3?filter=styleColor(${encodeURIComponent(p.id)})&filter=merchGroup(XP)`);
+            const ok = new Set((av.objects || []).filter((o) => o.available).map((o) => o.gtin));
+            for (const z of d.sizes) if (z.in_stock !== false) z.in_stock = z.gtins.some((g) => ok.has(g));
+          } catch (e) { log(`nike: stock ${p.id} ${e.message.slice(0, 40)}`); }
+        }
+        dt = { images: d.images.length ? d.images : p.images, sizes: d.sizes.map(({ size, in_stock }) => ({ size, in_stock })), description: d.description };
+        await sleep(300); if (details % 50 === 0) log(`nike: details ${details}`);
+      }
       catch (e) { log(`nike: detail ${p.id} ${e.message.slice(0, 40)}`); }
     }
     const it = qualify({

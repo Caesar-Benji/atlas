@@ -219,6 +219,27 @@
     };
   })();
 
+  /* ---------- deals (v74): the deal_today view, its prices and runs, scaled per fixture ---------- */
+  (function(){
+    const SHOPS = ['gant','adidas','ksp','outline','redback','terminalx','nike','mous'];
+    const CAT = [['polo','clothes','Gant'],['shirt','clothes','Tommy Hilfiger'],['knit','clothes','Lacoste'],['jacket','clothes','Carhartt'],['pants','clothes','Levi\'s'],['sneakers','shoes','adidas'],['shoes','shoes','Timberland'],['hat','hats','Fred Perry'],['backpack','bags','Mous'],['soundbar','audio','JBL'],['dock','desk','CalDigit'],['keyboard','desk','Keychron'],['apple','apple','Apple'],['lamp','lights','BenQ'],['watch','watches','Seiko']];
+    const IMG = i => `https://picsum.photos/seed/deal${i}/480/600`;
+    const mk = (n, long) => Array.from({length: n}, (_, i) => { const [kind, category, brand] = CAT[i % CAT.length], shop = SHOPS[i % SHOPS.length];
+      const compare = 200 + (i * 37) % 900, price = Math.round(compare * (0.4 + (i % 6) * 0.1) * 100) / 100, days = 1 + (i % 5);
+      const title = long && i % 4 === 0 ? 'Extremely long product name that goes on and on and on about the heritage of the brand and the fabric and the fit and never seems to end at all '.repeat(2) + i : `${brand} ${kind} ${i + 1}`;
+      return {id: 1000 + i, shop, external_id: 'fx-' + i, url: 'https://example.com/p/' + i, title, brand: brand.toLowerCase(), category, kind, gender: 'men',
+        image_url: long && i % 7 === 0 ? '' : IMG(i), images: long && i % 7 === 0 ? [] : [IMG(i), IMG(i + 100), IMG(i + 200)], description: i % 3 ? 'Soft cotton piqué with a classic collar. Regular fit. Machine wash cold.' : null,
+        color: ['Navy', 'Cream', 'Olive', null][i % 4], sizes: category === 'clothes' ? [{size: 'M', in_stock: true}, {size: 'L', in_stock: i % 3 > 0}, {size: 'XL', in_stock: i % 2 === 0}, {size: 'XXL', in_stock: null}] : category === 'shoes' ? [{size: '44', in_stock: true}, {size: '45', in_stock: i % 2 === 0}] : [],
+        my_size: category === 'clothes' || category === 'shoes' ? (i % 2 === 0 ? true : i % 5 === 0 ? false : null) : null, attrs: {on_sale: true, vat_flag: shop === 'mous' && price > 75}, currency: shop === 'mous' ? 'USD' : 'ILS',
+        score: Math.round((95 - i * 1.7 % 70) * 10) / 10, first_seen: D(-(days - 1)), last_seen: D(0), active: true,
+        price, compare_price: i % 5 === 4 ? null : compare, discount_pct: i % 5 === 4 ? null : Math.round((1 - price / compare) * 100), seen_on: D(0),
+        prev_price: days > 1 ? (i % 3 === 0 ? price + 40 : price) : null, lowest_price: days > 1 && i % 3 === 0 ? price : price + (days > 1 ? 10 : 0), days_seen: days,
+        flag: i % 9 === 1 ? 'wish' : i % 13 === 2 ? 'hidden' : null, flag_price: i % 9 === 1 ? price + 25 : null, on_sale: true}; });
+    const prices = rows => rows.flatMap(r => Array.from({length: r.days_seen}, (_, d) => ({product_id: r.id, seen_on: D(-(r.days_seen - 1 - d)), price: d === r.days_seen - 1 ? r.price : r.price + 40 - d * 8, compare_price: r.compare_price})));
+    const runs = () => SHOPS.map((shop, i) => ({id: i + 1, shop, runner: ['gant','adidas','ksp'].includes(shop) ? 'mac' : 'github', started_at: T(0, '07:0' + i), finished_at: T(0, '07:1' + i), status: i === 5 ? 'error' : 'ok', items_seen: 120 + i * 30, items_kept: 20 + i * 5, error: i === 5 ? 'Request failed with status 403' : null}));
+    const add = (d, n, long) => { d.deal_today = mk(n, long); d.deal_prices = prices(d.deal_today); d.deal_runs = n ? runs() : []; d.deal_flags = []; };
+    add(DATA.demo, 36); add(DATA.worst, 24, true); add(DATA.huge, 400); add(DATA.one, 1); add(DATA.empty, 0);
+  })();
   const db = DATA[mode];
   if(!db){ console.warn('[fixtures] unknown fixture "' + mode + '"'); return; }
   // a session-draft from a previous fixture would leak into this one
