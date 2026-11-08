@@ -35,11 +35,16 @@
   --ease-in-out:cubic-bezier(.77,0,.175,1);    /* things that move on screen */
   --ease-drawer:cubic-bezier(.32,.72,0,1);     /* the bottom sheet */
   --t-press:160ms; --t-hover:150ms; --t-pop:200ms; --t-sheet:250ms; --t-drawer:400ms;
+  /* springs sampled into linear(): --spring = critically damped, 0.4 s response (moves, fills);
+     --spring-b = damping 0.8, 0.35 s (things that land: the rest screen, pills) */
+  --spring:linear(0,0.05,0.158,0.286,0.413,0.527,0.626,0.707,0.774,0.826,0.868,0.9,0.925,0.943,0.958,0.969,0.977,0.983,0.987,0.991,0.993,0.995,0.996,0.997,1);
+  --spring-b:linear(0,0.031,0.108,0.211,0.324,0.436,0.543,0.639,0.722,0.793,0.851,0.897,0.933,0.961,0.981,0.995,1.005,1.011,1.014,1.015,1.015,1.014,1.013,1.011,1.009,1.008,1.006,1.005,1.004,1.003,1);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;font-size:15px;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
-button{font-family:inherit;cursor:pointer}
+button{font-family:inherit;cursor:pointer;touch-action:manipulation}
+html{-webkit-tap-highlight-color:transparent}
 input,select,textarea{font-family:inherit;font-size:14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 12px;outline:none;width:100%}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 ::placeholder{color:#a5a29b}
@@ -621,49 +626,181 @@ svg.exi{color:var(--accent);display:block;overflow:visible}
   .wheel-row.on{font-size:18px}
 }
 
-/* ---------- live workout: a full-screen room of its own while a session runs ----------
-   The gym page stays underneath (z 50 < the picker sheet's 60, so Add exercise opens on top). */
-.live{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;animation:liveIn 320ms var(--ease-out) both;transition:opacity var(--t-sheet) var(--ease-out),transform var(--t-sheet) var(--ease-out)}
+/* ---------- live workout (v75): an app screen of its own while a session runs ----------
+   One exercise fills the screen — a horizontal pager, one page per exercise, swiped like any phone app —
+   the one action sits in the thumb zone, and the rest between sets takes the whole screen over in ink.
+   The gym page stays underneath (z 50 < sheets at 60, so the picker and the plan sheet open on top). */
+.live{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;overscroll-behavior:contain;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;animation:liveIn 420ms var(--spring) both;transition:opacity var(--t-sheet) var(--ease-out),transform var(--t-sheet) var(--ease-out)}
 .live.closing{opacity:0;transform:translateY(14px);pointer-events:none}
-@keyframes liveIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.live-head{display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--surface);border-bottom:1px solid var(--border);flex:none}
-.live-head .ttl{flex:1;min-width:0;text-align:center}
-.live-head .ttl b{display:block;font-size:13px;font-weight:700;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.live-head .ttl span{display:block;font-size:11px;color:var(--muted);margin-top:1px}
-.live-head .btn{padding:8px 15px;font-size:13px}
-.live-head .icon-btn{width:38px;height:38px}
-.live-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 16px calc(28px + env(safe-area-inset-bottom))}
-.live-col{max-width:640px;margin:0 auto}
-.live-clock{text-align:center;padding:6px 0 14px}
-.live-clock .t{font-size:60px;font-weight:700;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;color:var(--text)}
-.live-clock .t small{font-size:30px;font-weight:600;color:var(--muted);letter-spacing:-.03em}
-.live-clock .sub{font-size:12.5px;color:var(--muted);margin-top:7px}
-/* rest: the one thing you glance at between sets, so it gets the biggest surface after the clock */
-.live-rest{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);transition:border-color var(--t-hover) ease}
-.live-rest.run{border-color:var(--accent)}
-.live-rest.ding{animation:restDing .5s ease 3}
-.live-rest .ring{width:56px;height:56px;position:relative;flex:none}
-.live-rest .ring svg{width:56px;height:56px;transform:rotate(-90deg)}
-.live-rest .ring .bg{stroke:var(--border)}
-.live-rest .ring .fg{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset .5s linear}
-.live-rest .ring .ic{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent)}
-.live-rest .ring .ic svg{width:18px;height:18px;transform:none}
-.live-rest .mid{min-width:0}
-.live-rest .lbl{margin-bottom:0}
-.live-rest .t{font-size:28px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
-.live-rest .hint{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.live-rest .acts{display:flex;gap:6px;flex:none}
-.live-rest .acts .btn-ghost{padding:8px 11px;font-size:12.5px;font-variant-numeric:tabular-nums}
-.live-rest .acts .btn{padding:8px 14px;font-size:13px}
-.live-sec{display:flex;align-items:baseline;gap:10px;margin:0 0 9px}
-.live-sec h3{margin:0;flex:1}
-.live-sec span{font-size:12px;color:var(--muted)}
-/* exercise cards in the live room: the targets line expands into the wheels, the set dots are always there */
-.live .ex-card{padding:12px}
-.live .ex-card.up{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.live .ex-card.done{opacity:.72}
-.live .ex-card.done .ex-ico{background:var(--accent);border-color:var(--accent)}
-.live .ex-card.done .ex-ico svg{color:var(--on-ink)}
+@keyframes liveIn{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+.lv-head{display:flex;align-items:center;gap:4px;padding:calc(6px + env(safe-area-inset-top)) 10px 2px;flex:none;position:relative;z-index:2}
+.lv-head .icon-btn{width:44px;height:44px;align-items:center;justify-content:center;border-radius:12px;color:var(--text);flex:none}
+.lv-head .icon-btn svg{width:21px;height:21px}
+.lv-head .btn{padding:10px 16px;font-size:13.5px;border-radius:12px;flex:none;margin-left:2px}
+.lv-ttl{flex:1;min-width:0;text-align:center;line-height:1.2}
+.lv-ttl b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lv-sub{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;font-variant-numeric:tabular-nums;min-height:20px}
+.lv-sub small{font:inherit;color:inherit}
+.lv-sub.resting #liveStats{display:none}
+.lv-pill{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--accent);color:var(--on-ink);border-radius:99px;padding:3px 10px 3px 8px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;animation:pillIn 380ms var(--spring-b) both}
+.lv-pill[hidden]{display:none}
+.lv-pill b{font-weight:700}
+.lv-pill i{width:6px;height:6px;border-radius:50%;background:var(--on-ink);animation:inkPulse 1.2s ease-in-out infinite}
+@keyframes pillIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+@keyframes inkPulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* progress: one segment per exercise, filled by its share of sets; the tall button is the hit area, the bar stays thin */
+.lv-prog{display:flex;gap:4px;padding:0 16px;flex:none;max-width:560px;width:100%;margin:0 auto}
+.lv-prog button{flex:1;min-width:0;height:22px;padding:9px 0;border:none;background:none;display:block}
+.lv-prog i{display:block;height:4px;border-radius:2px;background:var(--border);overflow:hidden;position:relative;transition:background-color var(--t-hover) ease}
+.lv-prog i::after{content:'';position:absolute;inset:0;background:var(--accent);transform-origin:left center;transform:scaleX(var(--f,0));transition:transform 520ms var(--spring)}
+.lv-prog button.cur i{background:#c3bfb7}
+/* the pager */
+.lv-stage{flex:1;min-height:0;position:relative;display:flex}
+.lv-track{flex:1;min-width:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.lv-track::-webkit-scrollbar{display:none}
+.ls{flex:0 0 100%;min-width:0;scroll-snap-align:center;scroll-snap-stop:always;overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:none;display:flex}
+.ls::-webkit-scrollbar{display:none}
+.ls-in{margin:auto;width:100%;max-width:520px;padding:4px 20px 14px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.ls-top{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.ls-top .dot{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.6}
+.ls-done{display:none;align-items:center;gap:4px;color:var(--green)}
+.ls-done svg{width:10px;height:10px}
+.ls.fin .ls-done{display:inline-flex}
+.ls-fig{width:clamp(112px,19vh,168px);height:clamp(112px,19vh,168px);border-radius:clamp(30px,5vh,44px);background:var(--surface);border:1px solid var(--border);box-shadow:0 1px 2px rgba(26,26,24,.05),0 14px 34px -18px rgba(26,26,24,.3);display:flex;align-items:center;justify-content:center;margin:14px 0 16px;color:var(--accent);transition:background-color 320ms var(--ease-out),border-color 320ms var(--ease-out)}
+.ls-fig .exi{width:72%;height:72%}
+.ls.fin .ls-fig{background:var(--accent);border-color:var(--accent)}
+.ls.fin .ls-fig .exi{color:var(--on-ink)}
+.ls-name{font-size:28px;font-weight:700;letter-spacing:-.028em;line-height:1.08;margin:0;text-wrap:balance;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.ls-last{font-size:13px;color:var(--muted);margin-top:7px}
+.live .ls-wheels{width:100%;max-width:400px;margin:18px auto 0;grid-template-columns:1.7fr 1fr 1fr;gap:8px}
+.live .ls-wheels.cardio{grid-template-columns:1fr 1.5fr;max-width:320px}
+.ls-wheels .wheel{border-radius:14px;padding-top:7px}
+.ls-sets{margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.set-dots.lg{flex:none;justify-content:center;gap:10px;max-width:100%}
+.set-dots.lg button{width:46px;height:46px;font-size:15px;border-width:2px}
+.set-dots.lg button svg{width:17px;height:17px}
+.ls-sets-n{font-size:13px;color:var(--muted)}
+.ls-sets-n b{color:var(--text);font-weight:700}
+.ls-empty .ls-fig{opacity:.5}
+.lv-nav{display:none}
+@media(hover:hover) and (pointer:fine) and (min-width:760px){
+  .lv-nav{display:flex;position:absolute;top:50%;margin-top:-23px;z-index:2;width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text);align-items:center;justify-content:center;box-shadow:var(--shadow);transition:opacity var(--t-hover) ease,border-color var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
+  .lv-nav:hover{border-color:var(--accent)}
+  .lv-nav:active{transform:scale(.92)}
+  .lv-nav svg{width:20px;height:20px}
+  .lv-nav.prev{left:max(16px,calc(50% - 420px))}
+  .lv-nav.next{right:max(16px,calc(50% - 420px))}
+  .lv-nav:disabled{opacity:0;pointer-events:none}
+}
+/* the thumb zone: what comes next, the plan, the one big action */
+.lv-bar{flex:none;padding:8px 16px calc(14px + env(safe-area-inset-bottom));position:relative;z-index:2;background:linear-gradient(to bottom,rgba(243,242,239,0),var(--bg) 12px)}
+.lv-barin{max-width:520px;margin:0 auto}
+.lv-next{display:flex;align-items:center;gap:8px;width:100%;min-width:0;border:none;background:none;padding:0 4px 10px;font-size:13px;color:var(--muted);text-align:left;min-height:32px}
+.lv-next .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;flex:none}
+.lv-next .exi{width:22px;height:22px;flex:none}
+.lv-next b{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lv-next .m{white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}
+.lv-acts{display:flex;gap:10px;align-items:stretch}
+.lv-sq{flex:none;width:58px;height:58px;border-radius:17px;border:1px solid var(--border);background:var(--surface);color:var(--text);display:flex;align-items:center;justify-content:center;padding:0;font-size:16px;font-weight:700;transition:transform var(--t-press) var(--ease-out),border-color var(--t-hover) ease}
+.lv-sq svg{width:22px;height:22px}
+.lv-sq:active{transform:scale(.93)}
+.lv-cta{flex:1;min-width:0;height:58px;border-radius:17px;font-size:17px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 12px 26px -14px rgba(26,26,24,.6);white-space:nowrap}
+.lv-cta svg{width:19px;height:19px;flex:none}
+/* rest: the whole room goes to ink, the countdown is the screen */
+.lrv{position:absolute;inset:0;z-index:5;background:radial-gradient(130% 85% at 50% 32%,#373530 0%,#1c1b19 72%);color:var(--on-ink);display:flex;flex-direction:column;touch-action:none;opacity:0;visibility:hidden;transform:translateY(32px) scale(.985);transition:opacity 220ms var(--ease-out),transform 260ms var(--ease-out),visibility 0s linear 260ms}
+.lrv.on{opacity:1;visibility:visible;transform:none;transition:opacity 240ms var(--ease-out),transform 560ms var(--spring-b),visibility 0s}
+.lrv svg.exi{color:var(--on-ink)}
+.lrv-in{flex:1;width:100%;max-width:520px;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:14px;padding:calc(8px + env(safe-area-inset-top)) 20px calc(18px + env(safe-area-inset-bottom))}
+.lrv-top{width:100%;display:flex;align-items:center;gap:10px;min-height:44px}
+.lrv-top .icon-btn{width:44px;height:44px;align-items:center;justify-content:center;border-radius:12px;color:rgba(250,249,247,.78);flex:none}
+.lrv-top .icon-btn svg{width:21px;height:21px}
+.lrv-k{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(250,249,247,.6);width:44px;flex:none}
+.lrv-what{flex:1;min-width:0;text-align:center;font-size:13px;color:rgba(250,249,247,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrv-ring{position:relative;width:min(78vw,340px,44vh);aspect-ratio:1;flex:none}
+.lrv-ring svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible;display:block}
+.lrv-ring .bg{stroke:rgba(250,249,247,.12)}
+.lrv-ring .fg{stroke:var(--on-ink);stroke-linecap:round}
+.lrv-t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.lrv-t b{font-size:clamp(66px,23vw,100px);font-weight:700;letter-spacing:-.055em;line-height:1;font-variant-numeric:tabular-nums}
+.lrv-t span{font-size:13px;color:rgba(250,249,247,.55);margin-top:10px;font-variant-numeric:tabular-nums;max-width:80%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrv.last .lrv-t b{animation:lrvBeat 1s var(--ease-out) infinite}
+@keyframes lrvBeat{0%{transform:scale(1.07)}60%,100%{transform:scale(1)}}
+.lrv-ctl{display:flex;align-items:center;justify-content:center;gap:14px;width:100%}
+.lrv-b{width:66px;height:66px;flex:none;border-radius:50%;border:1.5px solid rgba(250,249,247,.22);background:rgba(250,249,247,.06);color:var(--on-ink);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums;padding:0;transition:transform var(--t-press) var(--ease-out),background-color var(--t-hover) ease}
+.lrv-b:active{transform:scale(.92);background:rgba(250,249,247,.16)}
+.lrv-skip{height:66px;padding:0 30px;border-radius:33px;border:none;background:var(--on-ink);color:var(--accent);font-size:16.5px;font-weight:700;white-space:nowrap;transition:transform var(--t-press) var(--ease-out)}
+.lrv-skip:active{transform:scale(.96)}
+.lrv-next{width:100%;display:flex;align-items:center;gap:12px;border:1px solid rgba(250,249,247,.14);background:rgba(250,249,247,.06);border-radius:20px;padding:12px 14px;color:var(--on-ink);text-align:left;transition:transform var(--t-press) var(--ease-out),background-color var(--t-hover) ease}
+.lrv-next:active{transform:scale(.98);background:rgba(250,249,247,.1)}
+.lrv-next .fig{width:54px;height:54px;border-radius:15px;background:rgba(250,249,247,.08);display:flex;align-items:center;justify-content:center;flex:none}
+.lrv-next .fig .exi{width:42px;height:42px}
+.lrv-next .tx{flex:1;min-width:0}
+.lrv-next small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(250,249,247,.55);font-weight:700}
+.lrv-next b{display:block;font-size:16px;font-weight:700;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrv-next .tx span{display:block;font-size:13px;color:rgba(250,249,247,.7);margin-top:1px;font-variant-numeric:tabular-nums}
+.lrv-next .adj{display:flex;align-items:center;gap:2px;font-size:12.5px;font-weight:600;color:rgba(250,249,247,.65);flex:none}
+.lrv-next .adj svg{width:14px;height:14px}
+.lrv-go{font-size:22px;font-weight:700;letter-spacing:-.02em;text-align:center}
+.lrv-badge{width:96px;height:96px;border-radius:50%;background:var(--on-ink);color:var(--accent);display:flex;align-items:center;justify-content:center;animation:pillIn 520ms var(--spring-b) both}
+.lrv-badge svg{width:44px;height:44px}
+.lrv-sum{width:100%;display:flex;flex-direction:column;align-items:center}
+.lrv-sum .lrv-badge{margin-bottom:22px}
+.lrv-done h2{font-size:30px;font-weight:700;letter-spacing:-.03em;margin:0 0 18px;text-align:center}
+.lrv-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:400px}
+.lrv-stats div{border:1px solid rgba(250,249,247,.14);background:rgba(250,249,247,.06);border-radius:16px;padding:12px 8px;text-align:center}
+.lrv-stats b{display:block;font-size:22px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.lrv-stats span{font-size:10.5px;color:rgba(250,249,247,.6);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.lrv-dacts{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
+.lrv-dacts .lrv-skip{width:100%;max-width:400px}
+.lrv-link{border:none;background:none;color:rgba(250,249,247,.7);font-size:14px;font-weight:600;padding:12px 18px}
+/* the plan sheet: every exercise of the session, reorder / remove / jump */
+.lp-row{display:flex;align-items:center;gap:2px;padding:7px 0;border-bottom:1px solid var(--border)}
+.lp-row:last-child{border-bottom:none}
+.lp-main{flex:1;min-width:0;display:flex;align-items:center;gap:11px;background:none;border:none;padding:2px 0;text-align:left;color:inherit}
+.lp-main .fig{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex:none}
+.lp-main .fig .exi{width:33px;height:33px}
+.lp-row.fin .fig{background:var(--accent);border-color:var(--accent)}
+.lp-row.fin .fig .exi{color:var(--on-ink)}
+.lp-main .tx{flex:1;min-width:0}
+.lp-main b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-main .tx span{display:block;font-size:12px;color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
+.lp-row .icon-btn{width:38px;height:38px;align-items:center;justify-content:center;flex:none}
+.lp-row .icon-btn:disabled{opacity:.25;pointer-events:none}
+.lp-rest{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:14px;border-top:1px solid var(--border)}
+.lp-rest .grow{flex:1;min-width:0}
+.lp-rest .grow b{display:block;font-size:14px;font-weight:600}
+.lp-rest .grow span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.lp-rest .v{min-width:46px;text-align:center;font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.lp-rest .lv-sq{width:44px;height:44px;border-radius:13px}
+.lp-rest .lv-sq svg{width:18px;height:18px}
+.lp-sheet .sheet-foot .linkish{color:var(--red);font-weight:500;font-size:13px;white-space:nowrap}
+.lp-sheet .sheet-foot .btn{white-space:nowrap;min-width:0}
+/* the toast rises above the room (it sat under it before); it never takes a tap, so the hidden one can't block the buttons it floats over */
+#toast{pointer-events:none}
+body.live-on #toast{z-index:80;bottom:calc(150px + env(safe-area-inset-bottom))}
+@media(max-height:720px){
+  .ls-fig{margin:10px 0 12px}
+  .ls-name{font-size:24px}
+  .ls-wheels{margin-top:12px}.ls-sets{margin-top:12px}
+  .lrv-ring{width:min(70vw,300px,40vh)}
+}
+/* an SE in the browser leaves ~370px for the page: the counter goes (the progress bar already says it), everything tightens */
+@media(max-height:620px){
+  .ls-top{display:none}
+  .ls-fig{width:84px;height:84px;border-radius:24px;margin:4px 0 8px}
+  .ls-name{font-size:21px;-webkit-line-clamp:2}.ls-last{font-size:12px;margin-top:4px}
+  .ls-wheels{margin-top:10px}.ls-sets{margin-top:10px;gap:6px}
+  .set-dots.lg button{width:40px;height:40px}
+  .lv-next{min-height:26px;padding-bottom:6px}
+  .lv-cta,.lv-sq{height:52px}.lv-acts>.lv-sq{width:52px}
+  .lrv-ring{width:min(64vw,260px,38vh)}.lrv-b{width:56px;height:56px}.lrv-skip{height:56px}
+}
+@media(max-width:380px){
+  .ls-in{padding-left:14px;padding-right:14px}
+  .set-dots.lg{gap:8px}.set-dots.lg button{width:42px;height:42px}
+  .lrv-ctl{gap:10px}.lrv-b{width:58px;height:58px}.lrv-skip{padding:0 22px}
+  .lv-cta{font-size:16px}
+}
 .ex-foot{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-width:0}
 .set-dots{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-width:0}
 .set-dots button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;display:flex;align-items:center;justify-content:center;padding:0;transition:background-color var(--t-hover) ease,border-color var(--t-hover) ease,color var(--t-hover) ease,transform var(--t-press) var(--ease-out)}
@@ -675,10 +812,6 @@ svg.exi{color:var(--accent);display:block;overflow:visible}
 .ex-foot .btn{padding:9px 15px;font-size:13px;white-space:nowrap;flex:none}
 .ex-foot .btn-ghost{padding:8px 13px;font-size:12.5px;white-space:nowrap;flex:none}
 .ex-foot .n{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.live .ex-steps{margin-top:2px}
-.live-add{margin-top:12px;width:100%;padding:13px;font-size:14px;border-style:dashed}
-.live-foot{margin-top:26px;text-align:center}
-.live-foot .linkish{font-size:12.5px;color:var(--muted)}
 /* resume banner on the gym page while the room is minimised */
 .sess-live{display:flex;align-items:center;gap:14px}
 .sess-live .pulse{width:10px;height:10px;border-radius:50%;background:var(--green);flex:none;animation:pulse 1.6s ease-in-out infinite}
@@ -702,15 +835,8 @@ svg.exi{color:var(--accent);display:block;overflow:visible}
 .fin-stats div{background:var(--surface2);border:1px solid var(--border);border-radius:11px;padding:9px 10px;text-align:center}
 .fin-stats b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .fin-stats span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-@media(max-width:560px){
-  .live-clock .t{font-size:54px}
-  .live-rest{gap:10px;padding:11px 12px}
-  .live-rest .t{font-size:24px}
-  .live-rest .acts .btn-ghost{padding:8px 9px}
-  .ex-foot{flex-wrap:wrap}
-  .ex-foot .btn{flex:1}
-}
-@media(max-width:380px){ .live-clock .t{font-size:48px} .set-dots button{width:28px;height:28px} }
+@media(max-width:560px){ .ex-foot{flex-wrap:wrap} .ex-foot .btn{flex:1} }
+@media(max-width:380px){ .set-dots:not(.lg) button{width:28px;height:28px} }
 
 /* ================= MONEY ================= */
 .scope-pick{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap}
@@ -1074,6 +1200,11 @@ main.wide{max-width:1500px}
   .rest.ding,.live-rest.ding{animation-iteration-count:1}
   .live{animation:fadeIn 200ms ease both;transition:opacity 200ms ease}
   .live.closing{transform:none}
+  .lrv,.lrv.on{transform:none!important;transition:opacity 200ms ease,visibility 0s linear 200ms}
+  .lrv.on{transition:opacity 200ms ease,visibility 0s}
+  .lrv.last .lrv-t b,.lv-pill,.lv-pill i,.lrv-badge{animation:none}
+  .lv-prog i::after{transition:none}
+  .lv-sq:active,.lrv-b:active,.lrv-skip:active,.lrv-next:active,.lv-nav:active{transform:none}
   .sess-live .pulse{animation:none}
   .set-dots button:active{transform:none}
   .exi-anim .mv{animation-play-state:paused!important}
@@ -1152,7 +1283,7 @@ main.wide{max-width:1500px}
       </div>
      </div>
     </div>
-    <div class="hub-foot"><span id="ver">v74</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
+    <div class="hub-foot"><span id="ver">v75</span><button class="linkish" type="button" onclick="atlasIntro()">Play intro</button></div>
   </section>
 
   <!-- ---------- SECTION SHELL ---------- -->
@@ -1252,7 +1383,7 @@ async function submitGuard(e, fn){
 }
 
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-console.log('Atlas v74');
+console.log('Atlas v75');
 
 // if a file is dropped outside the import box, don't let the browser navigate away to the PDF
 window.addEventListener('dragover', e => e.preventDefault());
@@ -2018,6 +2149,12 @@ const ICO = {
   forget:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1M4 4l16 16"/></svg>',
   pause:'<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M7 4h4v16H7zM13 4h4v16h-4z"/></svg>',
   chevD:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></svg>',
+  chevU:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l7-7 7 7"/></svg>',
+  minus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>',
+  undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/></svg>',
+  vol:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 010 6M18.3 6.3a8 8 0 010 11.4"/></svg>',
+  volOff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
 };
 const gnum = n => (+n || 0).toLocaleString('en-GB', {maximumFractionDigits: 2});   // quarter-kilo plates: 8.75, not 8.8
 function exSum(it){ return isCardio(it.ex) ? 0 : (+it.sets || 0) * (+it.reps || 0) * (+it.kg || 0); }
@@ -2129,7 +2266,7 @@ function renderSession(){
     c.classList.add('hidden'); c.innerHTML = '';
     const n = d.items.length, done = draftDone();
     sub.className = 'mast-sub sess-live';
-    sub.innerHTML = `<span class="pulse"></span><b id="sessElapsed">0:00</b> in session · ${plural(n, 'exercise')} · ${done} of ${draftSets()} sets done${d.notes ? ' · ' + esc(d.notes) : ''}`;
+    sub.innerHTML = `<span class="pulse"></span><b id="sessElapsed">0:00</b> in session · ${plural(n, 'exercise')} · ${done} of ${draftSets()} sets done<span id="sessRest"></span>${d.notes ? ' · ' + esc(d.notes) : ''}`;
     acts.innerHTML = `<button class="btn ico" type="button" onclick="liveOpen()">${ICO.play}Resume</button>
       <button class="btn-ghost" type="button" onclick="finishSheet()">Finish</button>`;
     startTick();
@@ -2164,8 +2301,8 @@ function renderSession(){
     </div>`;
   renderExList(); sessTotals(); restPaint(); startTick();
 }
-/* the same cards serve the pending/edit card (#exList) and the live room (#liveList);
-   only the live room tracks sets as they happen */
+/* the cards of the pending/edit card (#exList). Since v75 the live room draws its own pager
+   (liveSlide); the #liveList branches below are inert and kept only for the shared helpers */
 const exDone = it => Math.max(0, +it.done || 0);
 const exPlanned = it => Math.max(1, +it.sets || 1);
 const exFinished = it => isCardio(it.ex) ? exDone(it) >= 1 : exDone(it) >= exPlanned(it);
@@ -2221,23 +2358,34 @@ function exFoot(it, i){
 /* tap an empty dot to jump ahead to it, the last filled one to untick it, an earlier filled one to roll back to it */
 function setDots(i, n){
   const it = gymDraft && gymDraft.items[i]; if(!it) return;
-  it.done = Math.max(0, n); draftSave(); gymRepaint();
+  it.done = Math.max(0, n); draftSave();
+  if(liveOpenNow()){ liveDotsPaint(i); liveChrome(); } else gymRepaint();
 }
 function logSet(i){
   const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  const setsWas = it.sets, finWas = exFinished(it), allWas = gymDraft.items.every(exFinished);
   it.done = exDone(it) + 1;
   if(!isCardio(it.ex) && it.done > exPlanned(it)) it.sets = it.done;   // an extra set counts
   draftSave();
-  // the room moves on by itself: the rest clock starts, the card you were on folds up
   if(_exOpen === i) _exOpen = -1;
-  const all = gymDraft.items.every(exFinished);
-  if(!all && gymDraft.autoRest !== false){ restStart(gymDraft.rest || 90); try{ window._ac && window._ac.resume(); }catch(e){} }
-  gymRepaint();
-  if(all) toast('All sets done — Finish when you\'re ready');
+  const all = gymDraft.items.every(exFinished), live = liveOpenNow(), justAll = all && !allWas;
+  _lastLog = {ex: it.ex, d: exDone(it), n: exPlanned(it), fin: exFinished(it)};
+  if(live){
+    // sound, haptic and the picture change in the same frame
+    Snd.play(justAll ? 'done' : 'set'); buzz(justAll ? [40, 60, 40] : 18);
+    if(it.sets !== setsWas) liveSlideRedo(i); else liveDotsPaint(i);
+    // finishing an exercise turns the page to the next one, behind the rest screen
+    if(!finWas && exFinished(it) && !all){ const j = liveNextIdx(i); if(j >= 0) liveGo(j, gymDraft.autoRest === false); }
+  }
+  if(justAll){ restStop(); if(live) _restView = 'done'; }
+  else if(gymDraft.autoRest !== false){ restStart(restLen()); if(live) _restView = 'rest'; }
+  if(live){ liveChrome(); restPaint(); }
+  else { gymRepaint(); if(justAll) toast('All sets done — Finish when you\'re ready'); }
 }
 function unlogSet(i){
   const it = gymDraft && gymDraft.items[i]; if(!it) return;
-  it.done = Math.max(0, exDone(it) - 1); draftSave(); gymRepaint();
+  it.done = Math.max(0, exDone(it) - 1); draftSave();
+  if(liveOpenNow()){ liveDotsPaint(i); liveChrome(); } else gymRepaint();
 }
 function exToggle(i){ _exOpen = _exOpen === i ? -1 : i; renderExList(); }
 async function exDel(i){
@@ -2248,7 +2396,7 @@ async function exDel(i){
   gymRepaint();
 }
 /* repaint whichever surface is showing the draft */
-function gymRepaint(){ renderExList(); sessTotals(); liveStats(); restPaint(); }
+function gymRepaint(){ if(liveOpenNow()) liveRender(); else renderExList(); sessTotals(); restPaint(); }
 
 /* ---------- scroll wheels ----------
    Each number is a snap-scrolling column; whichever row rests in the middle band is the value.
@@ -2306,6 +2454,7 @@ function wheelRead(el){
   it[k] = p === 'int' ? r2(v + cur - Math.floor(cur)) : p === 'frac' ? r2(Math.floor(cur) + v) : v;
   el.setAttribute('aria-valuenow', v);
   draftSave(); sessTotals();
+  if(liveOpenNow()) liveWheel(+el.dataset.i, k);
 }
 function wheelTap(e, el){
   const row = e.target.closest('.wheel-row'); if(!row || !el._rows) return;
@@ -2347,6 +2496,89 @@ function paintTick(){
   }
 }
 
+/* ---------- sound ----------
+   iOS starts every AudioContext suspended and only a tap may wake it, so the context is created and
+   resumed inside taps (the Start press, every set logged, any touch while a session runs) and a
+   one-sample silent buffer is played the first time — that is what actually opens the output. The old
+   beep was created when the timer ran out, outside any tap, so on the iPhone it never sounded. The
+   session is marked 'ambient' so the cues mix over music in the earbuds instead of pausing it; iOS
+   may still mute them when the phone is on silent. A cue is never queued for later: if the context
+   can't wake right now it is dropped rather than played on the next tap. */
+const sndOn = () => { try{ return localStorage.getItem('atlas_gym_sound') !== 'off'; }catch(e){ return true; } };
+const Snd = (() => {
+  let ac = null, bus = null, primed = false;
+  function ctx(){
+    if(ac) return ac;
+    const K = window.AudioContext || window.webkitAudioContext; if(!K) return null;
+    try{ if(navigator.audioSession) navigator.audioSession.type = 'ambient'; }catch(e){}
+    try{ ac = new K({latencyHint: 'interactive'}); }catch(e){ try{ ac = new K(); }catch(e2){ return null; } }
+    const comp = ac.createDynamicsCompressor();   // stacked chimes never clip
+    comp.threshold.value = -12; comp.knee.value = 8; comp.ratio.value = 4; comp.attack.value = .002; comp.release.value = .2;
+    bus = ac.createGain(); bus.gain.value = .9; bus.connect(comp); comp.connect(ac.destination);
+    window._ac = ac;
+    return ac;
+  }
+  function unlock(){
+    const c = ctx(); if(!c) return;
+    if(c.state !== 'running') c.resume().catch(() => {});
+    if(!primed){ try{ const s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0); primed = true; }catch(e){} }
+  }
+  /* one voice: an 8 ms attack and an exponential fall, so nothing clicks */
+  function voice(t, f, dur, vol, type){
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + .03);
+  }
+  /* a soft chime: the note plus two overtones that die away sooner */
+  function chime(t, f, vol, dur){ voice(t, f, dur, vol); voice(t, f * 2, dur * .55, vol * .3); voice(t, f * 3, dur * .3, vol * .1); }
+  const SOUNDS = {
+    set:  t => { voice(t, 659.25, .13, .16); voice(t + .075, 987.77, .22, .14); },                            // set logged: a quick rising pair
+    tick: (t, n) => voice(t, n === 1 ? 1318.51 : 987.77, .09, .17, 'triangle'),                                 // 3 · 2 · 1
+    go:   t => { chime(t, 880, .3, 1.1); chime(t + .15, 1174.66, .28, 1.1); chime(t + .3, 1760, .26, 1.4); },  // rest over
+    done: t => [523.25, 659.25, 783.99, 1046.5].forEach((f, k) => chime(t + k * .11, f, .24, 1.3)),           // every set done
+  };
+  function play(name, arg){
+    if(!sndOn() || !SOUNDS[name]) return;
+    const c = ctx(); if(!c) return;
+    const fire = () => { try{ SOUNDS[name](c.currentTime + .015, arg); }catch(e){} };
+    if(c.state === 'running') return fire();
+    const at = Date.now();
+    c.resume().then(() => { if(Date.now() - at < 400) fire(); }).catch(() => {});
+  }
+  function wake(){ if(ac && ac.state !== 'running') ac.resume().catch(() => {}); }
+  return {unlock, play, wake, state: () => ac ? ac.state : 'none'};
+})();
+/* any touch while a session runs keeps the context awake (iOS suspends it after calls, Siri, the lock screen) */
+['touchend', 'click', 'keydown'].forEach(ev => document.addEventListener(ev, () => {
+  if(gymDraft && gymDraft.started && !gymDraft.id) Snd.unlock();
+}, {capture: true, passive: true}));
+/* haptics: vibrate() where it exists (Android); iOS has none, but flipping a native switch inside a tap
+   gives a light system tick on Safari 18+ — harmless where it doesn't */
+function buzz(p){
+  try{ if(navigator.vibrate){ navigator.vibrate(p); return; } }catch(e){}
+  if(navigator.userActivation && !navigator.userActivation.isActive) return;
+  try{
+    const l = document.createElement('label'), c = document.createElement('input');
+    l.setAttribute('aria-hidden', 'true'); l.style.display = 'none'; c.type = 'checkbox'; c.setAttribute('switch', '');
+    l.appendChild(c); document.head.appendChild(l); l.click(); l.remove();
+  }catch(e){}
+}
+function sndToggle(){
+  const on = !sndOn();
+  try{ localStorage.setItem('atlas_gym_sound', on ? 'on' : 'off'); }catch(e){}
+  sndPaint();
+  if(on){ Snd.unlock(); Snd.play('set'); }
+  toast(on ? 'Sounds on' : 'Sounds off');
+}
+function sndPaint(){
+  const b = document.getElementById('liveSnd'); if(!b) return;
+  const on = sndOn();
+  b.innerHTML = on ? ICO.vol : ICO.volOff;
+  b.title = on ? 'Sounds on — tap to mute' : 'Sounds off — tap to turn on';
+  b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(on));
+}
+
 /* ---------- rest timer ---------- */
 /* the timer stores an end timestamp, not a countdown: iOS suspends intervals while the
    phone is locked, and a tick-based counter would come back frozen where it was.
@@ -2355,15 +2587,19 @@ const restLen = () => (gymDraft && gymDraft.rest) || 90;
 const restLeft = () => _rest ? Math.max(0, Math.ceil((_rest.end - Date.now()) / 1000)) : restLen();
 function restStart(sec){
   if(_rest) clearInterval(_rest.h);
-  _rest = {end: Date.now() + sec * 1000, total: sec, h: setInterval(restTick, 500)};
+  _rest = {end: Date.now() + sec * 1000, total: sec, h: setInterval(restTick, 250)};
   if(gymDraft){ gymDraft.restEnd = _rest.end; gymDraft.restTotal = sec; draftSave(); }
 }
 function restResume(){
   if(_rest || !gymDraft || !gymDraft.restEnd) return;
-  if(gymDraft.restEnd > Date.now()) _rest = {end: gymDraft.restEnd, total: gymDraft.restTotal || restLen(), h: setInterval(restTick, 500)};
+  if(gymDraft.restEnd > Date.now()) _rest = {end: gymDraft.restEnd, total: gymDraft.restTotal || restLen(), h: setInterval(restTick, 250)};
   else { delete gymDraft.restEnd; draftSave(); }
 }
-function restStop(){ if(_rest){ clearInterval(_rest.h); _rest = null; } if(gymDraft && gymDraft.restEnd){ delete gymDraft.restEnd; draftSave(); } }
+function restStop(){
+  if(_rest){ clearInterval(_rest.h); _rest = null; }
+  if(_restView === 'rest') _restView = null;
+  if(gymDraft && gymDraft.restEnd){ delete gymDraft.restEnd; draftSave(); }
+}
 /* while resting, ±15 nudges this countdown; when idle it sets the length every rest starts
    with, which is kept per session and remembered for the next one */
 function restAdjust(d){
@@ -2377,37 +2613,8 @@ function restAdjust(d){
   }
   restPaint();
 }
-const RING_C = 2 * Math.PI * 25;
-function restRing(){
-  const left = restLeft(), total = _rest ? (_rest.total || restLen()) : restLen();
-  const frac = _rest ? Math.max(0, Math.min(1, left / total)) : 1;
-  return `<div class="ring"><svg viewBox="0 0 56 56" fill="none" stroke-width="4">
-      <circle class="bg" cx="28" cy="28" r="25"/>
-      <circle class="fg" cx="28" cy="28" r="25" stroke-dasharray="${RING_C.toFixed(1)}" stroke-dashoffset="${(RING_C * (1 - frac)).toFixed(1)}"/></svg>
-    <span class="ic">${_rest ? ICO.pause : ICO.play}</span></div>`;
-}
-function liveRestPaint(){
-  const c = document.getElementById('liveRest'); if(!c) return;
-  const left = restLeft();
-  c.className = 'live-rest' + (_rest ? ' run' : '');
-  c.innerHTML = `<button class="ringbtn" type="button" title="${_rest ? 'Stop rest' : 'Start rest'}" onclick="restToggle()" style="background:none;border:none;padding:0">${restRing()}</button>
-    <div class="mid"><div class="lbl">${_rest ? 'Resting' : 'Rest'}</div><div class="t">${mmss(left)}</div>
-      <div class="hint">${_rest ? 'Next set when it rings' : 'Starts by itself after each set'}</div></div>
-    <div class="acts">
-      <button class="btn-ghost" type="button" title="15 seconds less" onclick="restAdjust(-15)">−15</button>
-      <button class="btn-ghost" type="button" title="15 seconds more" onclick="restAdjust(15)">+15</button>
-    </div>`;
-}
-function restDing(){
-  try{ navigator.vibrate && navigator.vibrate([200, 100, 200]); }catch(e){}
-  try{
-    const ac = window._ac || (window._ac = new (window.AudioContext || window.webkitAudioContext)());
-    [0, .25].forEach(t => { const o = ac.createOscillator(), g = ac.createGain();
-      o.frequency.value = 880; g.gain.value = .15; o.connect(g); g.connect(ac.destination);
-      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + .18); });
-  }catch(e){}
-}
-/* the rest clock paints wherever it is shown: the live room (#liveRest) or the compact chip (#restChip) */
+function restDing(){ Snd.play('go'); buzz([220, 90, 220]); }
+/* the rest clock paints wherever it is shown: the live room's takeover and pill, or the old compact chip (#restChip) */
 function restPaint(){
   liveRestPaint();
   const c = document.getElementById('restChip'); if(!c) return;
@@ -2419,21 +2626,34 @@ function restPaint(){
 }
 function restToggle(){
   if(_rest) restStop();
-  else { restStart(restLen()); try{ window._ac && window._ac.resume(); }catch(e){} }
+  else { restStart(restLen()); Snd.unlock(); }
   restPaint();
 }
 function restPlus(){ if(_rest) restAdjust(30); else restStart(restLen() + 30); restPaint(); }
 function restTick(){
   if(!_rest) return;
   // nothing on screen and no running session → let the interval go; a running session keeps counting even minimised
-  if(!document.getElementById('restChip') && !document.getElementById('liveRest') && !(gymDraft && gymDraft.started && !gymDraft.id)){ restStop(); return; }
-  if(restLeft() <= 0){
-    restStop(); restPaint();
-    const c = document.getElementById('liveRest') || document.getElementById('restChip');
-    if(c){ c.classList.add('ding'); setTimeout(() => c.classList.remove('ding'), 1600); }
-    restDing(); toast('Rest over — next set');
+  if(!document.getElementById('restChip') && !liveOpenNow() && !(gymDraft && gymDraft.started && !gymDraft.id)){ restStop(); return; }
+  const left = restLeft();
+  if(left <= 0){
+    const late = Date.now() - _rest.end, was = _restView;
+    restStop(); restOver(late, was);
     return;
   }
+  // the last three seconds count down out loud, each second once
+  if(left <= 3 && _rest.ticked !== left){ _rest.ticked = left; if(document.visibilityState === 'visible') Snd.play('tick', left); }
+  restPaint();
+}
+/* time's up: a chime and a "Go" screen that clears itself. A rest that ran out while the phone
+   was asleep (more than a few seconds ago) closes quietly instead of chiming late. */
+function restOver(late, was){
+  const fresh = late < 5000 && document.visibilityState === 'visible';
+  if(fresh) restDing();
+  const nx = liveOpenNow() ? lrvNext() : null;
+  if(liveOpenNow() && was === 'rest' && fresh){
+    _restView = 'go'; clearTimeout(_lrvGo);
+    _lrvGo = setTimeout(() => { if(_restView === 'go') restViewHide(); }, 1700);
+  } else toast(nx ? 'Rest over — ' + nx.x.ex : 'Rest over — next set');
   restPaint();
 }
 
@@ -2514,7 +2734,8 @@ function startSession(){ kindSheet(); }
 function beginSession(){
   if(!gymDraft) return;
   if(!gymDraft.items.length) return toast('Pick at least one exercise first');
-  gymDraft.started = Date.now(); gymDraft.items.forEach(it => { it.done = 0; }); _exOpen = -1; draftSave();
+  gymDraft.started = Date.now(); gymDraft.items.forEach(it => { it.done = 0; }); _exOpen = -1; gymDraft.at = 0; draftSave();
+  Snd.unlock();
   document.removeEventListener('keydown', pickEsc);
   sheetClose(document.getElementById('pickBg'));
   renderSession(); liveOpen();
@@ -2533,51 +2754,341 @@ async function discardSession(){
   restStop(); gymDraft = null; draftSave(); liveClose(); renderSession();
 }
 
-/* ---------- the live room ----------
-   Once Start is pressed the workout gets a screen of its own: the clock, the rest timer and the
-   exercise cards with their set dots. Minimising keeps it running underneath; the gym page shows
-   a Resume banner and a reload (or a return to Gym) walks straight back in. */
-let _wake = null, _liveMin = false;
+/* ---------- the live room (v75) ----------
+   Once Start is pressed the workout becomes an app screen of its own: one exercise at a time on a
+   horizontal pager (swipe, the progress segments, the side arrows or ← → to move), the set button
+   in the thumb zone, and the rest between sets as an ink takeover with a big countdown that can be
+   swiped down to peek at the exercise. Minimising keeps everything running; the gym page shows a
+   Resume banner and a reload walks straight back in, on the same exercise. */
+let _wake = null, _liveMin = false, _liveAt = 0, _restView = null, _lrvRaf = 0, _lrvGo = 0, _lastLog = null;
 const liveOpenNow = () => !!document.getElementById('live');
+const rmotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 function liveOpen(){
   if(!gymDraft || !gymDraft.started || gymDraft.id) return;
   _liveMin = false;
   if(liveOpenNow()) return liveRender();
+  const at = +gymDraft.at;
+  _liveAt = Number.isInteger(at) && at >= 0 ? at : Math.max(0, exUpNext());
   document.body.insertAdjacentHTML('beforeend', `<div class="live" id="live" role="dialog" aria-label="Workout in progress">
-    <div class="live-head">
-      <button class="icon-btn" type="button" title="Minimise — keeps running" onclick="liveClose(true)">${ICO.chevD}</button>
-      <div class="ttl"><b id="liveTitle"></b><span id="liveDate"></span></div>
+    <div class="lv-head">
+      <button class="icon-btn" type="button" title="Minimise — keeps running" aria-label="Minimise" onclick="liveClose(true)">${ICO.chevD}</button>
+      <div class="lv-ttl"><b id="liveTitle"></b>
+        <div class="lv-sub"><span id="liveClock">0:00</span><span id="liveStats"></span>
+          <button class="lv-pill" id="livePill" type="button" hidden onclick="restViewOpen('rest')"><i></i>Rest <b></b></button></div></div>
+      <button class="icon-btn" type="button" id="liveSnd" onclick="sndToggle()"></button>
       <button class="btn" type="button" onclick="finishSheet()">Finish</button>
     </div>
-    <div class="live-body"><div class="live-col">
-      <div class="live-clock"><div class="t" id="liveClock">0:00</div><div class="sub" id="liveStats"></div></div>
-      <div class="live-rest" id="liveRest"></div>
-      <div class="live-sec"><h3>Exercises</h3><span id="liveUp"></span></div>
-      <div id="liveList"></div>
-      <button class="btn-ghost live-add" type="button" onclick="openPicker()">+ Add exercise</button>
-      <div class="live-foot"><button class="linkish" type="button" onclick="discardSession()">Discard workout</button></div>
-    </div></div></div>`);
-  document.body.style.overflow = 'hidden';
+    <div class="lv-prog" id="liveProg"></div>
+    <div class="lv-stage">
+      <div class="lv-track" id="liveTrack"></div>
+      <button class="lv-nav prev" type="button" aria-label="Previous exercise" onclick="liveGo(_liveAt - 1, true)">${ICO.chevL}</button>
+      <button class="lv-nav next" type="button" aria-label="Next exercise" onclick="liveGo(_liveAt + 1, true)">${ICO.chevR}</button>
+    </div>
+    <div class="lv-bar"><div class="lv-barin" id="liveBar"></div></div>
+    <div class="lrv" id="liveRestV" aria-hidden="true" aria-live="polite"></div>
+  </div>`);
+  document.body.style.overflow = 'hidden'; document.body.classList.add('live-on');
+  const t = document.getElementById('liveTrack');
+  t.addEventListener('scroll', liveScroll, {passive: true});
+  if('onscrollend' in window) t.addEventListener('scrollend', liveSettle);
+  lrvDrag(document.getElementById('liveRestV'));
   restResume();
-  liveRender(); startTick(); wakeOn();
+  if(_rest) _restView = 'rest';   // reopened mid-rest: the countdown is the screen again
+  sndPaint(); liveRender(); startTick(); wakeOn();
 }
+/* full rebuild — on open and whenever the list itself changes (added, removed, reordered) */
 function liveRender(){
   if(!liveOpenNow() || !gymDraft) return;
+  const items = gymDraft.items;
   document.getElementById('liveTitle').textContent = kindTitle(gymDraft.notes, gymDraft.kind);
-  document.getElementById('liveDate').textContent = fmtDate(gymDraft.date) + ' · started ' + new Date(gymDraft.started).toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
-  renderExList(); liveStats(); restPaint(); paintTick();
+  _liveAt = Math.max(0, Math.min(items.length - 1, _liveAt));
+  const t = document.getElementById('liveTrack');
+  t.innerHTML = items.length ? items.map(liveSlide).join('')
+    : `<section class="ls"><div class="ls-in ls-empty"><div class="ls-fig">${exIcon('_')}</div>
+        <h2 class="ls-name">No exercises</h2><div class="ls-last">Add one to keep going</div></div></section>`;
+  wheelsInit(t);
+  t.scrollLeft = _liveAt * t.clientWidth;
+  document.getElementById('liveProg').innerHTML = '';
+  liveChrome(); restPaint(); paintTick();
+}
+function liveSlide(it, i){
+  const n = gymDraft.items.length, cardio = isCardio(it.ex), l = lastFor(it.ex), grp = (EX_BY_NAME[exCanon(it.ex)] || [])[1] || 'Custom';
+  return `<section class="ls${exFinished(it) ? ' fin' : ''}" id="ls${i}" data-i="${i}" aria-label="${esc(it.ex)}, exercise ${i + 1} of ${n}">
+    <div class="ls-in">
+      <div class="ls-top"><span>${i + 1} of ${n}</span><span class="dot"></span><span>${esc(grp)}</span><span class="ls-done">${ICO.tickSm}Done</span></div>
+      <div class="ls-fig">${exIcon(it.ex)}</div>
+      <h2 class="ls-name">${esc(it.ex)}</h2>
+      <div class="ls-last">${l ? 'Last time ' + fmtDate(l.date) + ' · ' + setLabel({ex: it.ex, sets: l.sets, reps: l.reps, kg: l.kg}) : 'First time logging this'}</div>
+      <div class="ex-steps ls-wheels${cardio ? ' cardio' : ''}">${cardio
+        ? wheel(i, 'reps', 'Minutes') + wheel(i, 'kg', 'Km')
+        : wheel(i, 'kg', 'Kg') + wheel(i, 'reps', 'Reps') + wheel(i, 'sets', 'Sets')}</div>
+      <div class="ls-sets" id="lsSets${i}">${liveDots(it, i)}</div>
+    </div></section>`;
+}
+/* one big dot per planned set: done ones fill, the next one is dashed, extra sets grow the row.
+   Tap an empty dot to jump ahead to it, the last filled one to untick it, an earlier one to roll back. */
+function liveDots(it, i){
+  const d = exDone(it);
+  if(isCardio(it.ex)) return `<div class="ls-sets-n">${d ? '<b>Logged</b>' : 'One entry · minutes and km'}</div>`;
+  const n = exPlanned(it), total = Math.max(n, d);
+  let dots = '';
+  for(let k = 0; k < total; k++)
+    dots += `<button type="button" class="${k < d ? 'on' : k === d ? 'next' : ''}${k >= n ? ' extra' : ''}" aria-label="Set ${k + 1}${k < d ? ', done' : ''}"
+      onclick="setDots(${i},${k < d ? (k === d - 1 ? k : k + 1) : k + 1})">${k < d ? ICO.tickSm : k + 1}</button>`;
+  return `<div class="set-dots lg">${dots}</div>
+    <div class="ls-sets-n">${d >= n ? `<b>All ${n} sets done</b>` : `Set <b>${d + 1}</b> of ${n}`}</div>`;
+}
+function liveDotsPaint(i){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  const el = document.getElementById('lsSets' + i), s = document.getElementById('ls' + i);
+  if(el) el.innerHTML = liveDots(it, i);
+  if(s) s.classList.toggle('fin', exFinished(it));
+}
+function liveSlideRedo(i){
+  const s = document.getElementById('ls' + i); if(!s || !gymDraft.items[i]) return;
+  s.outerHTML = liveSlide(gymDraft.items[i], i);
+  wheelsInit(document.getElementById('ls' + i));
+}
+/* the next exercise with sets still to do, after i (wrapping round), never i itself */
+function liveNextIdx(i){
+  const items = gymDraft ? gymDraft.items : [];
+  for(let k = 1; k < items.length; k++){ const j = (i + k) % items.length; if(!exFinished(items[j])) return j; }
+  return -1;
+}
+/* everything around the pager: progress segments, arrows, the next line and the action button */
+function liveChrome(){
+  if(!liveOpenNow() || !gymDraft) return;
+  const items = gymDraft.items, c = _liveAt, it = items[c];
+  const prog = document.getElementById('liveProg');
+  if(prog.children.length !== items.length)
+    prog.innerHTML = items.map((x, i) => `<button type="button" aria-label="Go to ${esc(x.ex)}" onclick="liveGo(${i}, true)"><i></i></button>`).join('');
+  [...prog.children].forEach((b, i) => {
+    const x = items[i], f = isCardio(x.ex) ? Math.min(1, exDone(x)) : Math.min(1, exDone(x) / exPlanned(x));
+    b.classList.toggle('cur', i === c); b.style.setProperty('--f', f.toFixed(3));
+  });
+  const prev = document.querySelector('.lv-nav.prev'), next = document.querySelector('.lv-nav.next');
+  if(prev) prev.disabled = c <= 0;
+  if(next) next.disabled = c >= items.length - 1;
+  const all = items.length > 0 && items.every(exFinished), nx = it ? liveNextIdx(c) : -1, nxIt = nx >= 0 ? items[nx] : null;
+  let cta, alt = '';
+  if(!it) cta = `<button class="btn lv-cta" type="button" onclick="openPicker()">${ICO.plus}Add exercise</button>`;
+  else if(!exFinished(it)){
+    const d = exDone(it);
+    cta = `<button class="btn lv-cta" type="button" id="liveCta" onclick="liveLog(${c})">${ICO.tick}${isCardio(it.ex) ? 'Done' : 'Set ' + (d + 1) + ' done'}</button>`;
+    if(d) alt = `<button class="lv-sq" type="button" title="Undo the last set" aria-label="Undo the last set" onclick="unlogSet(${c})">${ICO.undo}</button>`;
+  } else {
+    cta = nxIt ? `<button class="btn lv-cta" type="button" id="liveCta" onclick="liveGo(${nx}, true)">Next exercise${ICO.chevR}</button>`
+      : `<button class="btn lv-cta" type="button" id="liveCta" onclick="finishSheet()">Finish workout</button>`;
+    alt = isCardio(it.ex) ? `<button class="lv-sq" type="button" title="Undo" aria-label="Undo" onclick="unlogSet(${c})">${ICO.undo}</button>`
+      : `<button class="lv-sq" type="button" title="Log one more set" aria-label="Log one more set" onclick="liveLog(${c})">+1</button>`;
+  }
+  const line = !it ? '' : all ? `<span class="k">All sets done</span><b>Finish when you're ready</b>`
+    : nxIt ? `<span class="k">${exFinished(it) ? 'Up next' : 'Then'}</span>${exIcon(nxIt.ex)}<b>${esc(nxIt.ex)}</b><span class="m">${setLabel(nxIt)}</span>`
+    : `<span class="k">Last exercise</span>`;
+  document.getElementById('liveBar').innerHTML = `<button class="lv-next" type="button" ${nxIt ? `onclick="liveGo(${nx}, true)"` : 'tabindex="-1"'}>${line}</button>
+    <div class="lv-acts"><button class="lv-sq" type="button" title="All exercises" aria-label="All exercises" onclick="livePlan()">${ICO.list}</button>${cta}${alt}</div>`;
+  liveStats();
+  if(_restView) liveRestPaint();
 }
 function liveStats(){
   const el = document.getElementById('liveStats'); if(!el || !gymDraft) return;
-  const vol = draftDoneVol(), items = gymDraft.items;
-  el.textContent = `${plural(items.length, 'exercise')} · ${draftDone()} of ${draftSets()} sets${vol ? ' · ' + gnum(vol) + ' kg lifted' : ''}`;
-  const up = document.getElementById('liveUp'), i = exUpNext();
-  if(up) up.textContent = !items.length ? '' : i < 0 ? 'All done' : 'Up next: ' + items[i].ex;
+  el.textContent = '· ' + draftDone() + ' of ' + draftSets() + ' sets';
 }
+/* the pager reports where it settled; the index lives in the draft so a reload lands on the same page */
+function liveScroll(){ clearTimeout(liveScroll._h); liveScroll._h = setTimeout(liveSettle, 110); }
+function liveSettle(){
+  const t = document.getElementById('liveTrack'); if(!t || !gymDraft || !gymDraft.items.length) return;
+  const i = Math.max(0, Math.min(gymDraft.items.length - 1, Math.round(t.scrollLeft / Math.max(1, t.clientWidth))));
+  if(i !== _liveAt){ _liveAt = i; gymDraft.at = i; draftSave(); liveChrome(); }
+}
+function liveGo(i, smooth){
+  const t = document.getElementById('liveTrack'); if(!t || !gymDraft || !gymDraft.items.length) return;
+  i = Math.max(0, Math.min(gymDraft.items.length - 1, i));
+  _liveAt = i; gymDraft.at = i; draftSave();
+  t.scrollTo({left: i * t.clientWidth, behavior: smooth && !rmotion() ? 'smooth' : 'auto'});
+  liveChrome();
+}
+window.addEventListener('resize', () => { const t = document.getElementById('liveTrack'); if(t) t.scrollLeft = _liveAt * t.clientWidth; });
+document.addEventListener('keydown', e => {
+  if(!liveOpenNow() || document.querySelector('.sheet-bg:not(.closing)')) return;
+  if(e.target.closest && e.target.closest('input,textarea,select,.wheel-col')) return;
+  if(e.key === 'Escape' && _restView){ e.preventDefault(); restViewHide(); }
+  else if(_restView) return;
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); liveGo(_liveAt + 1, true); }
+  else if(e.key === 'ArrowLeft'){ e.preventDefault(); liveGo(_liveAt - 1, true); }
+});
+/* the big button: the tap that logs a set is also the one that lets iOS play sound */
+function liveLog(i){ Snd.unlock(); logSet(i); }
+function liveWheel(i, k){
+  if(k === 'sets') liveDotsPaint(i);
+  clearTimeout(liveWheel._h); liveWheel._h = setTimeout(liveChrome, 80);   // the button and the next line follow the numbers
+}
+
+/* ---------- rest takeover ---------- */
+const LRV_C = 2 * Math.PI * 92;
+const lrvRing = full => `<svg viewBox="0 0 200 200" fill="none" stroke-width="9" aria-hidden="true"><circle class="bg" cx="100" cy="100" r="92"/>
+  <circle class="fg" id="lrvArc" cx="100" cy="100" r="92" stroke-dasharray="${LRV_C.toFixed(2)}" stroke-dashoffset="${full ? 0 : (LRV_C * (1 - restFrac())).toFixed(2)}"/></svg>`;
+const restFrac = () => _rest ? Math.max(0, Math.min(1, (_rest.end - Date.now()) / ((_rest.total || restLen()) * 1000))) : 1;
+/* what the rest screen points at: more of the exercise on screen, or the next one with sets left */
+function lrvNext(){
+  const items = gymDraft ? gymDraft.items : [], it = items[_liveAt];
+  const j = it && !exFinished(it) ? _liveAt : liveNextIdx(_liveAt);
+  if(j < 0) return null;
+  const x = items[j];
+  return {x, line: isCardio(x.ex) ? setLabel(x) : 'Set ' + (exDone(x) + 1) + ' of ' + exPlanned(x) + ' · ' + (+x.kg ? gnum(x.kg) + ' kg × ' + (+x.reps || 0) : (+x.reps || 0) + ' reps')};
+}
+function lrvHTML(mode){
+  const nx = lrvNext(), L = _lastLog;
+  if(mode === 'rest'){
+    const what = !L ? '' : L.fin ? esc(L.ex) + ' done · ' + plural(L.d, 'set') : esc(L.ex) + ' · set ' + L.d + ' of ' + L.n + ' done';
+    return `<div class="lrv-in">
+      <div class="lrv-top"><span class="lrv-k">Rest</span><span class="lrv-what">${what}</span>
+        <button class="icon-btn" type="button" title="Show the exercise — the rest keeps running" aria-label="Show the exercise" onclick="restViewHide()">${ICO.chevD}</button></div>
+      <div class="lrv-ring">${lrvRing(false)}<div class="lrv-t"><b id="lrvT">${mmss(restLeft())}</b><span id="lrvOf"></span></div></div>
+      <div class="lrv-ctl"><button class="lrv-b" type="button" aria-label="15 seconds less" onclick="restAdjust(-15)">−15</button>
+        <button class="lrv-skip" type="button" onclick="restSkip()">Skip rest</button>
+        <button class="lrv-b" type="button" aria-label="15 seconds more" onclick="restAdjust(15)">+15</button></div>
+      ${nx ? `<button class="lrv-next" type="button" onclick="restViewHide()"><span class="fig">${exIcon(nx.x.ex)}</span>
+        <span class="tx"><small>Up next</small><b>${esc(nx.x.ex)}</b><span>${nx.line}</span></span><span class="adj">Adjust${ICO.chevR}</span></button>` : '<div></div>'}
+    </div>`;
+  }
+  if(mode === 'go') return `<div class="lrv-in" onclick="restViewHide()">
+      <div class="lrv-top"><span class="lrv-k"></span><span class="lrv-what">Rest over</span><span class="lrv-k"></span></div>
+      <div class="lrv-ring">${lrvRing(true)}<div class="lrv-t"><b>Go</b><span>${nx ? nx.line : ''}</span></div></div>
+      <div class="lrv-go">${nx ? esc(nx.x.ex) : ''}</div><div></div></div>`;
+  const vol = draftDoneVol(), min = Math.max(1, Math.round(elapsedSec() / 60));
+  return `<div class="lrv-in lrv-done">
+      <div class="lrv-top"><span class="lrv-k"></span><span class="lrv-what">${esc(kindTitle(gymDraft.notes, gymDraft.kind))}</span>
+        <button class="icon-btn" type="button" aria-label="Back to the exercises" onclick="restViewHide()">${ICO.x}</button></div>
+      <div class="lrv-sum"><div class="lrv-badge">${ICO.tick}</div><h2>All sets done</h2>
+        <div class="lrv-stats"><div><b>${min}</b><span>min</span></div><div><b>${draftDone()}</b><span>sets</span></div><div><b>${vol ? gnum(vol) : '—'}</b><span>kg lifted</span></div></div></div>
+      <div class="lrv-dacts"><button class="lrv-skip" type="button" onclick="finishSheet()">Finish &amp; save</button>
+        <button class="lrv-link" type="button" onclick="restViewHide()">Keep going</button></div></div>`;
+}
+function liveRestPaint(){
+  const sr = document.getElementById('sessRest'); if(sr) sr.textContent = _rest ? ' · rest ' + mmss(restLeft()) : '';
+  const pill = document.getElementById('livePill');
+  if(_restView === 'rest' && !_rest) _restView = null;
+  if(pill){
+    const show = !!_rest && _restView !== 'rest';
+    pill.hidden = !show; pill.parentElement.classList.toggle('resting', show);
+    if(show) pill.querySelector('b').textContent = mmss(restLeft());
+  }
+  const v = document.getElementById('liveRestV'); if(!v) return;
+  const on = !!_restView;
+  if(v.classList.contains('on') !== on){ v.classList.toggle('on', on); v.setAttribute('aria-hidden', String(!on)); }
+  if(!on){ v._html = ''; return; }
+  const html = lrvHTML(_restView);
+  if(v._html !== html){ v._html = html; v.innerHTML = html; }
+  v.classList.toggle('go', _restView === 'go');
+  if(_restView === 'rest'){
+    const O = document.getElementById('lrvOf'); if(O) O.textContent = 'of ' + mmss((_rest && _rest.total) || restLen());
+    lrvFrame();
+  } else v.classList.remove('last');
+}
+/* the ring and the seconds run on animation frames while they are on screen */
+function lrvFrame(){
+  cancelAnimationFrame(_lrvRaf); _lrvRaf = 0;
+  const v = document.getElementById('liveRestV'), arc = document.getElementById('lrvArc');
+  if(!v || !arc || !_rest || _restView !== 'rest') return;
+  arc.style.strokeDashoffset = (LRV_C * (1 - restFrac())).toFixed(2);
+  const left = restLeft(), T = document.getElementById('lrvT'), s = mmss(left);
+  if(T && T.textContent !== s) T.textContent = s;
+  v.classList.toggle('last', left <= 3);
+  _lrvRaf = requestAnimationFrame(lrvFrame);
+}
+function restViewOpen(mode){ _restView = mode; liveRestPaint(); }
+function restViewHide(){ clearTimeout(_lrvGo); _restView = null; liveRestPaint(); }
+function restSkip(){ restStop(); _restView = null; liveRestPaint(); liveChrome(); }
+/* the rest screen follows a downward swipe 1:1 and goes if it was pulled far or flicked;
+   upward it only gives a little (rubber band) */
+function lrvDrag(v){
+  let on = false, id = null, y0 = 0, dy = 0, hist = [];
+  const band = (x, dim) => (x * dim * .55) / (dim + .55 * x);
+  v.addEventListener('pointerdown', e => {
+    if(_restView !== 'rest' || e.target.closest('button')) return;
+    on = true; id = e.pointerId; y0 = e.clientY; dy = 0; hist = [[e.clientY, e.timeStamp]];
+    try{ v.setPointerCapture(id); }catch(err){}
+    v.style.transition = 'none';
+  });
+  v.addEventListener('pointermove', e => {
+    if(!on || e.pointerId !== id) return;
+    const raw = e.clientY - y0;
+    dy = raw >= 0 ? raw : -band(-raw, v.clientHeight);
+    v.style.transform = `translateY(${dy.toFixed(1)}px)`;
+    hist.push([e.clientY, e.timeStamp]); if(hist.length > 6) hist.shift();
+  });
+  const end = e => {
+    if(!on || e.pointerId !== id) return;
+    on = false;
+    const a = hist[0], b = hist[hist.length - 1];
+    const vel = a && b && b[1] > a[1] ? (b[0] - a[0]) / (b[1] - a[1]) * 1000 : 0;   // px/s
+    const proj = dy + vel / 1000 * .998 / (1 - .998);                                 // where the flick would carry it
+    if(dy > 8 && proj > v.clientHeight * .3){
+      v.style.transition = 'transform 300ms var(--ease-out)';
+      v.style.transform = `translateY(${v.clientHeight}px)`;
+      const done = () => { v.style.transition = 'none'; restViewHide(); requestAnimationFrame(() => { v.style.transform = ''; v.style.transition = ''; }); };
+      let fired = false; const once = () => { if(!fired){ fired = true; done(); } };
+      v.addEventListener('transitionend', once, {once: true}); setTimeout(once, 360);
+    } else { v.style.transition = ''; v.style.transform = ''; }
+  };
+  v.addEventListener('pointerup', end); v.addEventListener('pointercancel', end);
+}
+
+/* ---------- plan sheet: the whole session at a glance ---------- */
+function livePlan(){
+  if(!gymDraft) return;
+  if(!openSheet({title: kindTitle(gymDraft.notes, gymDraft.kind), sub: 'Tap an exercise to go to it · arrows change the order', cls: 'lp-sheet',
+    body: `<div id="lpList"></div>
+      <div class="lp-rest"><div class="grow"><b>Rest between sets</b><span>Starts by itself after every set</span></div>
+        <button class="lv-sq" type="button" aria-label="15 seconds shorter" onclick="lpRest(-15)">${ICO.minus}</button><b class="v" id="lpRestV"></b>
+        <button class="lv-sq" type="button" aria-label="15 seconds longer" onclick="lpRest(15)">${ICO.plus}</button></div>`,
+    foot: `<button class="linkish" type="button" onclick="closeSheet();discardSession()">Discard workout</button><span class="n"></span>
+      <button class="btn ico" type="button" onclick="closeSheet();openPicker()">${ICO.plus}Add exercise</button>`})) return;
+  lpPaint();
+}
+function lpPaint(){
+  const el = document.getElementById('lpList'); if(!el || !gymDraft) return;
+  const items = gymDraft.items;
+  el.innerHTML = items.length ? items.map((it, i) => {
+    const d = exDone(it), st = isCardio(it.ex) ? setLabel(it) + (d ? ' · logged' : '') : setLabel(it) + ' · ' + Math.min(d, exPlanned(it)) + ' of ' + exPlanned(it) + ' done';
+    return `<div class="lp-row${exFinished(it) ? ' fin' : ''}">
+      <button class="lp-main" type="button" onclick="closeSheet();liveGo(${i}, true)"><span class="fig">${exIcon(it.ex)}</span>
+        <span class="tx"><b>${esc(it.ex)}</b><span>${st}</span></span>${i === _liveAt ? '<span class="pill grey">Now</span>' : ''}</button>
+      <button class="icon-btn" type="button" aria-label="Move ${esc(it.ex)} up" ${i === 0 ? 'disabled' : ''} onclick="lpMove(${i},-1)">${ICO.chevU}</button>
+      <button class="icon-btn" type="button" aria-label="Move ${esc(it.ex)} down" ${i === items.length - 1 ? 'disabled' : ''} onclick="lpMove(${i},1)">${ICO.chevD}</button>
+      <button class="icon-btn danger" type="button" aria-label="Remove ${esc(it.ex)}" onclick="lpDel(${i})">${ICO.x}</button></div>`;
+  }).join('') : '<div class="empty">No exercises — add one below</div>';
+  const v = document.getElementById('lpRestV'); if(v) v.textContent = mmss(restLen());
+}
+function lpMove(i, d){
+  const a = gymDraft.items, j = i + d; if(j < 0 || j >= a.length) return;
+  const cur = a[_liveAt];
+  [a[i], a[j]] = [a[j], a[i]];
+  _liveAt = Math.max(0, a.indexOf(cur)); gymDraft.at = _liveAt; draftSave();
+  liveRender(); lpPaint();
+}
+async function lpDel(i){
+  const it = gymDraft && gymDraft.items[i]; if(!it) return;
+  if(exDone(it) && !await ask({title: 'Remove ' + it.ex + '?', body: plural(exDone(it), 'set has', 'sets have') + ' been logged for it this session.', ok: 'Remove', danger: true})) return;
+  const cur = gymDraft.items[_liveAt];
+  gymDraft.items.splice(i, 1);
+  const k = gymDraft.items.indexOf(cur);
+  _liveAt = k >= 0 ? k : Math.max(0, Math.min(i, gymDraft.items.length - 1)); gymDraft.at = _liveAt; draftSave();
+  liveRender(); lpPaint();
+}
+function lpRest(d){
+  if(!gymDraft) return;
+  gymDraft.rest = Math.max(15, Math.min(600, restLen() + d));
+  try{ localStorage.setItem('atlas_gym_rest', gymDraft.rest); }catch(e){}
+  draftSave(); lpPaint();
+}
+
 function liveClose(minimise){
   const el = document.getElementById('live');
-  document.body.style.overflow = '';
-  wakeOff();
+  document.body.style.overflow = ''; document.body.classList.remove('live-on');
+  wakeOff(); cancelAnimationFrame(_lrvRaf); _lrvRaf = 0; clearTimeout(_lrvGo);
+  if(_restView !== 'rest') _restView = null;
   if(!el) return;
   _liveMin = !!minimise;
   el.removeAttribute('id'); el.classList.add('closing');
@@ -2590,7 +3101,13 @@ async function wakeOn(){
   try{ if('wakeLock' in navigator && !_wake){ _wake = await navigator.wakeLock.request('screen'); _wake.addEventListener('release', () => { _wake = null; }); } }catch(e){}
 }
 function wakeOff(){ try{ _wake && _wake.release(); }catch(e){} _wake = null; }
-document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible'){ if(liveOpenNow()) wakeOn(); restPaint(); paintTick(); } });
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible') return;
+  Snd.wake();
+  if(liveOpenNow()) wakeOn();
+  if(_rest) restTick();
+  restPaint(); paintTick();
+});
 
 /* in-app confirm — a small sheet with a question and two buttons, never the browser's confirm() */
 function ask(o){
@@ -2617,6 +3134,7 @@ const esc_ = s => esc(String(s == null ? '' : s));
 function finishSheet(){
   const d = gymDraft; if(!d || !d.items.length) return toast('Add at least one exercise');
   if(document.getElementById('finBg')) return;
+  if(_restView === 'done') _restView = null;
   restStop(); restPaint();
   document.body.insertAdjacentHTML('beforeend', `<div class="sheet-bg" id="finBg" style="z-index:70" onclick="if(event.target===this)finClose()">
     <div class="sheet" role="dialog" aria-label="Finish workout" style="max-width:480px">
@@ -2799,7 +3317,7 @@ function closePicker(){
   // backing out of a brand-new workout with nothing picked leaves no empty session behind
   if(draftPending() && !gymDraft.items.length){ gymDraft = null; draftSave(); return renderSession(); }
   // mid-session, open the card of the exercise that was just added
-  if(gymDraft && !draftPending() && gymDraft.items.length > _pickN) _exOpen = _pickN;
+  if(gymDraft && !draftPending() && gymDraft.items.length > _pickN){ _exOpen = _pickN; _liveAt = _pickN; if(gymDraft) gymDraft.at = _pickN; }
   gymRepaint();
 }
 function pickGroup(g){
